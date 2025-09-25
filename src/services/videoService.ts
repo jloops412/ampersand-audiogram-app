@@ -108,7 +108,6 @@ export async function generateVideo({
     // 2. Adaptive Noise Reduction (remove background noise)
     if (options.audioEnhancement.adaptiveNoiseReduction) {
         // Multi-band noise gate for surgical precision
-        const splitter = offlineCtx.createChannelSplitter(2);
         const merger = offlineCtx.createChannelMerger(2);
         
         const bands = [

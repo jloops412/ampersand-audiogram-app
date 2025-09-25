@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
 import type { CustomizationOptions, TranscriptCue } from '../types';
 import { WaveformStyle } from '../types';
 import { getStaticPeaks } from '../services/audioService';

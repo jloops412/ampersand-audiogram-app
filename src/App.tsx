@@ -1,9 +1,8 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ControlPanel } from './components/ControlPanel';
 import { Preview } from './components/Preview';
 import { LoaderIcon } from './components/icons';
 import type { CustomizationOptions, TranscriptCue } from './types';
-import { WaveformStyle } from './types';
 import { DEFAULT_OPTIONS } from './constants';
 import { processAudioFile } from './services/audioService';
 import { generateVideo } from './services/videoService';
