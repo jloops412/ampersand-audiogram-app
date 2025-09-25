@@ -1,0 +1,5 @@
+{
+  "name": "Audiogram Waveform Generator",
+  "description": "An application to create beautiful, customizable waveform audiogram videos from audio files. Users can upload audio, add a background image, and style the reactive waveform before generating a video.",
+  "requestFramePermissions": []
+}
