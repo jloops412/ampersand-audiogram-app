@@ -1,5 +1,5 @@
 
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import type { CustomizationOptions } from '../types';
 import { WaveformStyle } from '../types';
 import { FileUpload } from './FileUpload';
