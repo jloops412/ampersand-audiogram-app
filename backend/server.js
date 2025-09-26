@@ -24,15 +24,25 @@ app.use(express.static(buildPath));
 // --- Auphonic API Proxy ---
 const AUPHONIC_API_BASE = 'https://auphonic.com/api';
 const { AUPHONIC_USERNAME, AUPHONIC_PASSWORD } = process.env;
+const auphonicRouter = express.Router();
 
-if (!AUPHONIC_USERNAME || !AUPHONIC_PASSWORD) {
-    console.warn('AUPHONIC_USERNAME or AUPHONIC_PASSWORD environment variables are not set. Auphonic integration will fail.');
-}
+// Middleware to check for Auphonic credentials on all Auphonic-proxied routes
+auphonicRouter.use((req, res, next) => {
+    if (!AUPHONIC_USERNAME || !AUPHONIC_PASSWORD) {
+        console.error('Auphonic API credentials are not configured on the server.');
+        return res.status(503).json({ 
+            error: 'Auphonic service is not configured.',
+            details: 'The server is missing the required AUPHONIC_USERNAME and AUPHONIC_PASSWORD environment variables for authentication.'
+        });
+    }
+    next();
+});
+
 const AUPHONIC_AUTH = 'Basic ' + Buffer.from(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`).toString('base64');
 
 
 // 1. Create Production and Upload File
-app.post('/api/auphonic/productions', async (req, res) => {
+auphonicRouter.post('/productions', async (req, res) => {
     const form = formidable({ keepExtensions: true, maxFileSize: 500 * 1024 * 1024 }); // 500MB limit
 
     form.parse(req, async (err, fields, files) => {
@@ -48,7 +58,6 @@ app.post('/api/auphonic/productions', async (req, res) => {
         try {
             const formData = new FormData();
             formData.append('action', 'new');
-            // Use a file stream instead of reading the whole file into memory
             formData.append('input_file', fs.createReadStream(inputFile.filepath), inputFile.originalFilename);
 
             const response = await fetch(`${AUPHONIC_API_BASE}/productions.json`, {
@@ -67,7 +76,6 @@ app.post('/api/auphonic/productions', async (req, res) => {
                 });
             }
             
-            // Clean up the temporary file
             fs.unlink(inputFile.filepath, (unlinkErr) => {
                 if(unlinkErr) console.error("Error deleting temp file:", unlinkErr);
             });
@@ -82,7 +90,7 @@ app.post('/api/auphonic/productions', async (req, res) => {
 
 
 // 2. Start Production
-app.post('/api/auphonic/productions/:uuid/start', async (req, res) => {
+auphonicRouter.post('/productions/:uuid/start', async (req, res) => {
     const { uuid } = req.params;
     const { generateTranscript, auphonicProcessing } = req.body;
 
@@ -117,7 +125,7 @@ app.post('/api/auphonic/productions/:uuid/start', async (req, res) => {
 
 
 // 3. Get Production Status
-app.get('/api/auphonic/productions/:uuid', async (req, res) => {
+auphonicRouter.get('/productions/:uuid', async (req, res) => {
     const { uuid } = req.params;
     try {
         const response = await fetch(`${AUPHONIC_API_BASE}/production/${uuid}.json`, {
@@ -132,7 +140,7 @@ app.get('/api/auphonic/productions/:uuid', async (req, res) => {
 });
 
 // 4. Get Production Results (to get download URLs)
-app.get('/api/auphonic/productions/:uuid/results', async (req, res) => {
+auphonicRouter.get('/productions/:uuid/results', async (req, res) => {
     const { uuid } = req.params;
     try {
         const response = await fetch(`${AUPHONIC_API_BASE}/production/${uuid}.json`, {
@@ -145,6 +153,9 @@ app.get('/api/auphonic/productions/:uuid/results', async (req, res) => {
         res.status(500).json({ error: 'Failed to get production results.', details: error.message });
     }
 });
+
+app.use('/api/auphonic', auphonicRouter);
+
 
 // --- Fallback for client-side routing ---
 app.get('*', (req, res) => {
