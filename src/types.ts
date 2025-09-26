@@ -15,10 +15,6 @@ export type TextPosition = 'top' | 'middle' | 'bottom';
 export type TextAlign = 'left' | 'center' | 'right';
 export type LineCap = 'butt' | 'round' | 'square';
 
-export interface AuphonicOptions {
-  preset: string;
-}
-
 export interface CustomizationOptions {
   // General
   backgroundColor: string;
@@ -64,8 +60,9 @@ export interface CustomizationOptions {
   textAlign: TextAlign;
   textPosition: TextPosition;
 
-  // Auphonic
-  auphonic: AuphonicOptions;
+  // Auphonic Enhancement
+  enhanceWithAuphonic: boolean;
+  generateTranscript: boolean;
 }
 
 export interface TranscriptCue {

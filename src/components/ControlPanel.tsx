@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import type { CustomizationOptions } from '../types';
 import { WaveformStyle } from '../types';
 import { FileUpload } from './FileUpload';
@@ -18,6 +18,19 @@ interface ControlPanelProps {
   transcriptFileName: string | undefined;
 }
 
+// Define a shared interface for input components
+interface OptionInputProps {
+    label: string;
+    value: string | number;
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    name?: string;
+    type: string;
+    min?: number;
+    max?: number;
+    step?: number;
+    disabled?: boolean;
+}
+
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   options,
   setOptions,
@@ -33,6 +46,17 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
   const handleOptionChange = (key: keyof CustomizationOptions, value: any) => {
     setOptions(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleToggleChange = (key: keyof CustomizationOptions, value: boolean) => {
+    setOptions(prev => {
+        const newOptions = { ...prev, [key]: value };
+        // If Auphonic is turned off, also turn off transcript generation
+        if (key === 'enhanceWithAuphonic' && !value) {
+            newOptions.generateTranscript = false;
+        }
+        return newOptions;
+    });
   };
 
   const waveformOptions = Object.values(WaveformStyle);
@@ -102,6 +126,25 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       <div className="flex-grow overflow-y-auto pr-2 -mr-2 space-y-6">
+        <details open className="group">
+          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Audio Enhancement</summary>
+          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
+            <OptionToggle 
+                label="Enhance Audio with Auphonic"
+                checked={options.enhanceWithAuphonic}
+                onChange={(c) => handleToggleChange('enhanceWithAuphonic', c)}
+                disabled={isGenerating}
+            />
+            <OptionToggle 
+                label="Generate Transcript"
+                checked={options.generateTranscript}
+                onChange={(c) => handleToggleChange('generateTranscript', c)}
+                disabled={isGenerating || !options.enhanceWithAuphonic}
+            />
+            {!options.enhanceWithAuphonic && <p className="text-xs text-gray-500 -mt-2">Transcript generation requires Auphonic enhancement.</p>}
+          </div>
+        </details>
+
         <details open className="group">
           <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Waveform</summary>
           <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
@@ -190,4 +233,21 @@ const TextInput: React.FC<{label: string, value: string, onChange: (v: string) =
     <label className="block text-sm font-medium text-gray-400">{label}</label>
     <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary" disabled={disabled}/>
   </div>
+);
+
+const OptionToggle: React.FC<{label: string, checked: boolean, onChange: (c: boolean) => void, disabled?: boolean}> = ({label, checked, onChange, disabled}) => (
+    <label className="flex items-center justify-between cursor-pointer">
+      <span className="text-sm font-medium text-gray-300">{label}</span>
+      <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${disabled ? 'cursor-not-allowed' : ''}`}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+          className="sr-only"
+        />
+        <div className={`w-11 h-6 rounded-full shadow-inner ${checked && !disabled ? 'bg-primary' : 'bg-gray-700'}`}></div>
+        <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'transform translate-x-5' : ''}`}></div>
+      </div>
+    </label>
 );

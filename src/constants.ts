@@ -40,7 +40,6 @@ export const DEFAULT_OPTIONS: CustomizationOptions = {
   textAlign: 'center',
   textPosition: 'middle',
 
-  auphonic: {
-    preset: ''
-  }
+  enhanceWithAuphonic: false,
+  generateTranscript: false,
 };
