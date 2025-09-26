@@ -52,8 +52,9 @@ if (AUPHONIC_PASSWORD && AUPHONIC_PASSWORD.length > 0) {
 
 // --- API Routes ---
 
-// Create a production, upload files, and start it (simplified flow)
+// Create a production, upload files, and start it (robust two-step flow)
 app.post('/api/auphonic/productions', checkAuphonicConfig, async (req, res) => {
+  let tempFilePaths: string[] = [];
   try {
     const form = formidable({ 
       maxFileSize: 500 * 1024 * 1024,
@@ -68,53 +69,67 @@ app.post('/api/auphonic/productions', checkAuphonicConfig, async (req, res) => {
     if (!inputFile) {
       return res.status(400).json({ error: 'No input file was uploaded.' });
     }
+    tempFilePaths.push(inputFile.filepath);
+    if(coverImageFile) tempFilePaths.push(coverImageFile.filepath);
 
-    // Use FormData to build a multipart request for Auphonic
-    const auphonicFormData = new FormData();
-    auphonicFormData.append('input_file', fs.createReadStream(inputFile.filepath), inputFile.originalFilename);
-    
-    // Add cover image if it exists
+    // --- Step 1: Create Production and Upload Files ---
+    const createFormData = new FormData();
+    createFormData.append('input_file', fs.createReadStream(inputFile.filepath), inputFile.originalFilename);
     if (coverImageFile) {
-      auphonicFormData.append('image', fs.createReadStream(coverImageFile.filepath), coverImageFile.originalFilename);
+      createFormData.append('image', fs.createReadStream(coverImageFile.filepath), coverImageFile.originalFilename);
     }
     
-    // Set metadata and action
-    const metadata = {
+    const createMetadata = {
         title: inputFile.originalFilename || 'Audiogram Production',
-        action: 'start', // Start production immediately
         output_files: [{ format: 'wav' }]
     };
-
-    if (generateTranscript) {
-        metadata.services = [{ identifier: 'whisper' }];
-    }
-
-    auphonicFormData.append('metadata', JSON.stringify(metadata));
+    createFormData.append('metadata', JSON.stringify(createMetadata));
 
     const createResponse = await fetch(`${AUPHONIC_API_BASE}/productions.json`, {
       method: 'POST',
       headers: {
-        ...auphonicFormData.getHeaders(),
+        ...createFormData.getHeaders(),
         'Authorization': getAuthHeader()
       },
-      body: auphonicFormData
+      body: createFormData
     });
-    
-    // Clean up temporary files
-    fs.unlinkSync(inputFile.filepath);
-    if (coverImageFile) fs.unlinkSync(coverImageFile.filepath);
 
     if (!createResponse.ok) {
         const errorData = await createResponse.json();
         throw new Error(`Auphonic Create Error: ${JSON.stringify(errorData)}`);
     }
-
     const { data: { uuid } } = await createResponse.json();
+
+    // --- Step 2: Start the Production ---
+    const startMetadata: { services?: { identifier: string }[] } = {};
+    if (generateTranscript) {
+        startMetadata.services = [{ identifier: 'whisper' }];
+    }
+
+    const startResponse = await fetch(`${AUPHONIC_API_BASE}/production/${uuid}/start.json`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': getAuthHeader()
+        },
+        body: Object.keys(startMetadata).length > 0 ? JSON.stringify(startMetadata) : undefined
+    });
+
+    if (!startResponse.ok) {
+        const errorData = await startResponse.json();
+        throw new Error(`Auphonic Start Error: ${JSON.stringify(errorData)}`);
+    }
+
     res.status(200).json({ uuid });
     
   } catch (error) {
     console.error('Error in /api/auphonic/productions:', error);
     res.status(500).json({ error: error.message });
+  } finally {
+      // Clean up temporary files
+      tempFilePaths.forEach(p => fs.unlink(p, (err) => {
+          if (err) console.error(`Failed to delete temp file: ${p}`, err);
+      }));
   }
 });
 
