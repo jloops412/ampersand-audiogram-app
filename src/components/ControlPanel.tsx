@@ -18,19 +18,6 @@ interface ControlPanelProps {
   transcriptFileName: string | undefined;
 }
 
-// Define a shared interface for input components
-interface OptionInputProps {
-    label: string;
-    value: string | number;
-    onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    name?: string;
-    type: string;
-    min?: number;
-    max?: number;
-    step?: number;
-    disabled?: boolean;
-}
-
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   options,
   setOptions,

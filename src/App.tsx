@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ControlPanel } from './components/ControlPanel';
 import { Preview } from './components/Preview';
 import { processAudioFile } from './services/audioService';
@@ -80,6 +80,7 @@ function App() {
     try {
       let finalAudioFile = audioFile;
       let finalTranscriptFile: File | null = transcriptFile;
+      let preloadedCues = transcriptCues;
 
       if (options.enhanceWithAuphonic) {
         setGenerationStatus('Processing audio with Auphonic...');
@@ -96,6 +97,7 @@ function App() {
         if (auphonicResult.transcriptUrl) {
             const transcriptText = await fetch(auphonicResult.transcriptUrl).then(res => res.text());
             const parsedCues = parseTranscriptCues(transcriptText);
+            preloadedCues = parsedCues;
             setTranscriptCues(parsedCues);
             // Nullify the original transcript file as we're now using the Auphonic-generated one
             finalTranscriptFile = null; 
@@ -112,7 +114,7 @@ function App() {
         transcriptFile: finalTranscriptFile,
         options,
         // Pass already parsed cues if available from Auphonic
-        preloadedTranscriptCues: transcriptCues,
+        preloadedTranscriptCues: preloadedCues,
         onProgress: setProgress,
       });
 
@@ -144,7 +146,7 @@ function App() {
                   <div className="w-1/2 bg-gray-700 rounded-full h-2.5 mt-2">
                     <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                   </div>
-                  <p className="mt-2 text-sm text-gray-400">{Math.round(progress)}%</p>
+                  <p className="mt-2 text-sm text-gray-400">{Math.round(progress)}</p>
                 </>
               )}
             </div>
