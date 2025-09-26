@@ -137,7 +137,7 @@ function App() {
         ::-webkit-scrollbar-thumb:hover { background: #718096; }
       `}</style>
       <header className="bg-gray-900 shadow-md p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Audiogram Generator</h1>
+        <h1 className="text-xl font-bold">Ampersand Audiogram</h1>
       </header>
       
       <main className="flex flex-col md:flex-row" style={{ height: 'calc(100vh - 64px)' }}>

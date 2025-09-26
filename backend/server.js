@@ -44,11 +44,8 @@ const getAuthHeader = () => {
 
 // 1. Create a Production (and upload files)
 app.post('/api/auphonic/productions', checkAuphonicCredentials, async (req, res) => {
-    const form = formidable({ 
-        multiples: true,
-        keepExtensions: true,
-        uploadDir: path.join(__dirname, 'uploads')
-    });
+    // Use a simpler formidable setup, letting it use the OS temp directory
+    const form = formidable({});
 
     form.parse(req, async (err, fields, files) => {
         if (err) {
@@ -68,6 +65,9 @@ app.post('/api/auphonic/productions', checkAuphonicCredentials, async (req, res)
         try {
             const formData = new FormData();
             
+            // Add user's specific preset
+            formData.append('preset', 'LcXbNksM7Li9oBpWAt5o4H');
+
             // Required: Add audio file
             formData.append('input_file', fs.createReadStream(audioFile.filepath));
             tempFilePaths.push(audioFile.filepath);
@@ -128,6 +128,7 @@ app.post('/api/auphonic/productions/:uuid/start', checkAuphonicCredentials, asyn
                 'Content-Type': 'application/json',
                 'Authorization': getAuthHeader()
             },
+            // Sending an empty body is fine, it will use the preset's settings
             body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
         });
 
