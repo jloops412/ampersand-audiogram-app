@@ -108,23 +108,22 @@ export async function generateVideo({
     // 2. Adaptive Noise Reduction (remove background noise)
     if (options.audioEnhancement.adaptiveNoiseReduction) {
         // Multi-band noise gate for surgical precision
+        const splitter = offlineCtx.createChannelSplitter(2);
         const merger = offlineCtx.createChannelMerger(2);
         
+        lastNode.connect(splitter); // Connect source to the splitter
+
         const bands = [
             { freq: 250, type: 'lowpass' as const, gateSettings: { threshold: -45, ratio: 12 } }, // Low band
-            { freq: 250, type: 'highpass' as const, gateSettings: { threshold: -60, ratio: 6 } }, // Mids/Highs band
+            { freq: 4000, type: 'highpass' as const, gateSettings: { threshold: -60, ratio: 6 } }, // Mids/Highs band
         ];
-
-        const highPassGateChain = offlineCtx.createBiquadFilter();
-        highPassGateChain.type = 'highpass'; highPassGateChain.frequency.value = 4000;
-        const highGate = offlineCtx.createDynamicsCompressor();
-        highGate.threshold.value = -40; highGate.knee.value = 0; highGate.ratio.value = 20; highGate.attack.value = 0.001; highGate.release.value = 0.1;
-        highPassGateChain.connect(highGate);
         
-        bands.forEach(band => {
+        // Process each band in parallel
+        bands.forEach((band, index) => {
             const filter = offlineCtx.createBiquadFilter();
             filter.type = band.type;
             filter.frequency.value = band.freq;
+            
             const gate = offlineCtx.createDynamicsCompressor();
             gate.threshold.value = band.gateSettings.threshold;
             gate.ratio.value = band.gateSettings.ratio;
@@ -132,11 +131,10 @@ export async function generateVideo({
             gate.attack.value = 0.005;
             gate.release.value = 0.2;
             
-            lastNode.connect(filter).connect(gate).connect(merger, 0, 0);
+            splitter.connect(filter, index).connect(gate).connect(merger, 0, index);
         });
         
-        lastNode.connect(highPassGateChain).connect(merger, 0, 1);
-        lastNode = merger;
+        lastNode = merger; // The merged signal is now the last node
     }
     
     // 3. Speech Clarity EQ (enhance vocal presence)

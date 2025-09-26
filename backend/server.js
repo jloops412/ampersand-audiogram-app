@@ -4,7 +4,6 @@ import { formidable } from 'formidable';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Blob } from 'buffer';
 
 const app = express();
 const port = process.env.PORT || 8080;
