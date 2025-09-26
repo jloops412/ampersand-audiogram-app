@@ -37,16 +37,18 @@ app.post('/api/auphonic/productions', async (req, res) => {
         
         try {
             const fileBuffer = readFileSync(inputFile.filepath);
-            const fileBlob = new Blob([fileBuffer], { type: inputFile.mimetype });
-
+            
             const formData = new FormData();
-            formData.append('input_file', fileBlob, inputFile.originalFilename);
+            // Append the raw Buffer directly, avoiding the incompatible Blob constructor.
+            formData.append('input_file', fileBuffer, inputFile.originalFilename);
             
             const metadata = {
                 title: inputFile.originalFilename || 'Audiogram Production',
             };
             formData.append('metadata', JSON.stringify(metadata));
 
+            // Do not set Content-Type header manually for multipart/form-data.
+            // Let node-fetch set it automatically with the correct boundary.
             const createRes = await fetch(`${AUPHONIC_API_BASE}/productions.json`, {
                 method: 'POST',
                 headers: { 'Authorization': AUTH_HEADER },
