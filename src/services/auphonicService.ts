@@ -1,11 +1,12 @@
+import type { AuphonicProcessingOptions } from '../types';
+
 // A helper for polling
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const AUPHONIC_PRESET_UUID = 'LcXbNksM7Li9oBpWAt5o4H';
 
 interface RunProductionParams {
     audioFile: File;
     generateTranscript: boolean;
+    auphonicProcessing: AuphonicProcessingOptions;
     onProgress: (message: string) => void;
 }
 
@@ -39,6 +40,7 @@ async function fetchWithTimeout(resource: RequestInfo, options: RequestInit = {}
 export async function runProduction({
     audioFile,
     generateTranscript,
+    auphonicProcessing,
     onProgress,
 }: RunProductionParams): Promise<AuphonicProductionResult> {
     try {
@@ -66,8 +68,8 @@ export async function runProduction({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                preset: AUPHONIC_PRESET_UUID,
                 generateTranscript,
+                auphonicProcessing,
             })
         });
         if (!startResponse.ok) throw new Error('Failed to start Auphonic production.');

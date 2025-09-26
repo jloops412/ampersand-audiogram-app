@@ -71,9 +71,24 @@ app.post('/api/auphonic/productions', async (req, res) => {
 // 2. Start Production
 app.post('/api/auphonic/productions/:uuid/start', async (req, res) => {
     const { uuid } = req.params;
-    const { preset, generateTranscript } = req.body;
+    const { generateTranscript, auphonicProcessing } = req.body;
     
-    const payload = { preset };
+    // Build the payload for the Auphonic API
+    const payload = {
+        preset: '', // Use an empty preset to define algorithms manually
+        output_files: [ { format: "wav" } ], // ensure we get a high-quality audio file back
+        algorithms: {
+            // Map frontend options to the correct Auphonic API parameters
+            leveler: auphonicProcessing.adaptiveLeveler,
+            denoise: auphonicProcessing.noiseAndHumReduction,
+            // If amount is 0, send null for 'auto' mode
+            denoiseamount: auphonicProcessing.noiseReductionAmount > 0 ? auphonicProcessing.noiseReductionAmount : null,
+            hipfilter: auphonicProcessing.filtering,
+            normloudness: !!auphonicProcessing.loudnessTarget, // Enable if target is set
+        },
+        loudness_target: auphonicProcessing.loudnessTarget,
+    };
+
     if (generateTranscript) {
         payload.services = { whisper: true };
     }
@@ -84,7 +99,11 @@ app.post('/api/auphonic/productions/:uuid/start', async (req, res) => {
             headers: { 'Authorization': AUTH_HEADER, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        if (!apiRes.ok) throw new Error(`Auphonic Start Error: ${await apiRes.text()}`);
+        if (!apiRes.ok) {
+            const errorText = await apiRes.text();
+            console.error('Auphonic Start API Error:', errorText);
+            throw new Error(`Auphonic Start Error: ${errorText}`);
+        }
         res.status(200).json(await apiRes.json());
     } catch (error) {
         console.error('Auphonic start error:', error);

@@ -42,14 +42,10 @@ export async function createAudiogram({
     throw new Error('An audio file is required to create an audiogram.');
   }
 
-  // Merge user options with defaults, including a deep merge for audioEnhancement
+  // Merge user options with defaults. Auphonic options are omitted as they are not used in this client-side function.
   const finalOptions: CustomizationOptions = { 
     ...DEFAULT_OPTIONS, 
     ...options,
-    audioEnhancement: {
-      ...DEFAULT_OPTIONS.audioEnhancement,
-      ...(options.audioEnhancement || {}),
-    },
   };
 
   // Parse transcript if provided

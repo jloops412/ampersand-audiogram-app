@@ -118,6 +118,7 @@ export default function App() {
         const auphonicResult = await runAuphonicProduction({
           audioFile,
           generateTranscript,
+          auphonicProcessing: options.auphonicProcessing,
           onProgress: setGenerationStatusMessage,
         });
         

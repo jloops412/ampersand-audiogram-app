@@ -43,13 +43,13 @@ export const DEFAULT_OPTIONS: CustomizationOptions = {
   particleSpeed: 1.5,
   particleSize: 3,
   
-  // Audio Enhancement
-  audioEnhancement: {
-    adaptiveNoiseReduction: false,
-    humReduction: false,
-    speechClarityEQ: false,
-    dynamicRangeCompression: false,
-    loudnessNormalization: false,
+  // Auphonic Processing
+  auphonicProcessing: {
+    adaptiveLeveler: true,
+    noiseAndHumReduction: true,
+    noiseReductionAmount: 0, // 0 is 'Auto'
+    filtering: true,
+    loudnessTarget: -16,
   },
 
   // Text & Transcript

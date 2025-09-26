@@ -19,12 +19,12 @@ export interface TranscriptCue {
   text: string;
 }
 
-export interface AudioEnhancementOptions {
-  adaptiveNoiseReduction: boolean;
-  humReduction: boolean;
-  speechClarityEQ: boolean;
-  dynamicRangeCompression: boolean;
-  loudnessNormalization: boolean;
+export interface AuphonicProcessingOptions {
+  adaptiveLeveler: boolean;
+  noiseAndHumReduction: boolean;
+  noiseReductionAmount: number; // 0 for Auto, otherwise dB
+  filtering: boolean; // High-pass filter
+  loudnessTarget: number; // In LUFS, e.g., -16
 }
 
 export interface CustomizationOptions {
@@ -69,6 +69,6 @@ export interface CustomizationOptions {
   textAlign: TextAlign;
   textPosition: TextPosition;
 
-  // Audio Enhancement
-  audioEnhancement: AudioEnhancementOptions;
+  // Auphonic Processing
+  auphonicProcessing: AuphonicProcessingOptions;
 }

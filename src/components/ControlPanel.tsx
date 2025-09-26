@@ -1,5 +1,5 @@
 import React from 'react';
-import type { CustomizationOptions, LineCap, TextAlign, TextPosition, AudioEnhancementOptions } from '../types';
+import type { CustomizationOptions, LineCap, TextAlign, TextPosition, AuphonicProcessingOptions } from '../types';
 import { WaveformStyle } from '../types';
 import { FileUpload } from './FileUpload';
 import { GenerateIcon } from './icons';
@@ -112,18 +112,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     setOptions(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleEnhancementChange = <K extends keyof AudioEnhancementOptions>(
+  const handleAuphonicChange = <K extends keyof AuphonicProcessingOptions>(
     key: K,
-    value: boolean
+    value: AuphonicProcessingOptions[K]
   ) => {
     setOptions(prev => ({
         ...prev,
-        audioEnhancement: {
-            ...prev.audioEnhancement,
+        auphonicProcessing: {
+            ...prev.auphonicProcessing,
             [key]: value,
         }
     }));
   };
+
+  const noiseReductionLabel = options.auphonicProcessing.noiseReductionAmount === 0
+    ? 'Auto'
+    : `${options.auphonicProcessing.noiseReductionAmount} dB`;
 
   return (
     <div className="bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-800">
@@ -154,7 +158,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <h3 className="text-lg font-semibold text-primary mb-3">Auphonic AI Processing</h3>
             <div className="space-y-3 p-4 bg-gray-800 rounded-lg">
                 <ToggleSwitch
-                    label="Enhance Audio & Sound Design"
+                    label="Enhance Audio with Auphonic"
                     enabled={useAuphonic}
                     onChange={setUseAuphonic}
                     disabled={isGenerating}
@@ -165,43 +169,46 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     onChange={setGenerateTranscript}
                     disabled={isGenerating || !useAuphonic}
                 />
-                <p className="text-xs text-gray-500 pt-2">Uses the Auphonic API to professionally process your audio and optionally generate a transcript. This may take several minutes and requires a backend server.</p>
-            </div>
-        </div>
-
-        <div className={useAuphonic ? 'opacity-50 pointer-events-none' : 'transition-opacity'}>
-            <h3 className="text-lg font-semibold text-primary mb-3">Studio Sound Processing</h3>
-            <div className="space-y-3 p-4 bg-gray-800 rounded-lg">
-                <ToggleSwitch
-                    label="Adaptive Noise Reduction"
-                    enabled={options.audioEnhancement.adaptiveNoiseReduction}
-                    onChange={(value) => handleEnhancementChange('adaptiveNoiseReduction', value)}
-                    disabled={isGenerating || useAuphonic}
-                />
-                 <ToggleSwitch
-                    label="Hum Reduction"
-                    enabled={options.audioEnhancement.humReduction}
-                    onChange={(value) => handleEnhancementChange('humReduction', value)}
-                    disabled={isGenerating || useAuphonic}
-                />
-                <ToggleSwitch
-                    label="Speech Clarity EQ"
-                    enabled={options.audioEnhancement.speechClarityEQ}
-                    onChange={(value) => handleEnhancementChange('speechClarityEQ', value)}
-                    disabled={isGenerating || useAuphonic}
-                />
-                <ToggleSwitch
-                    label="Dynamic Range Compression"
-                    enabled={options.audioEnhancement.dynamicRangeCompression}
-                    onChange={(value) => handleEnhancementChange('dynamicRangeCompression', value)}
-                    disabled={isGenerating || useAuphonic}
-                />
-                <ToggleSwitch
-                    label="Loudness Normalization"
-                    enabled={options.audioEnhancement.loudnessNormalization}
-                    onChange={(value) => handleEnhancementChange('loudnessNormalization', value)}
-                    disabled={isGenerating || useAuphonic}
-                />
+                <p className="text-xs text-gray-500 pt-2">Uses Auphonic to professionally process your audio. Requires a backend server.</p>
+                
+                {useAuphonic && (
+                    <div className="pt-4 mt-4 border-t border-gray-700 space-y-3">
+                        <ToggleSwitch
+                            label="Adaptive Leveler"
+                            enabled={options.auphonicProcessing.adaptiveLeveler}
+                            onChange={(value) => handleAuphonicChange('adaptiveLeveler', value)}
+                        />
+                        <ToggleSwitch
+                            label="High-Pass Filter"
+                            enabled={options.auphonicProcessing.filtering}
+                            onChange={(value) => handleAuphonicChange('filtering', value)}
+                        />
+                         <OptionWrapper title={`Loudness Target: ${options.auphonicProcessing.loudnessTarget} LUFS`}>
+                            <input
+                                type="range" min="-24" max="-10" step="1"
+                                value={options.auphonicProcessing.loudnessTarget}
+                                onChange={(e) => handleAuphonicChange('loudnessTarget', Number(e.target.value))}
+                                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                            />
+                        </OptionWrapper>
+                         <ToggleSwitch
+                            label="Noise & Hum Reduction"
+                            enabled={options.auphonicProcessing.noiseAndHumReduction}
+                            onChange={(value) => handleAuphonicChange('noiseAndHumReduction', value)}
+                        />
+                        <div className={!options.auphonicProcessing.noiseAndHumReduction ? 'opacity-50' : ''}>
+                            <OptionWrapper title={`Reduction Amount: ${noiseReductionLabel}`}>
+                                <input
+                                    type="range" min="0" max="30" step="1"
+                                    value={options.auphonicProcessing.noiseReductionAmount}
+                                    onChange={(e) => handleAuphonicChange('noiseReductionAmount', Number(e.target.value))}
+                                    disabled={!options.auphonicProcessing.noiseAndHumReduction}
+                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary disabled:cursor-not-allowed"
+                                />
+                            </OptionWrapper>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
 
