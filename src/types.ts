@@ -1,58 +1,67 @@
-
 export enum WaveformStyle {
   Line = 'Line',
   MirroredLine = 'Mirrored Line',
   Bars = 'Bars',
-  Bricks = 'Bricks',
   Circle = 'Circle',
+  Equalizer = 'Equalizer',
+  Bricks = 'Bricks',
   Radial = 'Radial',
   Particles = 'Particles',
-  Equalizer = 'Equalizer',
 }
 
-export type WaveformPosition = 'top' | 'middle' | 'bottom';
-export type TextPosition = 'top' | 'middle' | 'bottom';
-export type TextAlign = 'left' | 'center' | 'right';
 export type LineCap = 'butt' | 'round' | 'square';
+export type TextAlign = 'left' | 'center' | 'right';
+export type TextPosition = 'top' | 'middle' | 'bottom';
+
+export interface TranscriptCue {
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+export interface AuphonicProcessingOptions {
+  adaptiveLeveler: boolean;
+  noiseAndHumReduction: boolean;
+  noiseReductionAmount: number; // 0 for Auto, otherwise dB
+  filtering: boolean; // High-pass filter
+  loudnessTarget: number; // In LUFS, e.g., -16
+}
 
 export interface CustomizationOptions {
-  // General
-  backgroundColor: string;
-  
-  // Waveform
   waveformStyle: WaveformStyle;
-  waveformPosition: WaveformPosition;
+  backgroundColor: string;
   waveformColor: string;
   waveformOpacity: number;
+  waveformPosition: TextPosition;
+  lineWidth: number;
   amplitude: number;
   
-  // Waveform specific: Line / MirroredLine
-  lineWidth: number;
+  // Line, MirroredLine, Circle, Radial
   lineCap: LineCap;
 
-  // Waveform specific: Bars
+  // Bars, Equalizer
   barWidth: number;
   barSpacing: number;
   barCount: number;
 
-  // Waveform specific: Bricks
+  // Circle
+  circleRadius: number;
+
+  // Bricks
   brickHeight: number;
   brickSpacing: number;
   brickCount: number;
 
-  // Waveform specific: Circle
-  circleRadius: number;
-
-  // Waveform specific: Radial
-  innerRadius: number;
+  // Radial
   spokeCount: number;
+  innerRadius: number;
 
-  // Waveform specific: Particles
+  // Particles
   particleCount: number;
-  particleSize: number;
   particleSpeed: number;
+  particleSize: number;
 
-  // Text
+  // Text & Transcript
   overlayText: string;
   fontFamily: string;
   fontSize: number;
@@ -60,13 +69,6 @@ export interface CustomizationOptions {
   textAlign: TextAlign;
   textPosition: TextPosition;
 
-  // Auphonic Enhancement
-  enhanceWithAuphonic: boolean;
-  generateTranscript: boolean;
-}
-
-export interface TranscriptCue {
-  startTime: number;
-  endTime: number;
-  text: string;
+  // Auphonic Processing
+  auphonicProcessing: AuphonicProcessingOptions;
 }

@@ -1,45 +1,65 @@
+import { WaveformStyle } from './types';
+import type { CustomizationOptions } from './types';
 
-import { CustomizationOptions, WaveformStyle } from './types';
-
-export const CANVAS_WIDTH = 1080;
-export const CANVAS_HEIGHT = 1080;
+export const GOOGLE_FONTS = [
+  'Montserrat',
+  'Lato',
+  'Playfair Display',
+  'Roboto Mono',
+  'Lobster',
+];
 
 export const DEFAULT_OPTIONS: CustomizationOptions = {
-  backgroundColor: '#1a1a1a',
-  
-  waveformStyle: WaveformStyle.Bars,
+  waveformStyle: WaveformStyle.Line,
+  backgroundColor: '#1a1b20',
+  waveformColor: '#D7B185',
+  waveformOpacity: 1.0,
   waveformPosition: 'middle',
-  waveformColor: '#ffffff',
-  waveformOpacity: 0.8,
+  lineWidth: 3,
   amplitude: 150,
   
-  lineWidth: 4,
+  // Line, MirroredLine, Circle, Radial
   lineCap: 'round',
 
-  barWidth: 8,
-  barSpacing: 4,
-  barCount: 60,
+  // Bars, Equalizer
+  barWidth: 5,
+  barSpacing: 2,
+  barCount: 128,
 
-  brickHeight: 10,
+  // Circle
+  circleRadius: 150,
+
+  // Bricks
+  brickHeight: 8,
   brickSpacing: 4,
-  brickCount: 60,
+  brickCount: 80,
 
-  circleRadius: 200,
-
-  innerRadius: 100,
+  // Radial
   spokeCount: 180,
+  innerRadius: 50,
+  
+  // Particles
+  particleCount: 200,
+  particleSpeed: 1.5,
+  particleSize: 3,
+  
+  // Auphonic Processing
+  auphonicProcessing: {
+    adaptiveLeveler: true,
+    noiseAndHumReduction: true,
+    noiseReductionAmount: 0, // 0 is 'Auto'
+    filtering: true,
+    loudnessTarget: -16,
+  },
 
-  particleCount: 500,
-  particleSize: 2,
-  particleSpeed: 2,
-
-  overlayText: 'Your audiogram text goes here',
-  fontFamily: 'Inter, sans-serif',
-  fontSize: 72,
+  // Text & Transcript
+  overlayText: '',
+  fontFamily: GOOGLE_FONTS[0],
+  fontSize: 80,
   fontColor: '#ffffff',
   textAlign: 'center',
   textPosition: 'middle',
-
-  enhanceWithAuphonic: false,
-  generateTranscript: false,
 };
+
+export const CANVAS_WIDTH = 1920;
+export const CANVAS_HEIGHT = 1080;

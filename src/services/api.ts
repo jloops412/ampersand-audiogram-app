@@ -1,4 +1,3 @@
-
 import type { CustomizationOptions, TranscriptCue } from '../types';
 import { DEFAULT_OPTIONS, CANVAS_WIDTH, CANVAS_HEIGHT } from '../constants';
 import { generateVideo } from './videoService';
@@ -16,7 +15,6 @@ import { parseTranscriptFile } from './transcriptService';
  * @property {File} [transcriptFile] - An optional transcript file (.srt or .vtt).
  * @property {Partial<CustomizationOptions>} [options] - A partial object of customization options to override the defaults.
  * @property {(progress: number) => void} [onProgress] - An optional callback function to track generation progress (0-100).
- * @property {TranscriptCue[]} [preloadedTranscriptCues] - Optional pre-parsed transcript cues.
  */
 export interface CreateAudiogramParams {
   audioFile: File;
@@ -24,7 +22,6 @@ export interface CreateAudiogramParams {
   transcriptFile?: File | null;
   options?: Partial<CustomizationOptions>;
   onProgress?: (progress: number) => void;
-  preloadedTranscriptCues?: TranscriptCue[] | null;
 }
 
 /**
@@ -40,32 +37,30 @@ export async function createAudiogram({
   transcriptFile = null,
   options = {},
   onProgress = () => {},
-  preloadedTranscriptCues = null,
 }: CreateAudiogramParams): Promise<Blob> {
   if (!audioFile) {
     throw new Error('An audio file is required to create an audiogram.');
   }
 
-  // Merge user options with defaults.
+  // Merge user options with defaults. Auphonic options are omitted as they are not used in this client-side function.
   const finalOptions: CustomizationOptions = { 
     ...DEFAULT_OPTIONS, 
     ...options,
   };
 
-  // Use preloaded cues if available, otherwise parse the file
-  let transcriptCues: TranscriptCue[] | null = preloadedTranscriptCues;
-  if (!transcriptCues && transcriptFile) {
+  // Parse transcript if provided
+  let transcriptCues: TranscriptCue[] | null = null;
+  if (transcriptFile) {
     try {
       transcriptCues = await parseTranscriptFile(transcriptFile);
+      // If a transcript is used, ensure static text is cleared unless specified otherwise
+      if (options.overlayText === undefined) {
+          finalOptions.overlayText = '';
+      }
     } catch (error) {
       console.error('Failed to parse transcript file:', error);
       throw new Error('The provided transcript file could not be parsed.');
     }
-  }
-
-  // If a transcript is used, ensure static text is cleared unless specified otherwise
-  if (transcriptCues && options.overlayText === undefined) {
-      finalOptions.overlayText = '';
   }
 
   // Create a canvas element in memory to render the video

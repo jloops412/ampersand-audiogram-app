@@ -1,44 +1,35 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ControlPanel } from './components/ControlPanel';
 import { Preview } from './components/Preview';
-import { processAudioFile } from './services/audioService';
-import { parseTranscriptCues, parseTranscriptFile } from './services/transcriptService';
-import { createAudiogram } from './services/api';
-import { runAuphonicProduction } from './services/auphonicService';
-import { DEFAULT_OPTIONS } from './constants';
-import type { CustomizationOptions, TranscriptCue } from './types';
 import { LoaderIcon } from './components/icons';
+import type { CustomizationOptions, TranscriptCue } from './types';
+import { DEFAULT_OPTIONS } from './constants';
+import { processAudioFile } from './services/audioService';
+import { generateVideo } from './services/videoService';
+import { parseTranscriptFile } from './services/transcriptService';
+import { runProduction as runAuphonicProduction } from './services/auphonicService';
 
-function App() {
-  const [options, setOptions] = useState<CustomizationOptions>(DEFAULT_OPTIONS);
+export default function App() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
-  const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
-  
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
+  const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
   const [transcriptCues, setTranscriptCues] = useState<TranscriptCue[] | null>(null);
   
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStatus, setGenerationStatus] = useState('');
-  const [progress, setProgress] = useState(0);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [options, setOptions] = useState<CustomizationOptions>(DEFAULT_OPTIONS);
+  const [isLoadingAudio, setIsLoadingAudio] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
 
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (audioFile) {
-      processAudioFile(audioFile).then(setAudioBuffer).catch(err => {
-        console.error("Error processing audio:", err);
-        setError("Failed to process audio file.");
-        setAudioFile(null);
-      });
-    } else {
-      setAudioBuffer(null);
-    }
-  }, [audioFile]);
+  // Auphonic state
+  const [useAuphonic, setUseAuphonic] = useState<boolean>(false);
+  const [generateTranscript, setGenerateTranscript] = useState<boolean>(false);
+  const [generationStatusMessage, setGenerationStatusMessage] = useState<string>('');
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (backgroundImageFile) {
@@ -50,152 +41,218 @@ function App() {
     }
   }, [backgroundImageFile]);
   
-  useEffect(() => {
-    if (transcriptFile) {
-        parseTranscriptFile(transcriptFile).then(cues => {
-            setTranscriptCues(cues);
-            // Clear static text when transcript is loaded
-            setOptions(prev => ({...prev, overlayText: ''}));
-        }).catch(err => {
-            console.error("Error parsing transcript:", err);
-            setError("Failed to parse transcript file.");
-            setTranscriptFile(null);
-        });
+  const handleAudioFileChange = useCallback(async (file: File | null) => {
+    setAudioFile(file);
+    if (file) {
+      setIsLoadingAudio(true);
+      setGeneratedVideoUrl(null);
+      try {
+        const buffer = await processAudioFile(file);
+        setAudioBuffer(buffer);
+      } catch (error) {
+        console.error("Error processing audio file:", error);
+        alert("Failed to process audio file. Please try a different file.");
+        setAudioFile(null);
+        setAudioBuffer(null);
+      } finally {
+        setIsLoadingAudio(false);
+      }
     } else {
-        setTranscriptCues(null);
+      setAudioBuffer(null);
     }
-  }, [transcriptFile]);
+  }, []);
 
-  const handleGenerateClick = async () => {
-    if (!audioFile) {
-      setError("An audio file is required.");
+  const handleBackgroundImageChange = useCallback((file: File | null) => {
+    setBackgroundImageFile(file);
+    setGeneratedVideoUrl(null);
+  }, []);
+
+  const handleTranscriptFileChange = useCallback(async (file: File | null) => {
+    setTranscriptFile(file);
+    if (file) {
+      setUseAuphonic(false); // Disable Auphonic if a manual transcript is uploaded
+      try {
+        const cues = await parseTranscriptFile(file);
+        setTranscriptCues(cues);
+        setOptions(prev => ({ ...prev, overlayText: '' }));
+      } catch (error) {
+        console.error("Error parsing transcript file:", error);
+        alert("Failed to parse transcript file. Please check the file format (SRT or VTT).");
+        setTranscriptFile(null);
+        setTranscriptCues(null);
+      }
+    } else {
+      setTranscriptCues(null);
+    }
+  }, []);
+
+  const handleOverlayTextChange = (text: string) => {
+    setOptions(prev => ({ ...prev, overlayText: text }));
+    if (text) {
+        setTranscriptFile(null);
+        setTranscriptCues(null);
+        setUseAuphonic(false); // Disable Auphonic if static text is used
+    }
+  }
+  
+  const handleGenerateVideo = useCallback(async () => {
+    if (!audioFile || !canvasRef.current) {
+      alert("Please upload an audio file first.");
       return;
     }
+    if (!window.MediaRecorder) {
+      alert("Your browser does not support the MediaRecorder API, which is required for video generation. Please try Chrome or Firefox.");
+      return;
+    }
+
     setIsGenerating(true);
-    setProgress(0);
-    setError(null);
-    setVideoUrl(null);
-    setGenerationStatus('Starting...');
+    setGenerationProgress(0);
+    setGeneratedVideoUrl(null);
 
     try {
       let finalAudioFile = audioFile;
-      let finalTranscriptFile: File | null = transcriptFile;
-      let preloadedCues = transcriptCues;
-
-      if (options.enhanceWithAuphonic) {
-        setGenerationStatus('Processing audio with Auphonic...');
+      let finalTranscriptCues = transcriptCues;
+      
+      if (useAuphonic) {
+        setGenerationStatusMessage('Starting Auphonic production...');
         const auphonicResult = await runAuphonicProduction({
           audioFile,
-          coverImageFile: backgroundImageFile,
-          generateTranscript: options.generateTranscript,
-          onProgress: (status) => setGenerationStatus(`Auphonic: ${status}`),
+          generateTranscript,
+          auphonicProcessing: options.auphonicProcessing,
+          onProgress: setGenerationStatusMessage,
         });
+        
+        // Use the processed audio for generation and preview
+        finalAudioFile = auphonicResult.enhancedAudioFile;
+        handleAudioFileChange(finalAudioFile); // This re-analyzes and updates the preview
 
-        const audioBlob = await fetch(auphonicResult.audioUrl).then(res => res.blob());
-        finalAudioFile = new File([audioBlob], `auphonic_${audioFile.name}`, { type: audioBlob.type });
-
-        if (auphonicResult.transcriptUrl) {
-            const transcriptText = await fetch(auphonicResult.transcriptUrl).then(res => res.text());
-            const parsedCues = parseTranscriptCues(transcriptText);
-            preloadedCues = parsedCues;
-            setTranscriptCues(parsedCues);
-            // Nullify the original transcript file as we're now using the Auphonic-generated one
-            finalTranscriptFile = null; 
-            // Also ensure static text is cleared
-            setOptions(prev => ({...prev, overlayText: ''}));
+        if(auphonicResult.transcriptFile) {
+            const cues = await parseTranscriptFile(auphonicResult.transcriptFile);
+            finalTranscriptCues = cues;
+            setTranscriptCues(cues);
+            setTranscriptFile(auphonicResult.transcriptFile);
         }
       }
       
-      setGenerationStatus('Generating video...');
-      const videoBlob = await createAudiogram({
+      setGenerationStatusMessage('Rendering video frames...');
+
+      const videoBlob = await generateVideo({
         audioFile: finalAudioFile,
         backgroundImageFile,
-        // Pass null for transcriptFile if cues are already loaded from Auphonic
-        transcriptFile: finalTranscriptFile,
         options,
-        // Pass already parsed cues if available from Auphonic
-        preloadedTranscriptCues: preloadedCues,
-        onProgress: setProgress,
+        transcriptCues: finalTranscriptCues,
+        canvasElement: canvasRef.current,
+        onProgress: setGenerationProgress,
       });
+      const videoUrl = URL.createObjectURL(videoBlob);
+      setGeneratedVideoUrl(videoUrl);
 
-      const url = URL.createObjectURL(videoBlob);
-      setVideoUrl(url);
-    } catch (err) {
-      console.error('Generation failed', err);
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during video generation.';
-      setError(errorMessage);
+    } catch (error) {
+      console.error("Error generating video:", error);
+      alert(`An error occurred during video generation: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsGenerating(false);
-      setGenerationStatus('');
+      setGenerationStatusMessage('');
     }
-  };
+  }, [audioFile, backgroundImageFile, options, transcriptCues, useAuphonic, generateTranscript, handleAudioFileChange]);
+
+  useEffect(() => {
+      if (generatedVideoUrl && videoRef.current) {
+          videoRef.current.load();
+      }
+  }, [generatedVideoUrl]);
 
   return (
-    <div className="bg-gray-800 text-white h-screen w-screen flex flex-col font-sans">
-      <header className="bg-gray-900 shadow-md p-4 text-center">
-        <h1 className="text-2xl font-bold text-primary">Audiogram Studio</h1>
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center p-4 sm:p-6 lg:p-8">
+      <header className="w-full max-w-7xl text-center mb-8">
+        <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+          Ampersand <span className="text-primary">Audiogram</span>
+        </h1>
+        <p className="text-gray-400 mt-2 text-lg">
+          Audiogram Waveform Generator
+        </p>
       </header>
-      <main className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black relative">
-          {isGenerating && (
-            <div className="absolute inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-10">
-              <LoaderIcon className="w-16 h-16 animate-spin text-primary mb-4" />
-              <p className="text-xl mb-2">{generationStatus}</p>
-              {generationStatus === 'Generating video...' && (
-                <>
-                  <div className="w-1/2 bg-gray-700 rounded-full h-2.5 mt-2">
-                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-400">{Math.round(progress)}</p>
-                </>
-              )}
-            </div>
-          )}
-          {error && (
-            <div className="absolute top-4 left-4 right-4 bg-red-800 text-white p-4 rounded-md z-20">
-              <p><strong>Error:</strong> {error}</p>
-              <button onClick={() => setError(null)} className="absolute top-2 right-3 font-bold">X</button>
-            </div>
-          )}
-          {videoUrl ? (
-            <div className="w-full max-w-4xl aspect-square">
-              <video src={videoUrl} controls className="w-full h-full" />
-              <div className="mt-4 text-center">
-                <a href={videoUrl} download="audiogram.webm" className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                  Download Video
-                </a>
-                <button onClick={() => setVideoUrl(null)} className="ml-4 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded">
-                  Create Another
-                </button>
+      
+      <main className="w-full max-w-7xl flex flex-col lg:flex-row gap-8">
+        <aside className="w-full lg:w-1/3 xl:w-1/4">
+          <ControlPanel
+            options={options}
+            setOptions={setOptions}
+            onAudioFileChange={handleAudioFileChange}
+            onBackgroundImageChange={handleBackgroundImageChange}
+            onTranscriptFileChange={handleTranscriptFileChange}
+            onOverlayTextChange={handleOverlayTextChange}
+            onGenerateVideo={handleGenerateVideo}
+            isGenerating={isGenerating || isLoadingAudio}
+            audioFileName={audioFile?.name}
+            transcriptFileName={transcriptFile?.name}
+            useAuphonic={useAuphonic}
+            setUseAuphonic={setUseAuphonic}
+            generateTranscript={generateTranscript}
+            setGenerateTranscript={setGenerateTranscript}
+          />
+        </aside>
+
+        <section className="w-full lg:w-2/3 xl:w-3/4 flex flex-col">
+          <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-2xl shadow-primary/10 border-2 border-gray-800 flex items-center justify-center relative">
+            {(isLoadingAudio || isGenerating) && (
+              <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center text-center p-4">
+                <LoaderIcon className="w-16 h-16 animate-spin text-primary mb-4" />
+                <h2 className="text-2xl font-semibold mb-2">
+                  {isLoadingAudio ? 'Analyzing Audio...' : (generationStatusMessage || 'Generating Video...')}
+                </h2>
+                {isGenerating && !generationStatusMessage && (
+                    <>
+                        <p className="text-gray-400 mb-4">This may take a few moments. Please keep this tab open.</p>
+                        <div className="w-full max-w-sm bg-gray-800 rounded-full h-2.5">
+                            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${generationProgress.toFixed(0)}%` }}></div>
+                        </div>
+                        <p className="mt-2 text-lg font-mono">{generationProgress.toFixed(0)}%</p>
+                    </>
+                )}
+                 {isGenerating && generationStatusMessage && (
+                    <p className="text-gray-400 mb-4">Please keep this tab open.</p>
+                 )}
               </div>
-            </div>
-          ) : (
-            <div className="w-full max-w-4xl aspect-square bg-black">
+            )}
+
+            {!generatedVideoUrl && (
               <Preview
-                ref={previewCanvasRef}
+                ref={canvasRef}
                 audioBuffer={audioBuffer}
                 backgroundImageUrl={backgroundImageUrl}
                 options={options}
                 transcriptCues={transcriptCues}
               />
+            )}
+
+            {generatedVideoUrl && (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-black">
+                <video ref={videoRef} controls className="max-w-full max-h-full" src={generatedVideoUrl} />
+              </div>
+            )}
+            
+            {!audioBuffer && !isLoadingAudio && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 p-4">
+                    <p className="text-gray-500 text-xl text-center">Upload an audio file to begin</p>
+                </div>
+            )}
+          </div>
+
+          {generatedVideoUrl && (
+            <div className="mt-6 p-4 bg-gray-900 rounded-lg flex items-center justify-between">
+                <p className="font-medium">Your video is ready!</p>
+                <a
+                    href={generatedVideoUrl}
+                    download={`audiogram_${audioFile?.name?.split('.')[0] || 'video'}.webm`}
+                    className="px-4 py-2 bg-primary text-gray-950 font-bold rounded-md hover:bg-opacity-90 transition-all transform hover:scale-105"
+                >
+                    Download Video
+                </a>
             </div>
           )}
-        </div>
-        <ControlPanel
-          options={options}
-          setOptions={setOptions}
-          onGenerate={handleGenerateClick}
-          isGenerating={isGenerating}
-          onAudioFileChange={setAudioFile}
-          onImageFileChange={setBackgroundImageFile}
-          onTranscriptFileChange={setTranscriptFile}
-          audioFileName={audioFile?.name}
-          imageFileName={backgroundImageFile?.name}
-          transcriptFileName={transcriptFile?.name}
-        />
+        </section>
       </main>
     </div>
   );
 }
-
-export default App;

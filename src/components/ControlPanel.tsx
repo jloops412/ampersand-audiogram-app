@@ -1,240 +1,442 @@
-
 import React from 'react';
-import type { CustomizationOptions } from '../types';
+import type { CustomizationOptions, LineCap, TextAlign, TextPosition, AuphonicProcessingOptions } from '../types';
 import { WaveformStyle } from '../types';
 import { FileUpload } from './FileUpload';
 import { GenerateIcon } from './icons';
+import { GOOGLE_FONTS } from '../constants';
 
 interface ControlPanelProps {
   options: CustomizationOptions;
   setOptions: React.Dispatch<React.SetStateAction<CustomizationOptions>>;
-  onGenerate: () => void;
-  isGenerating: boolean;
   onAudioFileChange: (file: File | null) => void;
-  onImageFileChange: (file: File | null) => void;
+  onBackgroundImageChange: (file: File | null) => void;
   onTranscriptFileChange: (file: File | null) => void;
-  audioFileName: string | undefined;
-  imageFileName: string | undefined;
-  transcriptFileName: string | undefined;
+  onOverlayTextChange: (text: string) => void;
+  onGenerateVideo: () => void;
+  isGenerating: boolean;
+  audioFileName?: string;
+  transcriptFileName?: string;
+  useAuphonic: boolean;
+  setUseAuphonic: (value: boolean) => void;
+  generateTranscript: boolean;
+  setGenerateTranscript: (value: boolean) => void;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({
-  options,
-  setOptions,
-  onGenerate,
-  isGenerating,
-  onAudioFileChange,
-  onImageFileChange,
-  onTranscriptFileChange,
-  audioFileName,
-  imageFileName,
-  transcriptFileName,
-}) => {
+interface OptionWrapperProps {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}
 
-  const handleOptionChange = (key: keyof CustomizationOptions, value: any) => {
-    setOptions(prev => ({ ...prev, [key]: value }));
-  };
+const OptionWrapper: React.FC<OptionWrapperProps> = ({ title, children, className }) => (
+  <div className={`mb-4 ${className}`}>
+    <label className="block text-sm font-medium text-gray-400 mb-2">{title}</label>
+    {children}
+  </div>
+);
 
-  const handleToggleChange = (key: keyof CustomizationOptions, value: boolean) => {
-    setOptions(prev => {
-        const newOptions = { ...prev, [key]: value };
-        // If Auphonic is turned off, also turn off transcript generation
-        if (key === 'enhanceWithAuphonic' && !value) {
-            newOptions.generateTranscript = false;
-        }
-        return newOptions;
-    });
-  };
+interface ToggleSwitchProps {
+  label: string;
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  disabled?: boolean;
+}
 
-  const waveformOptions = Object.values(WaveformStyle);
-  
-  const renderWaveformSpecificControls = () => {
-    switch(options.waveformStyle) {
-      case WaveformStyle.Line:
-      case WaveformStyle.MirroredLine:
-        return (
-          <>
-            <RangeSlider label="Line Width" value={options.lineWidth} onChange={(v) => handleOptionChange('lineWidth', v)} min={1} max={20} step={1} disabled={isGenerating}/>
-          </>
-        )
-      case WaveformStyle.Bars:
-      case WaveformStyle.Equalizer:
-        return (
-          <>
-            <RangeSlider label="Bar Count" value={options.barCount} onChange={(v) => handleOptionChange('barCount', v)} min={10} max={200} step={2} disabled={isGenerating}/>
-            <RangeSlider label="Bar Width" value={options.barWidth} onChange={(v) => handleOptionChange('barWidth', v)} min={1} max={50} step={1} disabled={isGenerating}/>
-            <RangeSlider label="Bar Spacing" value={options.barSpacing} onChange={(v) => handleOptionChange('barSpacing', v)} min={0} max={20} step={1} disabled={isGenerating}/>
-          </>
-        )
-      case WaveformStyle.Bricks:
-        return (
-            <>
-              <RangeSlider label="Brick Count" value={options.brickCount} onChange={(v) => handleOptionChange('brickCount', v)} min={10} max={100} step={1} disabled={isGenerating}/>
-              <RangeSlider label="Brick Height" value={options.brickHeight} onChange={(v) => handleOptionChange('brickHeight', v)} min={1} max={30} step={1} disabled={isGenerating}/>
-              <RangeSlider label="Brick Spacing" value={options.brickSpacing} onChange={(v) => handleOptionChange('brickSpacing', v)} min={0} max={10} step={1} disabled={isGenerating}/>
-            </>
-        )
-      case WaveformStyle.Circle:
-        return (
-          <>
-            <RangeSlider label="Circle Radius" value={options.circleRadius} onChange={(v) => handleOptionChange('circleRadius', v)} min={50} max={400} step={10} disabled={isGenerating}/>
-            <RangeSlider label="Line Width" value={options.lineWidth} onChange={(v) => handleOptionChange('lineWidth', v)} min={1} max={20} step={1} disabled={isGenerating}/>
-          </>
-        )
-      case WaveformStyle.Radial:
-        return (
-          <>
-            <RangeSlider label="Inner Radius" value={options.innerRadius} onChange={(v) => handleOptionChange('innerRadius', v)} min={10} max={300} step={5} disabled={isGenerating}/>
-            <RangeSlider label="Spoke Count" value={options.spokeCount} onChange={(v) => handleOptionChange('spokeCount', v)} min={20} max={360} step={4} disabled={isGenerating}/>
-            <RangeSlider label="Line Width" value={options.lineWidth} onChange={(v) => handleOptionChange('lineWidth', v)} min={1} max={20} step={1} disabled={isGenerating}/>
-          </>
-        )
-      case WaveformStyle.Particles:
-        return (
-          <>
-            <RangeSlider label="Particle Count" value={options.particleCount} onChange={(v) => handleOptionChange('particleCount', v)} min={100} max={2000} step={50} disabled={isGenerating}/>
-            <RangeSlider label="Particle Size" value={options.particleSize} onChange={(v) => handleOptionChange('particleSize', v)} min={1} max={10} step={1} disabled={isGenerating}/>
-            <RangeSlider label="Particle Speed" value={options.particleSpeed} onChange={(v) => handleOptionChange('particleSpeed', v)} min={1} max={10} step={1} disabled={isGenerating}/>
-          </>
-        )
-      default:
-        return null;
-    }
-  }
-
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ label, enabled, onChange, disabled }) => {
   return (
-    <div className="bg-gray-900 text-white w-96 p-4 overflow-y-auto flex flex-col h-full border-l border-gray-800">
-      <h2 className="text-xl font-bold mb-6 text-center">Customize Audiogram</h2>
-      
-      <div className="space-y-4 mb-6">
-        <FileUpload id="audio-upload" label="Audio File" onFileChange={onAudioFileChange} accept="audio/*" disabled={isGenerating} fileName={audioFileName} />
-        <FileUpload id="image-upload" label="Background Image (optional)" onFileChange={onImageFileChange} accept="image/*" disabled={isGenerating} fileName={imageFileName} />
-        <FileUpload id="transcript-upload" label="Transcript File (optional, .srt/.vtt)" onFileChange={onTranscriptFileChange} accept=".srt,.vtt" disabled={isGenerating} fileName={transcriptFileName} />
-      </div>
-
-      <div className="flex-grow overflow-y-auto pr-2 -mr-2 space-y-6">
-        <details open className="group">
-          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Audio Enhancement</summary>
-          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
-            <OptionToggle 
-                label="Enhance Audio with Auphonic"
-                checked={options.enhanceWithAuphonic}
-                onChange={(c) => handleToggleChange('enhanceWithAuphonic', c)}
-                disabled={isGenerating}
-            />
-            <OptionToggle 
-                label="Generate Transcript"
-                checked={options.generateTranscript}
-                onChange={(c) => handleToggleChange('generateTranscript', c)}
-                disabled={isGenerating || !options.enhanceWithAuphonic}
-            />
-            {!options.enhanceWithAuphonic && <p className="text-xs text-gray-500 -mt-2">Transcript generation requires Auphonic enhancement.</p>}
-          </div>
-        </details>
-
-        <details open className="group">
-          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Waveform</summary>
-          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
-            <Select label="Style" value={options.waveformStyle} onChange={(v) => handleOptionChange('waveformStyle', v)} options={waveformOptions} disabled={isGenerating}/>
-            <ColorInput label="Color" value={options.waveformColor} onChange={(v) => handleOptionChange('waveformColor', v)} disabled={isGenerating}/>
-            <RangeSlider label="Opacity" value={options.waveformOpacity} onChange={(v) => handleOptionChange('waveformOpacity', v)} min={0} max={1} step={0.1} disabled={isGenerating}/>
-            <RangeSlider label="Amplitude" value={options.amplitude} onChange={(v) => handleOptionChange('amplitude', v)} min={10} max={500} step={10} disabled={isGenerating}/>
-            <Select label="Position" value={options.waveformPosition} onChange={(v) => handleOptionChange('waveformPosition', v)} options={['top', 'middle', 'bottom']} disabled={isGenerating}/>
-            {renderWaveformSpecificControls()}
-          </div>
-        </details>
-        
-        <details className="group">
-          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Text & Font</summary>
-          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
-             <textarea 
-                value={options.overlayText}
-                onChange={(e) => handleOptionChange('overlayText', e.target.value)}
-                className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary disabled:bg-gray-700"
-                rows={3}
-                placeholder="Enter text to display"
-                disabled={isGenerating || !!transcriptFileName}
-              />
-              {transcriptFileName && <p className="text-xs text-gray-400 -mt-2">Overlay text is disabled when a transcript is used.</p>}
-              <TextInput label="Font Family" value={options.fontFamily} onChange={(v) => handleOptionChange('fontFamily', v)} disabled={isGenerating}/>
-              <RangeSlider label="Font Size" value={options.fontSize} onChange={(v) => handleOptionChange('fontSize', v)} min={12} max={200} step={2} disabled={isGenerating}/>
-              <ColorInput label="Font Color" value={options.fontColor} onChange={(v) => handleOptionChange('fontColor', v)} disabled={isGenerating}/>
-              <Select label="Text Align" value={options.textAlign} onChange={(v) => handleOptionChange('textAlign', v)} options={['left', 'center', 'right']} disabled={isGenerating}/>
-              <Select label="Text Position" value={options.textPosition} onChange={(v) => handleOptionChange('textPosition', v)} options={['top', 'middle', 'bottom']} disabled={isGenerating}/>
-          </div>
-        </details>
-
-        <details className="group">
-          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Background</summary>
-           <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
-            <ColorInput label="Background Color" value={options.backgroundColor} onChange={(v) => handleOptionChange('backgroundColor', v)} disabled={isGenerating}/>
-           </div>
-        </details>
-      </div>
-
-      <div className="mt-auto pt-6">
-        <button 
-          onClick={onGenerate} 
-          disabled={isGenerating || !audioFileName}
-          className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-        >
-          {isGenerating ? 'Generating...' : <><GenerateIcon className="w-5 h-5 mr-2" /> Generate Video</>}
-        </button>
-      </div>
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-300">{label}</span>
+      <button
+        type="button"
+        onClick={() => onChange(!enabled)}
+        disabled={disabled}
+        className={`${
+          enabled ? 'bg-primary' : 'bg-gray-700'
+        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed`}
+        aria-pressed={enabled}
+      >
+        <span
+          aria-hidden="true"
+          className={`${
+            enabled ? 'translate-x-5' : 'translate-x-0'
+          } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+        />
+      </button>
     </div>
   );
 };
 
-// Helper components
-const RangeSlider: React.FC<{label: string, value: number, onChange: (v: number) => void, min: number, max: number, step: number, disabled?: boolean}> = ({label, value, onChange, ...props}) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-400 flex justify-between">
-      <span>{label}</span>
-      <span>{value}</span>
-    </label>
-    <input type="range" value={value} onChange={(e) => onChange(parseFloat(e.target.value))} {...props} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary" />
-  </div>
-);
 
-const ColorInput: React.FC<{label: string, value: string, onChange: (v: string) => void, disabled?: boolean}> = ({label, value, onChange, disabled}) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-400">{label}</label>
-    <div className="relative">
-      <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-10 p-0 border-none bg-transparent" disabled={disabled}/>
-      <div className="absolute inset-0 rounded-md pointer-events-none border border-gray-700" style={{backgroundColor: value}}></div>
-    </div>
-  </div>
-);
+const lineCapOptions: { value: LineCap; label: string }[] = [
+    { value: 'round', label: 'Round' },
+    { value: 'butt', label: 'Butt' },
+    { value: 'square', label: 'Square' },
+];
 
-const Select: React.FC<{label: string, value: string, onChange: (v: string) => void, options: string[], disabled?: boolean}> = ({label, value, onChange, options, disabled}) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-400">{label}</label>
-    <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary" disabled={disabled}>
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
-    </select>
-  </div>
-);
+const textAlignOptions: { value: TextAlign; label: string }[] = [
+    { value: 'left', label: 'Left' },
+    { value: 'center', label: 'Center' },
+    { value: 'right', label: 'Right' },
+];
 
-const TextInput: React.FC<{label: string, value: string, onChange: (v: string) => void, disabled?: boolean}> = ({label, value, onChange, disabled}) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-400">{label}</label>
-    <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary" disabled={disabled}/>
-  </div>
-);
+const textPositionOptions: { value: TextPosition; label: string }[] = [
+    { value: 'top', label: 'Top' },
+    { value: 'middle', label: 'Middle' },
+    { value: 'bottom', label: 'Bottom' },
+];
 
-const OptionToggle: React.FC<{label: string, checked: boolean, onChange: (c: boolean) => void, disabled?: boolean}> = ({label, checked, onChange, disabled}) => (
-    <label className="flex items-center justify-between cursor-pointer">
-      <span className="text-sm font-medium text-gray-300">{label}</span>
-      <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${disabled ? 'cursor-not-allowed' : ''}`}>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          disabled={disabled}
-          className="sr-only"
-        />
-        <div className={`w-11 h-6 rounded-full shadow-inner ${checked && !disabled ? 'bg-primary' : 'bg-gray-700'}`}></div>
-        <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'transform translate-x-5' : ''}`}></div>
+const lineBasedStyles = [WaveformStyle.Line, WaveformStyle.MirroredLine, WaveformStyle.Circle, WaveformStyle.Radial];
+const barBasedStyles = [WaveformStyle.Bars, WaveformStyle.Equalizer];
+const positionableStyles = [WaveformStyle.Line, WaveformStyle.MirroredLine, WaveformStyle.Bars, WaveformStyle.Bricks];
+
+export const ControlPanel: React.FC<ControlPanelProps> = ({
+  options,
+  setOptions,
+  onAudioFileChange,
+  onBackgroundImageChange,
+  onTranscriptFileChange,
+  onOverlayTextChange,
+  onGenerateVideo,
+  isGenerating,
+  audioFileName,
+  transcriptFileName,
+  useAuphonic,
+  setUseAuphonic,
+  generateTranscript,
+  setGenerateTranscript,
+}) => {
+  const handleOptionChange = <K extends keyof CustomizationOptions,>(
+    key: K,
+    value: CustomizationOptions[K]
+  ) => {
+    setOptions(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleAuphonicChange = <K extends keyof AuphonicProcessingOptions>(
+    key: K,
+    value: AuphonicProcessingOptions[K]
+  ) => {
+    setOptions(prev => ({
+        ...prev,
+        auphonicProcessing: {
+            ...prev.auphonicProcessing,
+            [key]: value,
+        }
+    }));
+  };
+
+  const noiseReductionLabel = options.auphonicProcessing.noiseReductionAmount === 0
+    ? 'Auto'
+    : `${options.auphonicProcessing.noiseReductionAmount} dB`;
+
+  return (
+    <div className="bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-800">
+      <h2 className="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Customize</h2>
+      
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-primary mb-3">Files</h3>
+          <FileUpload
+            id="audio-upload"
+            label="Upload Audio"
+            onFileChange={onAudioFileChange}
+            accept="audio/*"
+            fileName={audioFileName}
+            disabled={isGenerating}
+          />
+          <FileUpload
+            id="bg-image-upload"
+            label="Upload Background (Optional)"
+            onFileChange={onBackgroundImageChange}
+            accept="image/*"
+            disabled={isGenerating}
+            className="mt-4"
+          />
+        </div>
+        
+        <div>
+            <h3 className="text-lg font-semibold text-primary mb-3">Auphonic AI Processing</h3>
+            <div className="space-y-3 p-4 bg-gray-800 rounded-lg">
+                <ToggleSwitch
+                    label="Enhance Audio with Auphonic"
+                    enabled={useAuphonic}
+                    onChange={setUseAuphonic}
+                    disabled={isGenerating}
+                />
+                 <ToggleSwitch
+                    label="Generate Transcript"
+                    enabled={generateTranscript}
+                    onChange={setGenerateTranscript}
+                    disabled={isGenerating || !useAuphonic}
+                />
+                <p className="text-xs text-gray-500 pt-2">Uses Auphonic to professionally process your audio. Requires a backend server.</p>
+                
+                {useAuphonic && (
+                    <div className="pt-4 mt-4 border-t border-gray-700 space-y-3">
+                        <ToggleSwitch
+                            label="Adaptive Leveler"
+                            enabled={options.auphonicProcessing.adaptiveLeveler}
+                            onChange={(value) => handleAuphonicChange('adaptiveLeveler', value)}
+                        />
+                        <ToggleSwitch
+                            label="High-Pass Filter"
+                            enabled={options.auphonicProcessing.filtering}
+                            onChange={(value) => handleAuphonicChange('filtering', value)}
+                        />
+                         <OptionWrapper title={`Loudness Target: ${options.auphonicProcessing.loudnessTarget} LUFS`}>
+                            <input
+                                type="range" min="-24" max="-10" step="1"
+                                value={options.auphonicProcessing.loudnessTarget}
+                                onChange={(e) => handleAuphonicChange('loudnessTarget', Number(e.target.value))}
+                                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                            />
+                        </OptionWrapper>
+                         <ToggleSwitch
+                            label="Noise & Hum Reduction"
+                            enabled={options.auphonicProcessing.noiseAndHumReduction}
+                            onChange={(value) => handleAuphonicChange('noiseAndHumReduction', value)}
+                        />
+                        <div className={!options.auphonicProcessing.noiseAndHumReduction ? 'opacity-50' : ''}>
+                            <OptionWrapper title={`Reduction Amount: ${noiseReductionLabel}`}>
+                                <input
+                                    type="range" min="0" max="30" step="1"
+                                    value={options.auphonicProcessing.noiseReductionAmount}
+                                    onChange={(e) => handleAuphonicChange('noiseReductionAmount', Number(e.target.value))}
+                                    disabled={!options.auphonicProcessing.noiseAndHumReduction}
+                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary disabled:cursor-not-allowed"
+                                />
+                            </OptionWrapper>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+
+        <div className={useAuphonic ? 'opacity-50 pointer-events-none' : 'transition-opacity'}>
+            <h3 className="text-lg font-semibold text-primary mb-3">Text & Transcript</h3>
+            <FileUpload
+                id="transcript-upload"
+                label="Upload Transcript (Optional)"
+                onFileChange={onTranscriptFileChange}
+                accept=".srt,.vtt"
+                disabled={isGenerating || useAuphonic}
+                fileName={transcriptFileName}
+            />
+            <OptionWrapper title="Static Text Overlay">
+                 <textarea
+                    value={options.overlayText}
+                    onChange={(e) => onOverlayTextChange(e.target.value)}
+                    disabled={isGenerating || !!transcriptFileName || useAuphonic}
+                    placeholder={transcriptFileName ? 'Transcript file is active' : 'Enter text to display'}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-800/50"
+                    rows={2}
+                />
+            </OptionWrapper>
+            <OptionWrapper title="Font Family">
+                 <select
+                    value={options.fontFamily}
+                    onChange={(e) => handleOptionChange('fontFamily', e.target.value)}
+                    disabled={isGenerating}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary"
+                    style={{ fontFamily: options.fontFamily }}
+                 >
+                    {GOOGLE_FONTS.map(font => (
+                        <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                    ))}
+                </select>
+            </OptionWrapper>
+             <div className="grid grid-cols-2 gap-4">
+                <OptionWrapper title="Font Color">
+                    <input
+                        type="color"
+                        value={options.fontColor}
+                        onChange={(e) => handleOptionChange('fontColor', e.target.value)}
+                        disabled={isGenerating}
+                        className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer"
+                    />
+                </OptionWrapper>
+                <OptionWrapper title={`Font Size: ${options.fontSize}px`}>
+                     <input type="range" min="12" max="200" value={options.fontSize} onChange={(e) => handleOptionChange('fontSize', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary mt-3"/>
+                </OptionWrapper>
+             </div>
+              <div className="grid grid-cols-2 gap-4">
+                 <OptionWrapper title="Text Align">
+                    <select value={options.textAlign} onChange={(e) => handleOptionChange('textAlign', e.target.value as TextAlign)} disabled={isGenerating} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary">
+                        {textAlignOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                </OptionWrapper>
+                <OptionWrapper title="Vertical Position">
+                    <select value={options.textPosition} onChange={(e) => handleOptionChange('textPosition', e.target.value as TextPosition)} disabled={isGenerating} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary">
+                        {textPositionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                </OptionWrapper>
+              </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-primary mb-3">Style</h3>
+           <OptionWrapper title="Waveform Style">
+            <select
+              value={options.waveformStyle}
+              onChange={(e) => handleOptionChange('waveformStyle', e.target.value as WaveformStyle)}
+              disabled={isGenerating}
+              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary"
+            >
+              {Object.values(WaveformStyle).map(style => (
+                <option key={style} value={style}>{style}</option>
+              ))}
+            </select>
+          </OptionWrapper>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-primary mb-3">Colors</h3>
+           <div className="grid grid-cols-2 gap-4">
+              <OptionWrapper title="Waveform">
+                <input
+                  type="color"
+                  value={options.waveformColor}
+                  onChange={(e) => handleOptionChange('waveformColor', e.target.value)}
+                  disabled={isGenerating}
+                  className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer"
+                />
+              </OptionWrapper>
+              <OptionWrapper title="Background">
+                <input
+                  type="color"
+                  value={options.backgroundColor}
+                  onChange={(e) => handleOptionChange('backgroundColor', e.target.value)}
+                  disabled={isGenerating}
+                  className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md cursor-pointer"
+                />
+              </OptionWrapper>
+           </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-primary mb-3">Waveform Settings</h3>
+          <OptionWrapper title={`Amplitude: ${options.amplitude}`}>
+            <input
+              type="range" min="10" max="500"
+              value={options.amplitude}
+              onChange={(e) => handleOptionChange('amplitude', Number(e.target.value))}
+              disabled={isGenerating}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+          </OptionWrapper>
+          <OptionWrapper title={`Opacity: ${Math.round(options.waveformOpacity * 100)}%`}>
+            <input
+              type="range" min="0" max="1" step="0.05"
+              value={options.waveformOpacity}
+              onChange={(e) => handleOptionChange('waveformOpacity', Number(e.target.value))}
+              disabled={isGenerating}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+          </OptionWrapper>
+
+          {positionableStyles.includes(options.waveformStyle) && (
+             <OptionWrapper title="Waveform Position">
+                <select value={options.waveformPosition} onChange={(e) => handleOptionChange('waveformPosition', e.target.value as TextPosition)} disabled={isGenerating} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary">
+                    {textPositionOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+            </OptionWrapper>
+          )}
+
+          {lineBasedStyles.includes(options.waveformStyle) && (
+             <>
+                <OptionWrapper title={`Line Width: ${options.lineWidth}`}>
+                    <input
+                        type="range" min="1" max="20"
+                        value={options.lineWidth}
+                        onChange={(e) => handleOptionChange('lineWidth', Number(e.target.value))}
+                        disabled={isGenerating}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                </OptionWrapper>
+                <OptionWrapper title="Line Cap">
+                     <select
+                        value={options.lineCap}
+                        onChange={(e) => handleOptionChange('lineCap', e.target.value as LineCap)}
+                        disabled={isGenerating}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-primary focus:border-primary"
+                     >
+                        {lineCapOptions.map(cap => (
+                            <option key={cap.value} value={cap.value}>{cap.label}</option>
+                        ))}
+                    </select>
+                </OptionWrapper>
+             </>
+          )}
+
+          {barBasedStyles.includes(options.waveformStyle) && (
+            <>
+              <OptionWrapper title={`Bar Count: ${options.barCount}`}>
+                <input type="range" min="32" max="512" step="16" value={options.barCount} onChange={(e) => handleOptionChange('barCount', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+              <OptionWrapper title={`Bar Width: ${options.barWidth}`}>
+                <input type="range" min="1" max="50" value={options.barWidth} onChange={(e) => handleOptionChange('barWidth', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+               <OptionWrapper title={`Bar Spacing: ${options.barSpacing}`}>
+                <input type="range" min="0" max="20" value={options.barSpacing} onChange={(e) => handleOptionChange('barSpacing', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+            </>
+          )}
+
+          {options.waveformStyle === WaveformStyle.Circle && (
+            <OptionWrapper title={`Circle Radius: ${options.circleRadius}`}>
+               <input type="range" min="50" max="400" value={options.circleRadius} onChange={(e) => handleOptionChange('circleRadius', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+            </OptionWrapper>
+          )}
+          
+          {options.waveformStyle === WaveformStyle.Bricks && (
+            <>
+              <OptionWrapper title={`Brick Count: ${options.brickCount}`}>
+                <input type="range" min="20" max="200" value={options.brickCount} onChange={(e) => handleOptionChange('brickCount', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+              <OptionWrapper title={`Brick Height: ${options.brickHeight}`}>
+                <input type="range" min="1" max="20" value={options.brickHeight} onChange={(e) => handleOptionChange('brickHeight', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+              <OptionWrapper title={`Brick Spacing: ${options.brickSpacing}`}>
+                <input type="range" min="0" max="10" value={options.brickSpacing} onChange={(e) => handleOptionChange('brickSpacing', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+            </>
+          )}
+
+          {options.waveformStyle === WaveformStyle.Radial && (
+            <>
+              <OptionWrapper title={`Spoke Count: ${options.spokeCount}`}>
+                <input type="range" min="20" max="720" value={options.spokeCount} onChange={(e) => handleOptionChange('spokeCount', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+              <OptionWrapper title={`Inner Radius: ${options.innerRadius}`}>
+                <input type="range" min="0" max="300" value={options.innerRadius} onChange={(e) => handleOptionChange('innerRadius', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+            </>
+          )}
+
+          {options.waveformStyle === WaveformStyle.Particles && (
+            <>
+              <OptionWrapper title={`Particle Count: ${options.particleCount}`}>
+                <input type="range" min="50" max="1000" value={options.particleCount} onChange={(e) => handleOptionChange('particleCount', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+              <OptionWrapper title={`Particle Size: ${options.particleSize}`}>
+                <input type="range" min="0.5" max="10" step="0.5" value={options.particleSize} onChange={(e) => handleOptionChange('particleSize', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+              <OptionWrapper title={`Particle Speed: ${options.particleSpeed}`}>
+                <input type="range" min="0.5" max="10" step="0.5" value={options.particleSpeed} onChange={(e) => handleOptionChange('particleSpeed', Number(e.target.value))} disabled={isGenerating} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"/>
+              </OptionWrapper>
+            </>
+          )}
+        </div>
       </div>
-    </label>
-);
+      
+      <button
+        onClick={onGenerateVideo}
+        disabled={isGenerating}
+        className="mt-8 w-full flex items-center justify-center gap-2 bg-primary text-gray-950 font-bold py-3 px-4 rounded-md hover:bg-opacity-90 transition-all transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:scale-100"
+      >
+        <GenerateIcon className="w-5 h-5" />
+        Generate Video
+      </button>
+    </div>
+  );
+};
