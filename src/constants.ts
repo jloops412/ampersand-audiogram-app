@@ -5,47 +5,42 @@ export const CANVAS_WIDTH = 1080;
 export const CANVAS_HEIGHT = 1080;
 
 export const DEFAULT_OPTIONS: CustomizationOptions = {
-  // Waveform
+  backgroundColor: '#1a1a1a',
+  
   waveformStyle: WaveformStyle.Bars,
-  waveformColor: '#FFFFFF',
-  waveformOpacity: 0.8,
   waveformPosition: 'middle',
-  amplitude: 100,
-
-  // Line / Mirrored Line
+  waveformColor: '#ffffff',
+  waveformOpacity: 0.8,
+  amplitude: 150,
+  
   lineWidth: 4,
   lineCap: 'round',
 
-  // Bars / Equalizer
   barWidth: 8,
   barSpacing: 4,
-  barCount: 64,
+  barCount: 60,
 
-  // Circle
-  circleRadius: 150,
-
-  // Bricks
   brickHeight: 10,
   brickSpacing: 4,
-  brickCount: 64,
+  brickCount: 60,
 
-  // Radial
-  spokeCount: 120,
+  circleRadius: 200,
+
   innerRadius: 100,
-  
-  // Particles
-  particleCount: 200,
-  particleSize: 3,
+  spokeCount: 180,
+
+  particleCount: 500,
+  particleSize: 2,
   particleSpeed: 2,
 
-  // Text
-  overlayText: 'Your audiogram text here',
+  overlayText: 'Your audiogram text goes here',
   fontFamily: 'Inter, sans-serif',
-  fontSize: 64,
-  fontColor: '#FFFFFF',
+  fontSize: 72,
+  fontColor: '#ffffff',
   textAlign: 'center',
   textPosition: 'middle',
-  
-  // Background
-  backgroundColor: '#1a1a1a',
+
+  auphonic: {
+    preset: ''
+  }
 };

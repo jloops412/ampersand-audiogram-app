@@ -1,51 +1,57 @@
 
 export enum WaveformStyle {
-  Line = 'line',
-  MirroredLine = 'mirrored-line',
-  Bars = 'bars',
-  Equalizer = 'equalizer',
-  Circle = 'circle',
-  Bricks = 'bricks',
-  Radial = 'radial',
-  Particles = 'particles',
+  Line = 'Line',
+  MirroredLine = 'Mirrored Line',
+  Bars = 'Bars',
+  Bricks = 'Bricks',
+  Circle = 'Circle',
+  Radial = 'Radial',
+  Particles = 'Particles',
+  Equalizer = 'Equalizer',
 }
 
-export interface TranscriptCue {
-  startTime: number;
-  endTime: number;
-  text: string;
+export type WaveformPosition = 'top' | 'middle' | 'bottom';
+export type TextPosition = 'top' | 'middle' | 'bottom';
+export type TextAlign = 'left' | 'center' | 'right';
+export type LineCap = 'butt' | 'round' | 'square';
+
+export interface AuphonicOptions {
+  preset: string;
 }
 
 export interface CustomizationOptions {
+  // General
+  backgroundColor: string;
+  
   // Waveform
   waveformStyle: WaveformStyle;
+  waveformPosition: WaveformPosition;
   waveformColor: string;
   waveformOpacity: number;
-  waveformPosition: 'top' | 'middle' | 'bottom';
   amplitude: number;
   
-  // Line / Mirrored Line
+  // Waveform specific: Line / MirroredLine
   lineWidth: number;
-  lineCap: 'butt' | 'round' | 'square';
+  lineCap: LineCap;
 
-  // Bars / Equalizer
+  // Waveform specific: Bars
   barWidth: number;
   barSpacing: number;
   barCount: number;
 
-  // Circle
-  circleRadius: number;
-
-  // Bricks
+  // Waveform specific: Bricks
   brickHeight: number;
   brickSpacing: number;
   brickCount: number;
 
-  // Radial
-  spokeCount: number;
-  innerRadius: number;
+  // Waveform specific: Circle
+  circleRadius: number;
 
-  // Particles
+  // Waveform specific: Radial
+  innerRadius: number;
+  spokeCount: number;
+
+  // Waveform specific: Particles
   particleCount: number;
   particleSize: number;
   particleSpeed: number;
@@ -55,9 +61,15 @@ export interface CustomizationOptions {
   fontFamily: string;
   fontSize: number;
   fontColor: string;
-  textAlign: 'left' | 'center' | 'right';
-  textPosition: 'top' | 'middle' | 'bottom';
-  
-  // Background
-  backgroundColor: string;
+  textAlign: TextAlign;
+  textPosition: TextPosition;
+
+  // Auphonic
+  auphonic: AuphonicOptions;
+}
+
+export interface TranscriptCue {
+  startTime: number;
+  endTime: number;
+  text: string;
 }

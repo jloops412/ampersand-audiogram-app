@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ControlPanel } from './components/ControlPanel';
 import { Preview } from './components/Preview';
-import { createAudiogram } from './services/api';
 import { processAudioFile } from './services/audioService';
 import { parseTranscriptFile } from './services/transcriptService';
+import { createAudiogram } from './services/api';
 import { DEFAULT_OPTIONS } from './constants';
 import type { CustomizationOptions, TranscriptCue } from './types';
+import { LoaderIcon } from './components/icons';
 
-const App: React.FC = () => {
+function App() {
   const [options, setOptions] = useState<CustomizationOptions>(DEFAULT_OPTIONS);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
@@ -17,29 +18,26 @@ const App: React.FC = () => {
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [transcriptCues, setTranscriptCues] = useState<TranscriptCue[] | null>(null);
-
+  
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Effect to process audio file for preview
   useEffect(() => {
     if (audioFile) {
-      processAudioFile(audioFile)
-        .then(setAudioBuffer)
-        .catch(err => {
-            console.error("Error processing audio file:", err);
-            setError("Could not process audio file.");
-        });
+      processAudioFile(audioFile).then(setAudioBuffer).catch(err => {
+        console.error("Error processing audio:", err);
+        setError("Failed to process audio file.");
+        setAudioFile(null);
+      });
     } else {
       setAudioBuffer(null);
     }
   }, [audioFile]);
 
-  // Effect to create object URL for background image preview
   useEffect(() => {
     if (backgroundImageFile) {
       const url = URL.createObjectURL(backgroundImageFile);
@@ -49,46 +47,32 @@ const App: React.FC = () => {
       setBackgroundImageUrl(null);
     }
   }, [backgroundImageFile]);
-
-   // Effect to parse transcript file for preview
+  
   useEffect(() => {
     if (transcriptFile) {
-      parseTranscriptFile(transcriptFile)
-        .then(cues => {
-          setTranscriptCues(cues);
-          // If a transcript is provided, clear the static overlay text for a better preview
-          // We only do this if the user hasn't explicitly set it
-          if (options.overlayText === DEFAULT_OPTIONS.overlayText) {
-             setOptions(prev => ({...prev, overlayText: ''}));
-          }
-        })
-        .catch(err => {
-          console.error("Error parsing transcript file:", err);
-          setError("Could not parse transcript file.");
+        parseTranscriptFile(transcriptFile).then(cues => {
+            setTranscriptCues(cues);
+            // Clear static text when transcript is loaded
+            setOptions(prev => ({...prev, overlayText: ''}));
+        }).catch(err => {
+            console.error("Error parsing transcript:", err);
+            setError("Failed to parse transcript file.");
+            setTranscriptFile(null);
         });
     } else {
-      setTranscriptCues(null);
+        setTranscriptCues(null);
     }
-  }, [transcriptFile, options.overlayText]);
+  }, [transcriptFile]);
 
-
-  const handleOptionsChange = (newOptions: Partial<CustomizationOptions>) => {
-    setOptions(prev => ({ ...prev, ...newOptions }));
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerateClick = async () => {
     if (!audioFile) {
-      setError('Please select an audio file first.');
+      setError("An audio file is required.");
       return;
     }
-    
     setIsGenerating(true);
     setProgress(0);
     setError(null);
-    if(generatedVideoUrl) {
-        URL.revokeObjectURL(generatedVideoUrl);
-        setGeneratedVideoUrl(null);
-    }
+    setVideoUrl(null);
 
     try {
       const videoBlob = await createAudiogram({
@@ -99,70 +83,78 @@ const App: React.FC = () => {
         onProgress: setProgress,
       });
       const url = URL.createObjectURL(videoBlob);
-      setGeneratedVideoUrl(url);
+      setVideoUrl(url);
     } catch (err) {
-      console.error('Generation failed:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred during video generation.');
+      console.error('Generation failed', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during video generation.';
+      setError(errorMessage);
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="bg-gray-800 text-white h-screen flex flex-col font-sans">
+    <div className="bg-gray-800 text-white h-screen w-screen flex flex-col font-sans">
       <header className="bg-gray-900 shadow-md p-4 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Audiogram Studio</h1>
+        <h1 className="text-2xl font-bold text-primary">Audiogram Studio</h1>
       </header>
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-96 bg-gray-900 flex-shrink-0">
-          <ControlPanel
-            options={options}
-            onOptionsChange={handleOptionsChange}
-            onAudioFileChange={setAudioFile}
-            onBackgroundImageChange={setBackgroundImageFile}
-            onTranscriptFileChange={setTranscriptFile}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-            audioFileName={audioFile?.name}
-            backgroundImageName={backgroundImageFile?.name}
-            transcriptFileName={transcriptFile?.name}
-          />
-        </aside>
-        <main className="flex-1 p-8 flex flex-col items-center justify-center bg-black/50">
-           {error && <div className="absolute top-20 bg-red-500 text-white p-4 rounded-md shadow-lg z-10">{error}</div>}
-           <div className="w-full max-w-3xl aspect-square flex flex-col items-center justify-center">
-            {generatedVideoUrl ? (
-                <video src={generatedVideoUrl} controls autoPlay loop className="w-full h-full rounded-lg shadow-2xl" />
-            ) : isGenerating ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 rounded-lg shadow-2xl">
-                    <div className="w-3/4 bg-gray-700 rounded-full h-4">
-                        <div className="bg-primary h-4 rounded-full" style={{ width: `${progress}%` }}></div>
-                    </div>
-                    <p className="mt-4 text-lg">Generating video... {progress.toFixed(0)}%</p>
-                </div>
-            ) : (
-                <Preview
-                    ref={previewCanvasRef}
-                    audioBuffer={audioBuffer}
-                    backgroundImageUrl={backgroundImageUrl}
-                    options={options}
-                    transcriptCues={transcriptCues}
-                />
-            )}
-           </div>
-           {generatedVideoUrl && (
-             <a 
-                href={generatedVideoUrl} 
-                download="audiogram.webm"
-                className="mt-6 bg-primary text-white font-bold py-3 px-6 rounded-md hover:bg-primary-dark transition-colors"
-             >
-                Download Video
-            </a>
-           )}
-        </main>
-      </div>
+      <main className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black relative">
+          {isGenerating && (
+            <div className="absolute inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-10">
+              <LoaderIcon className="w-16 h-16 animate-spin text-primary mb-4" />
+              <p className="text-xl">Generating Video...</p>
+              <div className="w-1/2 bg-gray-700 rounded-full h-2.5 mt-4">
+                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+              </div>
+              <p className="mt-2 text-sm text-gray-400">{Math.round(progress)}%</p>
+            </div>
+          )}
+          {error && (
+            <div className="absolute top-4 left-4 right-4 bg-red-800 text-white p-4 rounded-md z-20">
+              <p><strong>Error:</strong> {error}</p>
+              <button onClick={() => setError(null)} className="absolute top-2 right-3 font-bold">X</button>
+            </div>
+          )}
+          {videoUrl ? (
+            <div className="w-full max-w-4xl aspect-square">
+              <video src={videoUrl} controls className="w-full h-full" />
+              <div className="mt-4 text-center">
+                <a href={videoUrl} download="audiogram.webm" className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                  Download Video
+                </a>
+                <button onClick={() => setVideoUrl(null)} className="ml-4 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded">
+                  Create Another
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-4xl aspect-square bg-black">
+              <Preview
+                ref={previewCanvasRef}
+                audioBuffer={audioBuffer}
+                backgroundImageUrl={backgroundImageUrl}
+                options={options}
+                transcriptCues={transcriptCues}
+              />
+            </div>
+          )}
+        </div>
+        <ControlPanel
+          options={options}
+          setOptions={setOptions}
+          onGenerate={handleGenerateClick}
+          isGenerating={isGenerating}
+          onAudioFileChange={setAudioFile}
+          onImageFileChange={setBackgroundImageFile}
+          onTranscriptFileChange={setTranscriptFile}
+          audioFileName={audioFile?.name}
+          imageFileName={backgroundImageFile?.name}
+          transcriptFileName={transcriptFile?.name}
+        />
+      </main>
     </div>
   );
-};
+}
 
 export default App;
