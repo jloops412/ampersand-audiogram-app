@@ -1,9 +1,10 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import { formidable } from 'formidable';
-import { createReadStream } from 'fs';
+import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Blob } from 'buffer';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -24,7 +25,7 @@ app.use(express.json());
 
 // --- Auphonic API Proxy Endpoints ---
 
-// 1. Create Production & Upload File
+// 1. Create Production & Upload File (Combined)
 app.post('/api/auphonic/productions', async (req, res) => {
     const form = formidable({});
     form.parse(req, async (err, fields, files) => {
@@ -34,23 +35,31 @@ app.post('/api/auphonic/productions', async (req, res) => {
         }
         
         const inputFile = files.input_file[0];
-        const fileStream = createReadStream(inputFile.filepath);
         
         try {
+            const fileBuffer = readFileSync(inputFile.filepath);
+            const fileBlob = new Blob([fileBuffer], { type: inputFile.mimetype });
+
+            const formData = new FormData();
+            formData.append('input_file', fileBlob, inputFile.originalFilename);
+            
+            const metadata = {
+                title: inputFile.originalFilename || 'Audiogram Production',
+            };
+            formData.append('metadata', JSON.stringify(metadata));
+
             const createRes = await fetch(`${AUPHONIC_API_BASE}/productions.json`, {
                 method: 'POST',
-                headers: { 'Authorization': AUTH_HEADER, 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-            if (!createRes.ok) throw new Error(`Auphonic Create Error: ${await createRes.text()}`);
-            const { data: { uuid } } = await createRes.json();
-            
-            const uploadRes = await fetch(`${AUPHONIC_API_BASE}/production/${uuid}/upload.json`, {
-                method: 'POST',
                 headers: { 'Authorization': AUTH_HEADER },
-                body: fileStream
+                body: formData,
             });
-            if (!uploadRes.ok) throw new Error(`Auphonic Upload Error: ${await uploadRes.text()}`);
+
+            if (!createRes.ok) {
+                const errorText = await createRes.text();
+                throw new Error(`Auphonic Create/Upload Error: ${createRes.status} ${errorText}`);
+            }
+            
+            const { data: { uuid } } = await createRes.json();
             
             res.status(200).json({ uuid });
         } catch (error) {
@@ -68,7 +77,6 @@ app.post('/api/auphonic/productions/:uuid/start', async (req, res) => {
     const payload = { preset };
     if (generateTranscript) {
         payload.services = { whisper: true };
-        payload.output_files = [{ format: 'vtt' }];
     }
 
     try {
