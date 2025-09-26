@@ -1,17 +1,14 @@
-export enum WaveformStyle {
-  Line = 'Line',
-  MirroredLine = 'Mirrored Line',
-  Bars = 'Bars',
-  Circle = 'Circle',
-  Equalizer = 'Equalizer',
-  Bricks = 'Bricks',
-  Radial = 'Radial',
-  Particles = 'Particles',
-}
 
-export type LineCap = 'butt' | 'round' | 'square';
-export type TextAlign = 'left' | 'center' | 'right';
-export type TextPosition = 'top' | 'middle' | 'bottom';
+export enum WaveformStyle {
+  Line = 'line',
+  MirroredLine = 'mirrored-line',
+  Bars = 'bars',
+  Equalizer = 'equalizer',
+  Circle = 'circle',
+  Bricks = 'bricks',
+  Radial = 'radial',
+  Particles = 'particles',
+}
 
 export interface TranscriptCue {
   startTime: number;
@@ -19,27 +16,19 @@ export interface TranscriptCue {
   text: string;
 }
 
-export interface AuphonicProcessingOptions {
-  adaptiveLeveler: boolean;
-  noiseAndHumReduction: boolean;
-  noiseReductionAmount: number; // 0 for Auto, otherwise dB
-  filtering: boolean; // High-pass filter
-  loudnessTarget: number; // In LUFS, e.g., -16
-}
-
 export interface CustomizationOptions {
+  // Waveform
   waveformStyle: WaveformStyle;
-  backgroundColor: string;
   waveformColor: string;
   waveformOpacity: number;
-  waveformPosition: TextPosition;
-  lineWidth: number;
+  waveformPosition: 'top' | 'middle' | 'bottom';
   amplitude: number;
   
-  // Line, MirroredLine, Circle, Radial
-  lineCap: LineCap;
+  // Line / Mirrored Line
+  lineWidth: number;
+  lineCap: 'butt' | 'round' | 'square';
 
-  // Bars, Equalizer
+  // Bars / Equalizer
   barWidth: number;
   barSpacing: number;
   barCount: number;
@@ -58,17 +47,17 @@ export interface CustomizationOptions {
 
   // Particles
   particleCount: number;
-  particleSpeed: number;
   particleSize: number;
+  particleSpeed: number;
 
-  // Text & Transcript
+  // Text
   overlayText: string;
   fontFamily: string;
   fontSize: number;
   fontColor: string;
-  textAlign: TextAlign;
-  textPosition: TextPosition;
-
-  // Auphonic Processing
-  auphonicProcessing: AuphonicProcessingOptions;
+  textAlign: 'left' | 'center' | 'right';
+  textPosition: 'top' | 'middle' | 'bottom';
+  
+  // Background
+  backgroundColor: string;
 }
