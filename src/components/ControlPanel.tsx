@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import type { CustomizationOptions } from '../types';
 import { WaveformStyle } from '../types';
 import { FileUpload } from './FileUpload';
@@ -32,6 +31,24 @@ const Option: React.FC<{ label: string; children: React.ReactNode }> = ({ label,
         {children}
     </div>
 );
+
+const OptionToggle: React.FC<{ label: string; checked: boolean; onChange: (e: ChangeEvent<HTMLInputElement>) => void; disabled?: boolean }> = ({ label, checked, onChange, disabled }) => (
+    <div className="flex items-center justify-between md:col-span-2 bg-gray-800 p-2 rounded-md">
+        <label htmlFor={label} className="text-sm font-medium text-gray-300">{label}</label>
+        <label className="relative inline-flex items-center cursor-pointer">
+            <input
+                id={label}
+                type="checkbox"
+                checked={checked}
+                onChange={onChange}
+                className="sr-only peer"
+                disabled={disabled}
+            />
+            <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-disabled:opacity-50"></div>
+        </label>
+    </div>
+);
+
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   options,
@@ -81,8 +98,29 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             accept=".vtt,.srt"
             onFileChange={onTranscriptFileChange}
             fileName={transcriptFileName}
+            disabled={isGenerating || options.generateTranscript}
+        />
+      </Section>
+      
+      <Section title="Audio Enhancement">
+         <OptionToggle
+            label="Enhance Audio with Auphonic"
+            checked={options.enhanceWithAuphonic}
+            onChange={e => {
+                handleOptionChange('enhanceWithAuphonic', e.target.checked);
+                if (!e.target.checked) {
+                    handleOptionChange('generateTranscript', false);
+                }
+            }}
             disabled={isGenerating}
         />
+        <OptionToggle
+            label="Generate Transcript"
+            checked={options.generateTranscript}
+            onChange={e => handleOptionChange('generateTranscript', e.target.checked)}
+            disabled={isGenerating || !options.enhanceWithAuphonic}
+        />
+        {options.enhanceWithAuphonic && <p className="text-xs text-gray-500 md:col-span-2 mt-1">Audio will be processed with Auphonic's default preset for leveling, noise reduction, and loudness targeting.</p>}
       </Section>
 
       <Section title="Background">
@@ -119,38 +157,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             disabled={isGenerating}
           />
         </Option>
-        <Option label="Opacity">
-           <input
-            type="range"
-            min="0" max="1" step="0.05"
-            value={options.waveformOpacity}
-            onChange={e => handleOptionChange('waveformOpacity', parseFloat(e.target.value))}
-            className="w-full"
-            disabled={isGenerating}
-          />
-        </Option>
-         <Option label="Amplitude">
-           <input
-            type="range"
-            min="1" max="500" step="1"
-            value={options.amplitude}
-            onChange={e => handleOptionChange('amplitude', parseInt(e.target.value, 10))}
-            className="w-full"
-            disabled={isGenerating}
-          />
-        </Option>
-        <Option label="Position">
-            <select
-                value={options.waveformPosition}
-                onChange={e => handleOptionChange('waveformPosition', e.target.value as 'top'|'middle'|'bottom')}
-                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
-                disabled={isGenerating}
-            >
-                <option value="top">Top</option>
-                <option value="middle">Middle</option>
-                <option value="bottom">Bottom</option>
-            </select>
-        </Option>
       </Section>
 
       <Section title="Text Overlay">
@@ -162,9 +168,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     rows={3}
                     className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
                     placeholder="Enter text to display"
-                    disabled={isGenerating || !!transcriptFileName}
+                    disabled={isGenerating || !!transcriptFileName || options.generateTranscript}
                 />
-                 {transcriptFileName && <p className="text-xs text-gray-500 mt-1">Text content is controlled by the transcript file.</p>}
+                 {(transcriptFileName || options.generateTranscript) && <p className="text-xs text-gray-500 mt-1">Text content is controlled by the transcript.</p>}
             </Option>
         </div>
          <Option label="Font Color">
@@ -173,16 +179,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             value={options.fontColor}
             onChange={e => handleOptionChange('fontColor', e.target.value)}
             className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md"
-            disabled={isGenerating}
-          />
-        </Option>
-        <Option label="Font Size">
-           <input
-            type="range"
-            min="12" max="150" step="1"
-            value={options.fontSize}
-            onChange={e => handleOptionChange('fontSize', parseInt(e.target.value, 10))}
-            className="w-full"
             disabled={isGenerating}
           />
         </Option>
@@ -196,30 +192,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 {FONT_FAMILY_OPTIONS.map(font => (
                     <option key={font} value={font}>{font}</option>
                 ))}
-            </select>
-        </Option>
-        <Option label="Text Align">
-             <select
-                value={options.textAlign}
-                onChange={e => handleOptionChange('textAlign', e.target.value as 'left'|'center'|'right')}
-                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
-                disabled={isGenerating}
-            >
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="right">Right</option>
-            </select>
-        </Option>
-        <Option label="Text Position">
-             <select
-                value={options.textPosition}
-                onChange={e => handleOptionChange('textPosition', e.target.value as 'top'|'middle'|'bottom')}
-                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
-                disabled={isGenerating}
-            >
-                <option value="top">Top</option>
-                <option value="middle">Middle</option>
-                <option value="bottom">Bottom</option>
             </select>
         </Option>
       </Section>

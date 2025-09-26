@@ -1,4 +1,3 @@
-
 export enum WaveformStyle {
     Line = 'Line',
     MirroredLine = 'Mirrored Line',
@@ -11,6 +10,10 @@ export enum WaveformStyle {
 }
 
 export interface CustomizationOptions {
+    // Auphonic Enhancement
+    enhanceWithAuphonic: boolean;
+    generateTranscript: boolean;
+
     // Background
     backgroundColor: string;
 

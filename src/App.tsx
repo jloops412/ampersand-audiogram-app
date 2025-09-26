@@ -1,11 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ControlPanel } from './components/ControlPanel';
 import { Preview } from './components/Preview';
 import { LoaderIcon } from './components/icons';
 import { createAudiogram } from './services/api';
 import { processAudioFile } from './services/audioService';
-import { parseTranscriptFile } from './services/transcriptService';
+import { parseTranscriptFile, parseTranscriptCues } from './services/transcriptService';
+import { runAuphonicProduction } from './services/auphonicService';
 import type { CustomizationOptions, TranscriptCue } from './types';
 import { DEFAULT_OPTIONS } from './constants';
 
@@ -22,6 +22,7 @@ function App() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -51,7 +52,6 @@ function App() {
   useEffect(() => {
     if (!transcriptFile) {
       setTranscriptCues(null);
-      // Restore overlay text if transcript is removed
       if (options.overlayText === '') {
         setOptions(prev => ({...prev, overlayText: DEFAULT_OPTIONS.overlayText}));
       }
@@ -60,13 +60,12 @@ function App() {
     parseTranscriptFile(transcriptFile)
       .then(cues => {
         setTranscriptCues(cues);
-        // Clear overlay text when transcript is loaded
         setOptions(prev => ({...prev, overlayText: ''}));
       })
       .catch(err => {
         console.error('Error parsing transcript:', err);
         setError('Failed to parse transcript file.');
-        setTranscriptFile(null); // Reset file state on error
+        setTranscriptFile(null);
       });
   }, [transcriptFile]);
 
@@ -82,36 +81,60 @@ function App() {
     setVideoUrl(null);
 
     try {
+      let finalAudioFile = audioFile;
+      let finalTranscriptCues = transcriptCues;
+      let finalTranscriptFile = transcriptFile;
+
+      if (options.enhanceWithAuphonic) {
+        setProgressMessage('Processing with Auphonic...');
+        const auphonicResult = await runAuphonicProduction({
+          audioFile,
+          coverImageFile: backgroundImageFile,
+          generateTranscript: options.generateTranscript,
+          onProgress: (percent, message) => {
+            setProgress(percent * 0.5); // Auphonic takes up the first 50%
+            setProgressMessage(message);
+          }
+        });
+
+        finalAudioFile = auphonicResult.processedAudioFile;
+
+        if (auphonicResult.transcriptContent) {
+            finalTranscriptCues = parseTranscriptCues(auphonicResult.transcriptContent);
+            setTranscriptCues(finalTranscriptCues); // Update preview
+            finalTranscriptFile = null; // We have cues, no need for file
+        }
+      }
+
+      setProgressMessage('Generating video...');
       const videoBlob = await createAudiogram({
-        audioFile,
+        audioFile: finalAudioFile,
         backgroundImageFile,
-        transcriptFile,
+        transcriptFile: finalTranscriptFile,
+        transcriptCues: finalTranscriptCues, // Pass pre-parsed cues
         options,
-        onProgress: setProgress,
+        onProgress: (p) => setProgress(options.enhanceWithAuphonic ? 50 + p * 0.5 : p), // Video gen is second 50%
       });
       const url = URL.createObjectURL(videoBlob);
       setVideoUrl(url);
+
     } catch (err) {
       console.error('Video generation failed:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred during video generation.');
     } finally {
       setIsGenerating(false);
       setProgress(100);
+      setProgressMessage('Complete');
     }
   };
 
   return (
     <div className="bg-gray-800 text-white min-h-screen font-sans">
       <style>{`
-        /* Minimalist scrollbar styling */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #2d3748; }
         ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #718096; }
-        .bg-primary { background-color: #4A90E2; }
-        .bg-primary-dark { background-color: #357ABD; }
-        .text-primary { color: #4A90E2; }
-        .border-primary { border-color: #4A90E2; }
       `}</style>
       <header className="bg-gray-900 shadow-md p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">Audiogram Generator</h1>
@@ -144,7 +167,7 @@ function App() {
             {isGenerating && (
               <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10">
                 <LoaderIcon className="w-16 h-16 animate-spin text-primary"/>
-                <p className="mt-4 text-xl">Generating video...</p>
+                <p className="mt-4 text-xl">{progressMessage}</p>
                 <div className="w-1/2 mt-4 bg-gray-700 rounded-full h-2.5">
                     <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                 </div>

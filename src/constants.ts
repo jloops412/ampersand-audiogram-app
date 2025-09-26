@@ -1,10 +1,13 @@
-
 import { CustomizationOptions, WaveformStyle } from './types';
 
 export const CANVAS_WIDTH = 1280;
 export const CANVAS_HEIGHT = 720;
 
 export const DEFAULT_OPTIONS: CustomizationOptions = {
+    // Auphonic
+    enhanceWithAuphonic: false,
+    generateTranscript: false,
+
     // Background
     backgroundColor: '#1a1a1a',
 
@@ -31,7 +34,7 @@ export const DEFAULT_OPTIONS: CustomizationOptions = {
     brickHeight: 10,
     brickSpacing: 2,
     brickCount: 80,
-
+    
     // Radial style options
     spokeCount: 180,
     innerRadius: 80,
@@ -51,12 +54,15 @@ export const DEFAULT_OPTIONS: CustomizationOptions = {
 };
 
 export const FONT_FAMILY_OPTIONS = [
+    'Lato',
+    'Montserrat',
+    'Roboto Mono',
+    'Playfair Display',
+    'Lobster',
     'Arial',
     'Helvetica',
     'Times New Roman',
     'Georgia',
     'Courier New',
     'Verdana',
-    'Impact',
-    'Comic Sans MS',
 ];
