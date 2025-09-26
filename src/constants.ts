@@ -1,60 +1,62 @@
-import { WaveformStyle } from './types';
-import type { CustomizationOptions } from './types';
 
-export const GOOGLE_FONTS = [
-  'Montserrat',
-  'Lato',
-  'Playfair Display',
-  'Roboto Mono',
-  'Lobster',
-];
+import { CustomizationOptions, WaveformStyle } from './types';
+
+export const CANVAS_WIDTH = 1280;
+export const CANVAS_HEIGHT = 720;
 
 export const DEFAULT_OPTIONS: CustomizationOptions = {
-  waveformStyle: WaveformStyle.Line,
-  backgroundColor: '#1a1b20',
-  waveformColor: '#D7B185',
-  waveformOpacity: 1.0,
-  waveformPosition: 'middle',
-  lineWidth: 3,
-  amplitude: 150,
-  
-  // Line, MirroredLine, Circle, Radial
-  lineCap: 'round',
+    // Background
+    backgroundColor: '#1a1a1a',
 
-  // Bars, Equalizer
-  barWidth: 5,
-  barSpacing: 2,
-  barCount: 128,
+    // Waveform
+    waveformStyle: WaveformStyle.MirroredLine,
+    waveformColor: '#ffffff',
+    waveformOpacity: 0.85,
+    waveformPosition: 'middle',
+    amplitude: 150,
 
-  // Circle
-  circleRadius: 150,
+    // Line style options
+    lineWidth: 4,
+    lineCap: 'round',
 
-  // Bricks
-  brickHeight: 8,
-  brickSpacing: 4,
-  brickCount: 80,
+    // Bar style options
+    barWidth: 5,
+    barSpacing: 2,
+    barCount: 128,
 
-  // Radial
-  spokeCount: 180,
-  innerRadius: 50,
-  
-  // Particles
-  particleCount: 200,
-  particleSpeed: 1.5,
-  particleSize: 3,
-  
-  // Auphonic Processing
-  enhanceWithAuphonic: false,
-  generateTranscript: false,
+    // Circle style options
+    circleRadius: 100,
 
-  // Text & Transcript
-  overlayText: '',
-  fontFamily: GOOGLE_FONTS[0],
-  fontSize: 80,
-  fontColor: '#ffffff',
-  textAlign: 'center',
-  textPosition: 'middle',
+    // Bricks style options
+    brickHeight: 10,
+    brickSpacing: 2,
+    brickCount: 80,
+
+    // Radial style options
+    spokeCount: 180,
+    innerRadius: 80,
+
+    // Particle style options
+    particleCount: 500,
+    particleSize: 2,
+    particleSpeed: 1,
+
+    // Text Overlay
+    overlayText: 'Audiogram Generator',
+    fontColor: '#ffffff',
+    fontSize: 64,
+    fontFamily: 'Arial',
+    textAlign: 'center',
+    textPosition: 'middle',
 };
 
-export const CANVAS_WIDTH = 1920;
-export const CANVAS_HEIGHT = 1080;
+export const FONT_FAMILY_OPTIONS = [
+    'Arial',
+    'Helvetica',
+    'Times New Roman',
+    'Georgia',
+    'Courier New',
+    'Verdana',
+    'Impact',
+    'Comic Sans MS',
+];
