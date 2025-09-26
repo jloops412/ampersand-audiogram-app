@@ -1,68 +1,45 @@
+
 import { CustomizationOptions, WaveformStyle } from './types';
 
-export const CANVAS_WIDTH = 1280;
-export const CANVAS_HEIGHT = 720;
+export const CANVAS_WIDTH = 1080;
+export const CANVAS_HEIGHT = 1080;
 
 export const DEFAULT_OPTIONS: CustomizationOptions = {
-    // Auphonic
-    enhanceWithAuphonic: false,
-    generateTranscript: false,
+  backgroundColor: '#1a1a1a',
+  
+  waveformStyle: WaveformStyle.Bars,
+  waveformPosition: 'middle',
+  waveformColor: '#ffffff',
+  waveformOpacity: 0.8,
+  amplitude: 150,
+  
+  lineWidth: 4,
+  lineCap: 'round',
 
-    // Background
-    backgroundColor: '#1a1a1a',
+  barWidth: 8,
+  barSpacing: 4,
+  barCount: 60,
 
-    // Waveform
-    waveformStyle: WaveformStyle.MirroredLine,
-    waveformColor: '#ffffff',
-    waveformOpacity: 0.85,
-    waveformPosition: 'middle',
-    amplitude: 150,
+  brickHeight: 10,
+  brickSpacing: 4,
+  brickCount: 60,
 
-    // Line style options
-    lineWidth: 4,
-    lineCap: 'round',
+  circleRadius: 200,
 
-    // Bar style options
-    barWidth: 5,
-    barSpacing: 2,
-    barCount: 128,
+  innerRadius: 100,
+  spokeCount: 180,
 
-    // Circle style options
-    circleRadius: 100,
+  particleCount: 500,
+  particleSize: 2,
+  particleSpeed: 2,
 
-    // Bricks style options
-    brickHeight: 10,
-    brickSpacing: 2,
-    brickCount: 80,
-    
-    // Radial style options
-    spokeCount: 180,
-    innerRadius: 80,
+  overlayText: 'Your audiogram text goes here',
+  fontFamily: 'Inter, sans-serif',
+  fontSize: 72,
+  fontColor: '#ffffff',
+  textAlign: 'center',
+  textPosition: 'middle',
 
-    // Particle style options
-    particleCount: 500,
-    particleSize: 2,
-    particleSpeed: 1,
-
-    // Text Overlay
-    overlayText: 'Audiogram Generator',
-    fontColor: '#ffffff',
-    fontSize: 64,
-    fontFamily: 'Arial',
-    textAlign: 'center',
-    textPosition: 'middle',
+  enhanceWithAuphonic: false,
+  generateTranscript: false,
 };
-
-export const FONT_FAMILY_OPTIONS = [
-    'Lato',
-    'Montserrat',
-    'Roboto Mono',
-    'Playfair Display',
-    'Lobster',
-    'Arial',
-    'Helvetica',
-    'Times New Roman',
-    'Georgia',
-    'Courier New',
-    'Verdana',
-];

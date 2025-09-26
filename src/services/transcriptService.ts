@@ -1,3 +1,4 @@
+
 import type { TranscriptCue } from '../types';
 
 // Parses timestamp strings like "00:01:02,123" or "00:01:02.123" into seconds.
@@ -15,29 +16,34 @@ const parseTimestamp = (timestamp: string): number => {
 
 export const parseTranscriptCues = (content: string): TranscriptCue[] => {
     if (!content) {
-      throw new Error("Transcript content is empty.");
+        throw new Error("Transcript content is empty.");
     }
     
     try {
       const cues: TranscriptCue[] = [];
+      // VTT can have metadata headers, SRT doesn't. We can strip the WEBVTT header if it exists.
       const cleanedContent = content.replace(/^WEBVTT\s*\n/,'');
+      
+      // Split cues by double newline, which is common for both SRT and VTT
       const cueBlocks = cleanedContent.trim().split(/\n\s*\n/);
 
       for (const block of cueBlocks) {
         const lines = block.split('\n');
         if (lines.length < 2) continue;
 
+        // The line with the timestamp is usually the first or second line
         const timeLineIndex = lines.findIndex(line => line.includes('-->'));
         if (timeLineIndex === -1) continue;
         
         const timeLine = lines[timeLineIndex];
         const textLines = lines.slice(timeLineIndex + 1);
+
         const timeMatch = timeLine.match(/(\S+)\s*-->\s*(\S+)/);
 
         if (timeMatch) {
           const startTime = parseTimestamp(timeMatch[1]);
           const endTime = parseTimestamp(timeMatch[2]);
-          const text = textLines.join(' ').replace(/<[^>]+>/g, '').trim();
+          const text = textLines.join(' ').replace(/<[^>]+>/g, '').trim(); // Strip HTML tags and join lines
           
           if (!isNaN(startTime) && !isNaN(endTime) && text) {
             cues.push({ startTime, endTime, text });
@@ -48,7 +54,8 @@ export const parseTranscriptCues = (content: string): TranscriptCue[] => {
     } catch (error) {
       throw new Error("Error parsing transcript content.");
     }
-};
+}
+
 
 export const parseTranscriptFile = (file: File): Promise<TranscriptCue[]> => {
   return new Promise((resolve, reject) => {
@@ -56,7 +63,8 @@ export const parseTranscriptFile = (file: File): Promise<TranscriptCue[]> => {
     reader.onload = (event) => {
       const content = event.target?.result as string;
       try {
-        resolve(parseTranscriptCues(content));
+        const cues = parseTranscriptCues(content);
+        resolve(cues);
       } catch (error) {
         reject(error);
       }

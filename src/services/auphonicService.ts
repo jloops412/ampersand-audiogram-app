@@ -1,111 +1,77 @@
+
 interface RunAuphonicProductionParams {
-    audioFile: File;
-    coverImageFile?: File | null;
-    generateTranscript: boolean;
-    onProgress: (progress: number, message: string) => void;
+  audioFile: File;
+  coverImageFile: File | null;
+  generateTranscript: boolean;
+  onProgress: (status: string) => void;
 }
 
 interface AuphonicResult {
-    processedAudioFile: File;
-    transcriptContent?: string;
+  audioUrl: string;
+  transcriptUrl: string | null;
 }
 
-const POLLING_INTERVAL = 5000; // 5 seconds
+const API_BASE_URL = '/api/auphonic';
 
-async function checkStatus(uuid: string): Promise<any> {
-    const response = await fetch(`/api/auphonic/productions/${uuid}`);
-    if (!response.ok) {
-        throw new Error('Failed to get Auphonic production status.');
-    }
-    return response.json();
-}
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function runAuphonicProduction({
-    audioFile,
-    coverImageFile,
-    generateTranscript,
-    onProgress,
+  audioFile,
+  coverImageFile,
+  generateTranscript,
+  onProgress,
 }: RunAuphonicProductionParams): Promise<AuphonicResult> {
-    onProgress(0, 'Uploading files to Auphonic...');
+
+  // 1. Create FormData and upload to our backend
+  onProgress('Uploading files...');
+  const formData = new FormData();
+  formData.append('audioFile', audioFile);
+  if (coverImageFile) {
+    formData.append('coverImageFile', coverImageFile);
+  }
+  formData.append('title', audioFile.name);
+
+  const createResponse = await fetch(`${API_BASE_URL}/productions`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!createResponse.ok) {
+    const errorData = await createResponse.json();
+    console.error('Auphonic service error:', errorData);
+    throw new Error(`Failed to create Auphonic production: ${createResponse.status} ${errorData.error?.details?.error_message || errorData.error}`);
+  }
+
+  const production = await createResponse.json();
+  const { uuid } = production;
+
+  // 2. Poll for status
+  let status = production.status_string;
+  while (status !== 'Done') {
+    onProgress(status);
+    await delay(5000); // Poll every 5 seconds
     
-    // 1. Create Production and Upload Files
-    const createFormData = new FormData();
-    createFormData.append('audio', audioFile);
-    if (coverImageFile) {
-        createFormData.append('coverImage', coverImageFile);
+    const statusResponse = await fetch(`${API_BASE_URL}/productions/${uuid}`);
+    if (!statusResponse.ok) {
+        throw new Error('Failed to get Auphonic production status.');
     }
-    
-    const createResponse = await fetch('/api/auphonic/productions', {
-        method: 'POST',
-        body: createFormData,
-    });
+    const statusData = await statusResponse.json();
+    status = statusData.status_string;
 
-    if (!createResponse.ok) {
-        const errorData = await createResponse.json();
-        throw new Error(`Failed to create Auphonic production: ${errorData.error || createResponse.statusText}`);
+    if (status === 'Error') {
+        throw new Error(`Auphonic processing failed: ${statusData.error_message}`);
     }
-    const { uuid } = await createResponse.json();
-    onProgress(10, 'Starting production...');
+  }
 
-    // 2. Start Production
-    const startResponse = await fetch(`/api/auphonic/productions/${uuid}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ generateTranscript }),
-    });
+  onProgress('Processing complete. Downloading results...');
 
-    if (!startResponse.ok) {
-        const errorData = await startResponse.json();
-        throw new Error(`Failed to start Auphonic production: ${errorData.error || startResponse.statusText}`);
-    }
-
-    // 3. Poll for Status
-    return new Promise((resolve, reject) => {
-        const intervalId = setInterval(async () => {
-            try {
-                const statusData = await checkStatus(uuid);
-                const progressPercentage = statusData.progress || 15;
-                onProgress(10 + (progressPercentage * 0.7), `Processing... (${statusData.status_string})`);
-
-                if (statusData.status === 3) { // 3 means "Done"
-                    clearInterval(intervalId);
-                    onProgress(80, 'Downloading processed files...');
-                    
-                    // 4. Download Results
-                    const audioResultUrl = statusData.results.find((r: any) => r.output_basename.endsWith('.wav'))?.download_url;
-                    
-                    if (!audioResultUrl) {
-                       throw new Error('Could not find processed audio file in Auphonic results.');
-                    }
-                    
-                    const audioResponse = await fetch(`/api/auphonic/download?url=${encodeURIComponent(audioResultUrl)}`);
-                    if (!audioResponse.ok) throw new Error('Failed to download processed audio.');
-                    const audioBlob = await audioResponse.blob();
-                    const processedAudioFile = new File([audioBlob], `auphonic_${audioFile.name}.wav`, { type: 'audio/wav' });
-
-                    let transcriptContent: string | undefined = undefined;
-                    if (generateTranscript) {
-                        const transcriptUrl = statusData.results.find((r: any) => r.output_basename.endsWith('.vtt'))?.download_url;
-                        if (transcriptUrl) {
-                            const transcriptResponse = await fetch(`/api/auphonic/download?url=${encodeURIComponent(transcriptUrl)}`);
-                            if(transcriptResponse.ok) {
-                                transcriptContent = await transcriptResponse.text();
-                            }
-                        } else {
-                            console.warn("Transcript generation was enabled, but no VTT file was found in results.");
-                        }
-                    }
-
-                    onProgress(100, 'Processing complete.');
-                    resolve({ processedAudioFile, transcriptContent });
-                } else if (statusData.status > 3) { // Error states
-                    clearInterval(intervalId);
-                    reject(new Error(`Auphonic production failed with status: ${statusData.status_string}`));
-                }
-            } catch (error) {
-                clearInterval(intervalId);
-                reject(error);
-            }
-        }, POLLING_INTERVAL);
-    });
+  // 3. Download results via our secure proxy
+  const audioUrl = `${API_BASE_URL}/productions/${uuid}/download?type=audio`;
+  let transcriptUrl: string | null = null;
+  
+  if (generateTranscript) {
+    transcriptUrl = `${API_BASE_URL}/productions/${uuid}/download?type=transcript`;
+  }
+  
+  return { audioUrl, transcriptUrl };
 }

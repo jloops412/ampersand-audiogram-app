@@ -1,211 +1,240 @@
-import React, { ChangeEvent } from 'react';
+
+import React from 'react';
 import type { CustomizationOptions } from '../types';
 import { WaveformStyle } from '../types';
 import { FileUpload } from './FileUpload';
-import { FONT_FAMILY_OPTIONS } from '../constants';
 import { GenerateIcon } from './icons';
 
 interface ControlPanelProps {
   options: CustomizationOptions;
   setOptions: React.Dispatch<React.SetStateAction<CustomizationOptions>>;
-  onAudioFileChange: (file: File | null) => void;
-  onBackgroundImageChange: (file: File | null) => void;
-  onTranscriptFileChange: (file: File | null) => void;
-  audioFileName?: string;
-  backgroundImageFileName?: string;
-  transcriptFileName?: string;
   onGenerate: () => void;
   isGenerating: boolean;
+  onAudioFileChange: (file: File | null) => void;
+  onImageFileChange: (file: File | null) => void;
+  onTranscriptFileChange: (file: File | null) => void;
+  audioFileName: string | undefined;
+  imageFileName: string | undefined;
+  transcriptFileName: string | undefined;
 }
-
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-200 border-b border-gray-700 pb-2 mb-4">{title}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
-    </div>
-);
-
-const Option: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-    <div>
-        <label className="block text-sm font-medium text-gray-400 mb-1">{label}</label>
-        {children}
-    </div>
-);
-
-const OptionToggle: React.FC<{ label: string; checked: boolean; onChange: (e: ChangeEvent<HTMLInputElement>) => void; disabled?: boolean }> = ({ label, checked, onChange, disabled }) => (
-    <div className="flex items-center justify-between md:col-span-2 bg-gray-800 p-2 rounded-md">
-        <label htmlFor={label} className="text-sm font-medium text-gray-300">{label}</label>
-        <label className="relative inline-flex items-center cursor-pointer">
-            <input
-                id={label}
-                type="checkbox"
-                checked={checked}
-                onChange={onChange}
-                className="sr-only peer"
-                disabled={disabled}
-            />
-            <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-disabled:opacity-50"></div>
-        </label>
-    </div>
-);
-
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   options,
   setOptions,
-  onAudioFileChange,
-  onBackgroundImageChange,
-  onTranscriptFileChange,
-  audioFileName,
-  backgroundImageFileName,
-  transcriptFileName,
   onGenerate,
   isGenerating,
+  onAudioFileChange,
+  onImageFileChange,
+  onTranscriptFileChange,
+  audioFileName,
+  imageFileName,
+  transcriptFileName,
 }) => {
-    
-  const handleOptionChange = <K extends keyof CustomizationOptions>(
-    key: K,
-    value: CustomizationOptions[K]
-  ) => {
+
+  const handleOptionChange = (key: keyof CustomizationOptions, value: any) => {
     setOptions(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleToggleChange = (key: keyof CustomizationOptions, value: boolean) => {
+    setOptions(prev => {
+        const newOptions = { ...prev, [key]: value };
+        // If Auphonic is turned off, also turn off transcript generation
+        if (key === 'enhanceWithAuphonic' && !value) {
+            newOptions.generateTranscript = false;
+        }
+        return newOptions;
+    });
+  };
+
+  const waveformOptions = Object.values(WaveformStyle);
+  
+  const renderWaveformSpecificControls = () => {
+    switch(options.waveformStyle) {
+      case WaveformStyle.Line:
+      case WaveformStyle.MirroredLine:
+        return (
+          <>
+            <RangeSlider label="Line Width" value={options.lineWidth} onChange={(v) => handleOptionChange('lineWidth', v)} min={1} max={20} step={1} disabled={isGenerating}/>
+          </>
+        )
+      case WaveformStyle.Bars:
+      case WaveformStyle.Equalizer:
+        return (
+          <>
+            <RangeSlider label="Bar Count" value={options.barCount} onChange={(v) => handleOptionChange('barCount', v)} min={10} max={200} step={2} disabled={isGenerating}/>
+            <RangeSlider label="Bar Width" value={options.barWidth} onChange={(v) => handleOptionChange('barWidth', v)} min={1} max={50} step={1} disabled={isGenerating}/>
+            <RangeSlider label="Bar Spacing" value={options.barSpacing} onChange={(v) => handleOptionChange('barSpacing', v)} min={0} max={20} step={1} disabled={isGenerating}/>
+          </>
+        )
+      case WaveformStyle.Bricks:
+        return (
+            <>
+              <RangeSlider label="Brick Count" value={options.brickCount} onChange={(v) => handleOptionChange('brickCount', v)} min={10} max={100} step={1} disabled={isGenerating}/>
+              <RangeSlider label="Brick Height" value={options.brickHeight} onChange={(v) => handleOptionChange('brickHeight', v)} min={1} max={30} step={1} disabled={isGenerating}/>
+              <RangeSlider label="Brick Spacing" value={options.brickSpacing} onChange={(v) => handleOptionChange('brickSpacing', v)} min={0} max={10} step={1} disabled={isGenerating}/>
+            </>
+        )
+      case WaveformStyle.Circle:
+        return (
+          <>
+            <RangeSlider label="Circle Radius" value={options.circleRadius} onChange={(v) => handleOptionChange('circleRadius', v)} min={50} max={400} step={10} disabled={isGenerating}/>
+            <RangeSlider label="Line Width" value={options.lineWidth} onChange={(v) => handleOptionChange('lineWidth', v)} min={1} max={20} step={1} disabled={isGenerating}/>
+          </>
+        )
+      case WaveformStyle.Radial:
+        return (
+          <>
+            <RangeSlider label="Inner Radius" value={options.innerRadius} onChange={(v) => handleOptionChange('innerRadius', v)} min={10} max={300} step={5} disabled={isGenerating}/>
+            <RangeSlider label="Spoke Count" value={options.spokeCount} onChange={(v) => handleOptionChange('spokeCount', v)} min={20} max={360} step={4} disabled={isGenerating}/>
+            <RangeSlider label="Line Width" value={options.lineWidth} onChange={(v) => handleOptionChange('lineWidth', v)} min={1} max={20} step={1} disabled={isGenerating}/>
+          </>
+        )
+      case WaveformStyle.Particles:
+        return (
+          <>
+            <RangeSlider label="Particle Count" value={options.particleCount} onChange={(v) => handleOptionChange('particleCount', v)} min={100} max={2000} step={50} disabled={isGenerating}/>
+            <RangeSlider label="Particle Size" value={options.particleSize} onChange={(v) => handleOptionChange('particleSize', v)} min={1} max={10} step={1} disabled={isGenerating}/>
+            <RangeSlider label="Particle Speed" value={options.particleSpeed} onChange={(v) => handleOptionChange('particleSpeed', v)} min={1} max={10} step={1} disabled={isGenerating}/>
+          </>
+        )
+      default:
+        return null;
+    }
+  }
+
   return (
-    <div className="bg-gray-900 p-6 overflow-y-auto h-full text-white">
-      <h2 className="text-2xl font-bold mb-6">Audiogram Controls</h2>
-
-      <Section title="Source Files">
-        <FileUpload
-            id="audio-file"
-            label="Audio File"
-            accept="audio/*"
-            onFileChange={onAudioFileChange}
-            fileName={audioFileName}
-            disabled={isGenerating}
-            className="md:col-span-2"
-        />
-        <FileUpload
-            id="background-image"
-            label="Background Image (optional)"
-            accept="image/*"
-            onFileChange={onBackgroundImageChange}
-            fileName={backgroundImageFileName}
-            disabled={isGenerating}
-        />
-        <FileUpload
-            id="transcript-file"
-            label="Transcript File (optional .vtt/.srt)"
-            accept=".vtt,.srt"
-            onFileChange={onTranscriptFileChange}
-            fileName={transcriptFileName}
-            disabled={isGenerating || options.generateTranscript}
-        />
-      </Section>
+    <div className="bg-gray-900 text-white w-96 p-4 overflow-y-auto flex flex-col h-full border-l border-gray-800">
+      <h2 className="text-xl font-bold mb-6 text-center">Customize Audiogram</h2>
       
-      <Section title="Audio Enhancement">
-         <OptionToggle
-            label="Enhance Audio with Auphonic"
-            checked={options.enhanceWithAuphonic}
-            onChange={e => {
-                handleOptionChange('enhanceWithAuphonic', e.target.checked);
-                if (!e.target.checked) {
-                    handleOptionChange('generateTranscript', false);
-                }
-            }}
-            disabled={isGenerating}
-        />
-        <OptionToggle
-            label="Generate Transcript"
-            checked={options.generateTranscript}
-            onChange={e => handleOptionChange('generateTranscript', e.target.checked)}
-            disabled={isGenerating || !options.enhanceWithAuphonic}
-        />
-        {options.enhanceWithAuphonic && <p className="text-xs text-gray-500 md:col-span-2 mt-1">Audio will be processed with Auphonic's default preset for leveling, noise reduction, and loudness targeting.</p>}
-      </Section>
+      <div className="space-y-4 mb-6">
+        <FileUpload id="audio-upload" label="Audio File" onFileChange={onAudioFileChange} accept="audio/*" disabled={isGenerating} fileName={audioFileName} />
+        <FileUpload id="image-upload" label="Background Image (optional)" onFileChange={onImageFileChange} accept="image/*" disabled={isGenerating} fileName={imageFileName} />
+        <FileUpload id="transcript-upload" label="Transcript File (optional, .srt/.vtt)" onFileChange={onTranscriptFileChange} accept=".srt,.vtt" disabled={isGenerating} fileName={transcriptFileName} />
+      </div>
 
-      <Section title="Background">
-        <Option label="Background Color">
-          <input
-            type="color"
-            value={options.backgroundColor}
-            onChange={e => handleOptionChange('backgroundColor', e.target.value)}
-            className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md"
-            disabled={isGenerating}
-          />
-        </Option>
-      </Section>
-      
-      <Section title="Waveform">
-        <Option label="Style">
-          <select 
-            value={options.waveformStyle}
-            onChange={e => handleOptionChange('waveformStyle', e.target.value as WaveformStyle)}
-            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
-            disabled={isGenerating}
-          >
-            {Object.values(WaveformStyle).map(style => (
-              <option key={style} value={style}>{style}</option>
-            ))}
-          </select>
-        </Option>
-        <Option label="Color">
-          <input
-            type="color"
-            value={options.waveformColor}
-            onChange={e => handleOptionChange('waveformColor', e.target.value)}
-            className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md"
-            disabled={isGenerating}
-          />
-        </Option>
-      </Section>
-
-      <Section title="Text Overlay">
-        <div className="md:col-span-2">
-            <Option label="Text Content">
-                <textarea
-                    value={options.overlayText}
-                    onChange={e => handleOptionChange('overlayText', e.target.value)}
-                    rows={3}
-                    className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
-                    placeholder="Enter text to display"
-                    disabled={isGenerating || !!transcriptFileName || options.generateTranscript}
-                />
-                 {(transcriptFileName || options.generateTranscript) && <p className="text-xs text-gray-500 mt-1">Text content is controlled by the transcript.</p>}
-            </Option>
-        </div>
-         <Option label="Font Color">
-          <input
-            type="color"
-            value={options.fontColor}
-            onChange={e => handleOptionChange('fontColor', e.target.value)}
-            className="w-full h-10 p-1 bg-gray-800 border border-gray-700 rounded-md"
-            disabled={isGenerating}
-          />
-        </Option>
-        <Option label="Font Family">
-             <select
-                value={options.fontFamily}
-                onChange={e => handleOptionChange('fontFamily', e.target.value)}
-                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md"
+      <div className="flex-grow overflow-y-auto pr-2 -mr-2 space-y-6">
+        <details open className="group">
+          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Audio Enhancement</summary>
+          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
+            <OptionToggle 
+                label="Enhance Audio with Auphonic"
+                checked={options.enhanceWithAuphonic}
+                onChange={(c) => handleToggleChange('enhanceWithAuphonic', c)}
                 disabled={isGenerating}
-            >
-                {FONT_FAMILY_OPTIONS.map(font => (
-                    <option key={font} value={font}>{font}</option>
-                ))}
-            </select>
-        </Option>
-      </Section>
+            />
+            <OptionToggle 
+                label="Generate Transcript"
+                checked={options.generateTranscript}
+                onChange={(c) => handleToggleChange('generateTranscript', c)}
+                disabled={isGenerating || !options.enhanceWithAuphonic}
+            />
+            {!options.enhanceWithAuphonic && <p className="text-xs text-gray-500 -mt-2">Transcript generation requires Auphonic enhancement.</p>}
+          </div>
+        </details>
 
-      <div className="mt-8 sticky bottom-0 bg-gray-900 py-4">
-        <button
-          onClick={onGenerate}
+        <details open className="group">
+          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Waveform</summary>
+          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
+            <Select label="Style" value={options.waveformStyle} onChange={(v) => handleOptionChange('waveformStyle', v)} options={waveformOptions} disabled={isGenerating}/>
+            <ColorInput label="Color" value={options.waveformColor} onChange={(v) => handleOptionChange('waveformColor', v)} disabled={isGenerating}/>
+            <RangeSlider label="Opacity" value={options.waveformOpacity} onChange={(v) => handleOptionChange('waveformOpacity', v)} min={0} max={1} step={0.1} disabled={isGenerating}/>
+            <RangeSlider label="Amplitude" value={options.amplitude} onChange={(v) => handleOptionChange('amplitude', v)} min={10} max={500} step={10} disabled={isGenerating}/>
+            <Select label="Position" value={options.waveformPosition} onChange={(v) => handleOptionChange('waveformPosition', v)} options={['top', 'middle', 'bottom']} disabled={isGenerating}/>
+            {renderWaveformSpecificControls()}
+          </div>
+        </details>
+        
+        <details className="group">
+          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Text & Font</summary>
+          <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
+             <textarea 
+                value={options.overlayText}
+                onChange={(e) => handleOptionChange('overlayText', e.target.value)}
+                className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary disabled:bg-gray-700"
+                rows={3}
+                placeholder="Enter text to display"
+                disabled={isGenerating || !!transcriptFileName}
+              />
+              {transcriptFileName && <p className="text-xs text-gray-400 -mt-2">Overlay text is disabled when a transcript is used.</p>}
+              <TextInput label="Font Family" value={options.fontFamily} onChange={(v) => handleOptionChange('fontFamily', v)} disabled={isGenerating}/>
+              <RangeSlider label="Font Size" value={options.fontSize} onChange={(v) => handleOptionChange('fontSize', v)} min={12} max={200} step={2} disabled={isGenerating}/>
+              <ColorInput label="Font Color" value={options.fontColor} onChange={(v) => handleOptionChange('fontColor', v)} disabled={isGenerating}/>
+              <Select label="Text Align" value={options.textAlign} onChange={(v) => handleOptionChange('textAlign', v)} options={['left', 'center', 'right']} disabled={isGenerating}/>
+              <Select label="Text Position" value={options.textPosition} onChange={(v) => handleOptionChange('textPosition', v)} options={['top', 'middle', 'bottom']} disabled={isGenerating}/>
+          </div>
+        </details>
+
+        <details className="group">
+          <summary className="font-semibold cursor-pointer list-none group-open:mb-2">Background</summary>
+           <div className="pl-4 mt-2 space-y-4 border-l-2 border-gray-700">
+            <ColorInput label="Background Color" value={options.backgroundColor} onChange={(v) => handleOptionChange('backgroundColor', v)} disabled={isGenerating}/>
+           </div>
+        </details>
+      </div>
+
+      <div className="mt-auto pt-6">
+        <button 
+          onClick={onGenerate} 
           disabled={isGenerating || !audioFileName}
-          className="w-full flex items-center justify-center bg-primary hover:bg-primary-dark disabled:bg-gray-600 text-white font-bold py-3 px-4 rounded-md transition-colors"
+          className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
         >
-          <GenerateIcon className="w-5 h-5 mr-2"/>
-          {isGenerating ? 'Generating...' : 'Generate Video'}
+          {isGenerating ? 'Generating...' : <><GenerateIcon className="w-5 h-5 mr-2" /> Generate Video</>}
         </button>
       </div>
     </div>
   );
 };
+
+// Helper components
+const RangeSlider: React.FC<{label: string, value: number, onChange: (v: number) => void, min: number, max: number, step: number, disabled?: boolean}> = ({label, value, onChange, ...props}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-400 flex justify-between">
+      <span>{label}</span>
+      <span>{value}</span>
+    </label>
+    <input type="range" value={value} onChange={(e) => onChange(parseFloat(e.target.value))} {...props} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary" />
+  </div>
+);
+
+const ColorInput: React.FC<{label: string, value: string, onChange: (v: string) => void, disabled?: boolean}> = ({label, value, onChange, disabled}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-400">{label}</label>
+    <div className="relative">
+      <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-10 p-0 border-none bg-transparent" disabled={disabled}/>
+      <div className="absolute inset-0 rounded-md pointer-events-none border border-gray-700" style={{backgroundColor: value}}></div>
+    </div>
+  </div>
+);
+
+const Select: React.FC<{label: string, value: string, onChange: (v: string) => void, options: string[], disabled?: boolean}> = ({label, value, onChange, options, disabled}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-400">{label}</label>
+    <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary" disabled={disabled}>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  </div>
+);
+
+const TextInput: React.FC<{label: string, value: string, onChange: (v: string) => void, disabled?: boolean}> = ({label, value, onChange, disabled}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-400">{label}</label>
+    <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-800 rounded p-2 text-sm border border-gray-700 focus:ring-primary focus:border-primary" disabled={disabled}/>
+  </div>
+);
+
+const OptionToggle: React.FC<{label: string, checked: boolean, onChange: (c: boolean) => void, disabled?: boolean}> = ({label, checked, onChange, disabled}) => (
+    <label className="flex items-center justify-between cursor-pointer">
+      <span className="text-sm font-medium text-gray-300">{label}</span>
+      <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${disabled ? 'cursor-not-allowed' : ''}`}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+          className="sr-only"
+        />
+        <div className={`w-11 h-6 rounded-full shadow-inner ${checked && !disabled ? 'bg-primary' : 'bg-gray-700'}`}></div>
+        <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'transform translate-x-5' : ''}`}></div>
+      </div>
+    </label>
+);
