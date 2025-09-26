@@ -1,1 +1,17 @@
-full contents of backend/package.json
+{
+  "name": "audiogram-backend",
+  "version": "1.0.0",
+  "description": "Backend server for the Ampersand Audiogram generator",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "form-data": "^4.0.0",
+    "formidable": "^3.5.1",
+    "node-fetch": "^3.3.2"
+  }
+}
