@@ -1,19 +1,23 @@
-# Ampersand V2 Planning Authority
+# Ampersand V2 Planning and Build Authority
 
-**Status:** Active planning baseline  
+**Status:** Active build baseline  
 **Last verified:** 2026-08-18  
 **Branch:** `docs/ampersand-v2-research-plan-2026-08`
 
-This directory is the durable planning authority for rebuilding Ampersand from an audiogram prototype into an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform.
+This directory is the durable authority for rebuilding Ampersand from an audiogram prototype into an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform.
 
-The documents here are intentionally separated into product, research, architecture, deployment, roadmap, and decision records so future contributors do not have to reconstruct the strategy from chat history.
+## Current directive
+
+**Build the actual Ampersand engine and Studio first.**
+
+ChatGPT Sites and the owner's domain remain the intended later publishing destination, but hosting migration, DNS, and compatibility proof are not current workstreams or build gates. ADR-0007 supersedes ADR-0006 as the execution priority.
 
 ## Start here
 
-1. [Master Plan](./MASTER_PLAN.md)
-2. [Target Architecture](./architecture/TARGET_ARCHITECTURE.md)
-3. [Technology and Algorithm Direction](./architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md)
-4. [ChatGPT Sites Migration and Custom-Domain Plan](./deployment/CHATGPT_SITES_MIGRATION_PLAN.md)
+1. [Implementation Execution Plan](./build/IMPLEMENTATION_EXECUTION_PLAN.md)
+2. [Master Plan](./MASTER_PLAN.md)
+3. [Target Architecture](./architecture/TARGET_ARCHITECTURE.md)
+4. [Technology and Algorithm Direction](./architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md)
 5. [Phased Roadmap](./roadmap/PHASED_ROADMAP.md)
 6. [Audio Quality Evaluation Plan](./research/AUDIO_QUALITY_EVALUATION_PLAN.md)
 7. [Auphonic Capability and Research Boundary](./research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
@@ -32,42 +36,72 @@ The documents here are intentionally separated into product, research, architect
 - [ADR-0003: Dependency and model admission gates](./decisions/ADR-0003-DEPENDENCY-AND-MODEL-GATES.md)
 - [ADR-0004: Workflow engine selection remains open](./decisions/ADR-0004-WORKFLOW-ENGINE-SELECTION-OPEN.md)
 - [ADR-0005: Provisional technology and algorithm direction](./decisions/ADR-0005-TECHNOLOGY-DIRECTION-PROVISIONAL.md)
-- [ADR-0006: ChatGPT Sites hosts the web/control plane; media processing remains external](./decisions/ADR-0006-CHATGPT-SITES-WEB-CONTROL-PLANE.md)
+- [ADR-0006: Historical hosting-boundary note](./decisions/ADR-0006-CHATGPT-SITES-WEB-CONTROL-PLANE.md)
+- [ADR-0007: Build the product first; defer hosting migration work](./decisions/ADR-0007-BUILD-FIRST-HOSTING-DEFERRED.md)
 
 ## Governing rules
 
-1. **Audio quality is proven before it is productized.** The Ampersand Audio Lab and its rights-cleared evaluation corpus are developed before substantial Studio polish.
-2. **Ampersand is independent, not a reverse-engineered Auphonic implementation.** Auphonic's public documentation may inform capability research. Its services, outputs, derivatives, evaluations, or learnings must not be used to benchmark, train, evaluate, or improve Ampersand without written permission from Auphonic.
-3. **Human listening is the final quality gate.** Objective metrics are diagnostic evidence, not automatic truth.
-4. **No dependency enters production because its repository is merely described as open source.** Code license, model/checkpoint license, training-data terms, attribution, redistribution obligations, security posture, maintenance health, and deployment constraints are reviewed separately.
-5. **Provider interfaces precede provider commitments.** Storage, workflow, transcription, diarization, enhancement, restoration, waveform, and publishing implementations remain replaceable.
-6. **Singletrack spoken-word mastering comes first.** Multitrack mixing, generative voice restoration, advanced social video editing, and broad publishing integrations follow only after the singletrack engine passes defined quality and reliability gates.
-7. **Original media is immutable.** Processing is non-destructive, reproducible, versioned, and traceable to a recipe, engine version, dependency version, and source checksum.
-8. **Privacy is a product feature.** User media must have explicit retention, deletion, access-control, consent, and model-training policies.
-9. **ChatGPT Sites hosts the web experience, not the heavy audio engine.** Native DSP, long-running jobs, workflow orchestration, model inference, and the Audio Lab remain externally deployable behind versioned contracts.
-10. **GitHub is the source of truth for Sites releases.** Agents save and review a Sites version tied to a known Git commit before deploying; they do not deploy unreviewed working state.
-11. **The repository documents decisions, not just intentions.** Material architectural or research choices require an ADR or an update to an existing ADR.
-12. **Unknowns stay visibly open.** A candidate is not labeled selected until its spike and exit criteria are complete.
+1. **Working product over additional hosting proof.** Agents implement the engine, Studio, reports, and outputs before release-host migration work.
+2. **Auphonic research becomes independent architecture.** Public findings inform capability and structure; Auphonic services/outputs/derived learnings are not used to benchmark, tune, evaluate, or design Ampersand without written permission.
+3. **Ampersand owns the intelligence layer.** Semantic Map, Router, Adaptive Leveler, recipes, quality policy, and Studio explanations remain Ampersand-controlled.
+4. **Human listening is the final quality gate.** Objective metrics are diagnostic evidence, not automatic truth.
+5. **No dependency enters production because it is merely described as open source.** Code license, checkpoint terms, provenance, security, quality, and deployment constraints are separate gates.
+6. **Provider interfaces precede provider commitments.** ASR, diarization, enhancement, storage, workflow, waveform, and render implementations remain replaceable.
+7. **Singletrack spoken-word mastering comes first.** Multitrack, generative restoration defaults, broad publishing, and full social-video editing follow later.
+8. **Original media is immutable.** Processing is non-destructive, reproducible, versioned, and traceable.
+9. **No-op/protection is a valid result.** Clean, uncertain, musical, ambient, or unsupported content must not be processed merely because a tool exists.
+10. **The browser is not the authoritative long-form processor or renderer.**
+11. **Privacy is a product feature.** Retention, deletion, access, consent, and no-training defaults are part of the build.
+12. **The repository documents decisions and working acceptance criteria.** Material decisions require ADR updates; speculative planning must not displace implementation.
+
+## Active GitHub execution
+
+### Immediate build wave
+
+- #3 — V2 workspace/refoundation
+- #12 — dependency/model manifests
+- #21 — core contracts and local CLI
+- #22 — Semantic Audio Map V0
+- #6 — deterministic DSP and Adaptive Leveler V0
+- #4/#5 — rights-cleared fixtures and quality harness
+
+### Integration wave
+
+- #7 — enhancement providers
+- #8 — ASR/alignment/diarization providers
+- #23 — Processing Router V0
+- #9/#10 — durable workflow and storage lifecycle
+- #24 — durable singletrack vertical slice
+
+### Product wave
+
+- #11 — waveform/edit contracts
+- #25 — Studio MVP
+- #26 — Original/Master comparison and processing report
+- #13 — one-hour end-to-end proof
+- #27 — deterministic audiogram renderer
+
+Issues #16–#20 are closed because they over-prioritized hosting proof before product implementation.
 
 ## Decision status legend
 
 | Status | Meaning |
 |---|---|
-| **Accepted** | Approved as the current direction; changes require a superseding ADR. |
-| **Provisional** | Preferred direction, pending a defined spike or legal/security check. |
-| **Open** | Deliberately undecided; alternatives and exit criteria are documented. |
-| **Rejected** | Evaluated and not suitable for the stated use. |
-| **Lab only** | Permitted for internal research but not approved for production or redistribution. |
+| **Accepted** | Approved as current direction; changes require a superseding ADR. |
+| **Provisional** | Preferred direction pending a defined implementation/quality/legal gate. |
+| **Open** | Deliberately undecided with bounded alternatives and exit criteria. |
+| **Rejected** | Evaluated and unsuitable for the stated role. |
+| **Lab only** | Permitted for controlled research, not production. |
+| **Deferred release task** | Intentionally postponed until a working product exists. |
 
 ## Documentation maintenance
 
-Every material research or deployment update should include:
+Every material update should include:
 
-- the date verified;
-- primary-source links;
-- whether the result changes architecture, scope, hosting, licensing, security, quality methodology, or roadmap;
-- a confidence label where a conclusion is inferred rather than explicitly documented;
-- an ADR update when a decision changes;
-- the Git commit and Sites saved/deployed version when a hosting release is involved.
+- verification date and primary sources;
+- whether architecture, implementation order, quality, licensing, privacy, or scope changed;
+- confidence labels for deductions;
+- ADR updates for decisions;
+- issue/PR links and runnable evidence.
 
-The source register and official ChatGPT Sites documentation should be reviewed before implementation begins and again before any public or custom-domain release.
+Before implementation begins, agents should read `AGENTS.md`, the execution plan, their assigned issue, and its linked authority documents.
