@@ -16,10 +16,11 @@ The documents here are intentionally separated into product, research, architect
 4. [Phased Roadmap](./roadmap/PHASED_ROADMAP.md)
 5. [Audio Quality Evaluation Plan](./research/AUDIO_QUALITY_EVALUATION_PLAN.md)
 6. [Auphonic Capability and Research Boundary](./research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
-7. [Open-Source Dependency and License Matrix](./research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
-8. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
-9. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
-10. [Source Register](./research/SOURCE_REGISTER.md)
+7. [Auphonic Public Reconstruction Matrix](./research/AUPHONIC_PUBLIC_RECONSTRUCTION_MATRIX.md)
+8. [Open-Source Dependency and License Matrix](./research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
+9. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
+10. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
+11. [Source Register](./research/SOURCE_REGISTER.md)
 
 ## Architecture decision records
 
