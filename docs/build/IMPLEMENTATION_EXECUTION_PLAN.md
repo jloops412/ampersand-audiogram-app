@@ -156,7 +156,7 @@ Build a complete CPU-only processing baseline before neural-model selection.
 
 - #6 — deterministic DSP and Adaptive Leveler V0;
 - #21 — local engine foundation;
-- #23 — singletrack processing vertical slice.
+- #24 — durable singletrack processing vertical slice.
 
 ### Exit artifact
 
@@ -209,7 +209,7 @@ Create the durable shared analysis layer that every intelligent processor uses.
 
 ### Issues
 
-- #8 — ASR/alignment/diarization/semantics research;
+- #8 — ASR/alignment/diarization/semantics providers;
 - #22 — Semantic Audio Map V0 implementation.
 
 ---
@@ -224,8 +224,8 @@ Build the original Ampersand feature most responsible for automatic-mix quality.
 
 - speech probability;
 - active speaker;
-- 400 ms momentary loudness;
-- 3 s short-term loudness;
+- momentary loudness;
+- short-term loudness;
 - music/noise/silence confidence;
 - overlap confidence;
 - peak risk;
@@ -257,7 +257,7 @@ Build the original Ampersand feature most responsible for automatic-mix quality.
 
 ### Issue
 
-- #6 — Adaptive Leveler V0.
+- #6 — deterministic mastering and Adaptive Leveler V0.
 
 ---
 
@@ -302,7 +302,7 @@ unsupported content
 
 ### Issues
 
-- #7 — enhancement/restoration bake-off;
+- #7 — enhancement adapters and first admitted denoise path;
 - #23 — Processing Router V0.
 
 ---
@@ -330,7 +330,7 @@ Convert the local processing graph into a production service.
 
 ### Issues
 
-- #9 — workflow-engine selection;
+- #9 — workflow-engine selection and implementation;
 - #10 — upload/storage/isolation/deletion;
 - #24 — durable singletrack engine vertical slice;
 - #13 — one-hour end-to-end proof.
@@ -431,24 +431,25 @@ Agents should begin these in parallel where dependencies permit:
 3. **#21** core engine contracts and local CLI;
 4. **#22** Semantic Audio Map V0 schema/fusion;
 5. **#6** deterministic mastering and Leveler V0 using fixture inputs;
-6. **#4/#5** minimal corpus and listening harness sufficient to evaluate changes.
+6. **#4/#5** minimum fixture corpus and listening/regression harness.
 
 ## Next integration wave
 
 7. **#7** enhancement candidate adapters and tests;
 8. **#8** ASR/diarization candidate normalization;
 9. **#23** Processing Router V0;
-10. **#24** durable singletrack engine vertical slice;
-11. **#25/#26** Studio MVP, A/B, and report;
-12. **#13** one-hour end-to-end proof.
+10. **#9/#10** durable workflow and storage lifecycle;
+11. **#24** durable singletrack engine vertical slice;
+12. **#25/#26** Studio MVP, A/B, and report;
+13. **#13** one-hour end-to-end product proof.
 
 ## After the real product works
 
-13. **#27** deterministic audiogram migration;
-14. transcript-driven edits and automatic cut suggestions;
-15. publishing automation;
-16. ChatGPT Sites release and domain connection;
-17. multitrack and advanced restoration research.
+14. **#27** deterministic audiogram migration;
+15. transcript-driven edits and automatic cut suggestions;
+16. publishing automation;
+17. ChatGPT Sites release and domain connection;
+18. multitrack and advanced restoration research.
 
 ---
 
