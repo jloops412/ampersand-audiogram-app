@@ -27,6 +27,7 @@ The documents here are intentionally separated into product, research, architect
 - [ADR-0002: Lab-first development and independent evaluation](./decisions/ADR-0002-LAB-FIRST-INDEPENDENT-EVALUATION.md)
 - [ADR-0003: Dependency and model admission gates](./decisions/ADR-0003-DEPENDENCY-AND-MODEL-GATES.md)
 - [ADR-0004: Workflow engine selection remains open](./decisions/ADR-0004-WORKFLOW-ENGINE-SELECTION-OPEN.md)
+- [ADR-0005: Provisional technology and algorithm direction](./decisions/ADR-0005-TECHNOLOGY-DIRECTION-PROVISIONAL.md)
 
 ## Governing rules
 
