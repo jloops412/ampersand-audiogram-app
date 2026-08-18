@@ -1,9 +1,9 @@
 # Ampersand
 
-**Status:** V2 research, architecture, refoundation, and deployment planning  
-**Current implementation:** legacy audiogram prototype on its existing Google-hosted path  
-**Target web host:** ChatGPT Sites, followed by the owner's custom domain  
-**Target processing plane:** external durable CPU/GPU media workers  
+**Status:** V2 engine and Studio implementation planning  
+**Current implementation:** legacy audiogram prototype  
+**Immediate objective:** build the actual independent audio-processing product  
+**Later release destination:** ChatGPT Sites and the owner's custom domain  
 **Last planning update:** 2026-08-18
 
 Ampersand is being refounded as an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform.
@@ -18,17 +18,46 @@ The intended product combines:
 - deterministic outputs and provenance;
 - later transcript-driven editing, captions, audiograms, social clips, automation, and multitrack processing.
 
-## Start with the planning authority
+## Start here
 
+- [Implementation Execution Plan](./docs/build/IMPLEMENTATION_EXECUTION_PLAN.md)
 - [Ampersand V2 documentation index](./docs/README.md)
 - [Master Plan](./docs/MASTER_PLAN.md)
 - [Target Architecture](./docs/architecture/TARGET_ARCHITECTURE.md)
 - [Technology and Algorithm Direction](./docs/architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md)
-- [ChatGPT Sites Migration and Custom-Domain Plan](./docs/deployment/CHATGPT_SITES_MIGRATION_PLAN.md)
-- [Phased Roadmap](./docs/roadmap/PHASED_ROADMAP.md)
+- [Auphonic Public Reconstruction Matrix](./docs/research/AUPHONIC_PUBLIC_RECONSTRUCTION_MATRIX.md)
 - [Audio Quality Evaluation Plan](./docs/research/AUDIO_QUALITY_EVALUATION_PLAN.md)
 - [Dependency and License Matrix](./docs/research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
-- [Auphonic Capability and Research Boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
+
+## Current owner directive
+
+**Build the product now.**
+
+Do not spend the current development phase proving hosting compatibility, auditing Google hosting, planning DNS, or connecting the domain. ChatGPT Sites remains the intended later publication target, but it is not a prerequisite or workstream for the engine and Studio.
+
+The active build is:
+
+```text
+source
+  ↓
+probe / waveform / loudness / VAD / optional ASR and speakers
+  ↓
+Semantic Audio Map
+  ↓
+Processing Router
+  ├── protect / no-op
+  ├── deterministic filters
+  ├── admitted speech enhancement
+  └── regional processing
+  ↓
+Ampersand Adaptive Leveler
+  ↓
+conservative speaker-aware EQ / filtering
+  ↓
+final loudness + true-peak master
+  ↓
+WAV / MP3 / report / later audiogram outputs
+```
 
 ## Important governance boundary
 
@@ -36,28 +65,9 @@ Ampersand is not planned as a reverse-engineered implementation of Auphonic.
 
 Auphonic's current Terms of Service restrict using its services, outputs, derivatives, evaluations, insights, or learnings to develop, train, evaluate, benchmark, or improve a competing system, and restrict using outputs as reference material, ground truth, design input, or a quality target without a tailored arrangement.
 
-Accordingly, Ampersand's Audio Lab will use independent rights-cleared references, synthetic degradations, human listening, standards-based measurements, and legally admissible open baselines. Auphonic services and outputs are excluded from Ampersand research unless written permission specifically authorizes the intended activity.
+Accordingly, Ampersand's Audio Lab uses independent rights-cleared references, synthetic degradations, human listening, standards-based measurements, and legally admissible open baselines. Auphonic services and outputs are excluded from Ampersand research unless written permission specifically authorizes the activity.
 
-See the full [research boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md).
-
-## Hosting and deployment boundary
-
-ChatGPT Sites is the target host for Ampersand's supported public web experience, Studio UI, and lightweight control functions.
-
-ChatGPT Sites is **not** the target runtime for:
-
-- FFmpeg and native DSP;
-- GPU inference;
-- long-running workflow orchestration;
-- model caches;
-- large temporary processing data;
-- the Audio Lab.
-
-Those capabilities remain independently deployable behind versioned APIs and durable workflow contracts.
-
-GitHub remains the source of truth. Sites releases must be saved and reviewed against a known Git commit before deployment. The current Google-hosted deployment remains rollback until the Sites/custom-domain acceptance plan passes.
-
-See [ADR-0006](./docs/decisions/ADR-0006-CHATGPT-SITES-WEB-CONTROL-PLANE.md) and the [migration plan](./docs/deployment/CHATGPT_SITES_MIGRATION_PLAN.md).
+See the [research boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md).
 
 ## What is in the repository today
 
@@ -72,61 +82,67 @@ The current source is an early React/Vite audiogram prototype with:
 
 This implementation is useful as history and concept validation, but it is **not the V2 architecture** and should not be treated as production-ready.
 
-The file-level preservation and replacement decisions are documented in [Legacy Salvage Matrix](./docs/research/LEGACY_SALVAGE_MATRIX.md).
+See [Legacy Salvage Matrix](./docs/research/LEGACY_SALVAGE_MATRIX.md).
 
-## V2 development order
+## Active build order
 
-1. planning authority and governance;
-2. rights-cleared Audio Lab and listening harness;
-3. deterministic DSP baseline and Ampersand Leveler V0;
-4. model/processor bake-offs with clean-input preservation;
-5. durable upload/storage/workflow architecture proof;
-6. ChatGPT Sites compatibility and external-processing boundary proof;
-7. singletrack Studio alpha;
-8. production hardening;
-9. parallel Sites deployment and custom-domain cutover;
-10. deterministic editing, captions, and audiograms;
-11. automation, publishing, and multitrack research.
+### Immediate wave
 
-The project deliberately does **not** begin with a major UI rewrite or immediate DNS cutover. Audio quality, legal admissibility, reproducibility, privacy, worker recovery, hosting compatibility, and rollback are the first product risks to prove.
+1. #3 — V2 workspace/refoundation
+2. #12 — dependency/model admission manifests
+3. #21 — core contracts and local processing CLI
+4. #22 — Semantic Audio Map V0
+5. #6 — deterministic DSP and Adaptive Leveler V0
+6. #4/#5 — rights-cleared fixtures and minimal quality harness
 
-## Contribution rules during refoundation
+### Integration wave
+
+7. #7 — enhancement candidates
+8. #8 — ASR/alignment/diarization providers
+9. #23 — Processing Router V0
+10. #9/#10 — durable workflow and storage lifecycle
+11. #24 — durable singletrack engine
+
+### Product wave
+
+12. #11 — waveform/edit contracts
+13. #25 — Studio MVP
+14. #26 — Original/Master A/B and report
+15. #13 — one-hour product proof
+16. #27 — deterministic audiogram rendering
+
+After these produce a working product, publish the compatible web application to ChatGPT Sites and connect the domain as a release task.
+
+## Contribution rules
 
 Before adding a dependency or model:
 
-- verify the exact code license;
-- verify the exact checkpoint/model license;
+- verify exact code and checkpoint licenses;
 - record provenance and hashes;
 - review training-data/gated-access terms;
-- run the applicable Ampersand quality tests;
-- document runtime, privacy, and rollback behavior;
+- run applicable quality and clean-preservation tests;
+- document runtime, privacy, contraindications, and rollback;
 - link an approving issue/PR or ADR.
 
-Before changing architecture or hosting:
+Before changing architecture:
 
 - update or supersede the relevant ADR;
 - keep provider-specific state out of core domain schemas;
 - preserve immutable source and reproducible manifests;
 - avoid production dependencies on unapproved Lab-only components;
-- preserve the external-worker boundary;
-- never commit secret values or place them in `.openai/hosting.json`;
-- save and review a Sites version before deployment;
-- do not change DNS until the custom-domain issue explicitly enters cutover;
-- keep Google hosting available until rollback-safe acceptance passes.
+- preserve no-op/protected paths;
+- implement the issue's working acceptance criteria rather than expanding speculative planning.
 
 ## Legacy execution
 
 The legacy prototype should be preserved with a permanent tag before structural refactoring. Its old Auphonic integration must not be used in the Ampersand Audio Lab or as a product-quality benchmark.
 
-Updated legacy run instructions, if still needed, should live with the legacy tag rather than define the V2 project README.
-
 ## Current planning branch
 
 `docs/ampersand-v2-research-plan-2026-08`
 
-## Governing epics
+## Governing epic
 
-- #14 — Ampersand V2 independent audio intelligence and singletrack foundation
-- #20 — ChatGPT Sites migration, external processing boundary, and custom-domain cutover
+- #14 — Ampersand V2 engine, Studio, and singletrack foundation
 
-The next implementation work should be created from the gated roadmap and linked back to the relevant planning document.
+Issues #16–#20 were closed because they over-prioritized hosting proof before product implementation.
