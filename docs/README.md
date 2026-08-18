@@ -17,10 +17,11 @@ The documents here are intentionally separated into product, research, architect
 5. [Audio Quality Evaluation Plan](./research/AUDIO_QUALITY_EVALUATION_PLAN.md)
 6. [Auphonic Capability and Research Boundary](./research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
 7. [Auphonic Public Reconstruction Matrix](./research/AUPHONIC_PUBLIC_RECONSTRUCTION_MATRIX.md)
-8. [Open-Source Dependency and License Matrix](./research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
-9. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
-10. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
-11. [Source Register](./research/SOURCE_REGISTER.md)
+8. [Auphonic Public Technical Evidence Ledger](./research/AUPHONIC_PUBLIC_TECHNICAL_EVIDENCE_LEDGER.md)
+9. [Open-Source Dependency and License Matrix](./research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
+10. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
+11. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
+12. [Source Register](./research/SOURCE_REGISTER.md)
 
 ## Architecture decision records
 
