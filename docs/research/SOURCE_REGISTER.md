@@ -40,14 +40,20 @@ Rules:
 | [ITU-R BS.1770-5](https://www.itu.int/rec/R-REC-BS.1770-5-202311-I/en) | Current in-force loudness and true-peak measurement algorithms | Measurement authority |
 | [EBU R128](https://tech.ebu.ch/publications/r128) | Loudness normalization and permitted maximum level guidance | Product recipe/output guidance |
 | [Google ViSQOL](https://github.com/google/visqol) | Apache-2.0 full-reference quality estimator with documented use limitations | Diagnostic only; not sole promotion judge |
+| [pystoi](https://github.com/mpariente/pystoi) | STOI/eSTOI intrusive intelligibility implementation | MIT; use only where clean references exist |
+| [Microsoft DNS Challenge](https://github.com/microsoft/DNS-Challenge) | P.835-style speech/noise/overall evaluation references and challenge tooling | Code and each dataset/source require separate rights review |
+| [NISQA](https://github.com/gabrielmittag/NISQA) | Non-intrusive speech quality research reference | Code may be permissive, but commonly published weights are noncommercial/share-alike; not production-selection logic |
 
 ## Media, measurement, and corpus tooling
 
 | Source | Proposed role | License/status note |
 |---|---|---|
 | [FFmpeg](https://ffmpeg.org/) | Probe, decode, resample, filter, encode, mux, render | LGPL/GPL depends on build configuration; approved build profile required |
+| [FFmpeg Audio Filters](https://ffmpeg.org/ffmpeg-filters.html) | Official behavior for loudnorm, denoise, dynamics, clipping, gating, and other deterministic baselines | An execution/filter reference, not Ampersand's semantic intelligence |
 | [libebur128](https://github.com/jiixyj/libebur128) | R128 loudness/LRA/true-peak measurements | MIT |
+| [libsoxr](https://github.com/chirlu/soxr) | High-quality configurable sample-rate conversion | LGPL-2.1+; include in approved native-build profile |
 | [audiomentations](https://github.com/iver56/audiomentations) | Deterministic degradation generation | MIT |
+| [pyroomacoustics](https://github.com/LCAV/pyroomacoustics) | Room simulation, beamforming, separation, and corpus/research utilities | MIT; Lab/corpus tool, not production engine |
 | [OpenTimelineIO](https://github.com/AcademySoftwareFoundation/OpenTimelineIO) | NLE/timeline interchange | Apache-2.0; adapter support varies |
 | [rclone](https://github.com/rclone/rclone) | Generic external file destinations | MIT; provider terms/credentials remain separate |
 
@@ -59,7 +65,7 @@ Rules:
 | [tusd](https://github.com/tus/tusd) | TUS server/self-hosted upload fallback | MIT |
 | [Supabase](https://github.com/supabase/supabase) | Postgres/Auth/Storage/Realtime managed or self-host candidate | Apache-2.0 repository; managed terms separate |
 | [WaveSurfer.js](https://github.com/katspaugh/wavesurfer.js) | Waveform playback/regions candidate | BSD-3-Clause; precomputed peaks needed for long files |
-| [Peaks.js](https://github.com/bbc/peaks.js) | Long-form waveform/segments alternative | LGPL-3.0; development location/status must be rechecked |
+| [Peaks.js](https://github.com/bbc/peaks.js) | Long-form waveform/segments alternative | LGPL-3.0; active development has moved from GitHub to Codeberg |
 | [BBC audiowaveform](https://github.com/bbc/audiowaveform) | Peak generation reference/tool | GPLv3; not default production choice without legal review |
 | [waveform-data.js](https://github.com/bbc/waveform-data.js) | Waveform data representation | LGPL-3.0 |
 
@@ -73,18 +79,22 @@ Rules:
 | [speaker-diarization-community-1 model card](https://huggingface.co/pyannote/speaker-diarization-community-1) | Candidate diarization pipeline | CC BY 4.0 and gated/user-agreement requirements reported; verify live card |
 | [MOSS-Transcribe-Diarize](https://github.com/OpenMOSS/MOSS-Transcribe-Diarize) | New joint ASR/diarization/events candidate | Apache-2.0 reported for repo/model; very new; exact artifact required |
 | [moss-transcribe.cpp](https://github.com/OpenMOSS/moss-transcribe.cpp) | Emerging CPU/local MOSS inference | MIT implementation; upstream model terms separate |
+| [NVIDIA Parakeet-TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) | Fast long-form timestamped ASR challenger | Official model card reports CC BY 4.0, 25 European languages, word/segment timestamps; separate diarization required |
 | [PANNs](https://github.com/qiuqiangkong/audioset_tagging_cnn) | Semantic audio classification baseline | MIT repository; checkpoint verification required |
 | [OpenAI Whisper](https://github.com/openai/whisper) | ASR foundation/reference | MIT repository; converted/runtime artifacts still require provenance |
 
-## Speech enhancement and restoration
+## Speech enhancement, dereverberation, separation, and restoration
 
 | Source | Proposed role | License/model note |
 |---|---|---|
 | [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet) | Full-band speech enhancement baseline | Dual MIT/Apache-2.0 repository; verify exact checkpoint |
 | [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) | Enhancement, separation, super-resolution, target-speaker extraction | Apache-2.0 repository; model-by-model verification required |
+| [nara_wpe](https://github.com/fgnt/nara_wpe) | Weighted Prediction Error dereverberation baseline | MIT; Lab first, especially multichannel/far-field |
 | [Resemble Enhance](https://github.com/resemble-ai/resemble-enhance) | Restorative denoise/bandwidth experiment | MIT repository; verify checkpoint/provenance/maturity |
 | [RNNoise](https://github.com/xiph/rnnoise) | Lightweight neural-denoise fallback | BSD-3-Clause repository |
 | [Audio Separator](https://github.com/nomadkaraoke/python-audio-separator) | Lab separation-model wrapper | Wrapper/model licenses differ; verify every model |
+| [Asteroid](https://github.com/asteroid-team/asteroid) | Speech separation/enhancement research toolkit | MIT; Lab/reference framework rather than first production runtime |
+| [SpeechBrain](https://github.com/speechbrain/speechbrain) | Broad speech enhancement/separation/speaker research toolkit | Apache-2.0; Lab/reference framework |
 | [Backblaze DeepFilterNet batch sample](https://github.com/backblaze-b2-samples/deepfilternet-batch-speech-enhancement) | Implementation reference for object storage + batch enhancement | MIT sample; not automatically our architecture |
 
 Projects such as VoiceRestore or Cathar remain watchlist items until their canonical source, checkpoint terms, maintenance, and security are recorded here.
@@ -93,17 +103,20 @@ Projects such as VoiceRestore or Cathar remain watchlist items until their canon
 
 | Source | Relevance | License/status note |
 |---|---|---|
-| [Hatchet](https://github.com/hatchet-dev/hatchet) | Python/TS task and durable-workflow candidate | MIT; must pass long-run/fault injection |
-| [Temporal](https://github.com/temporalio/temporal) | Mature durable execution candidate | MIT service; SDK and managed terms separate |
-| [Temporal Python SDK](https://github.com/temporalio/sdk-python) | Python-worker integration | MIT; verify version compatibility |
-| [Prefect](https://github.com/PrefectHQ/prefect) | Python-native workflow candidate | Apache-2.0; managed/self-host feature boundaries must be tested |
+| [Temporal](https://github.com/temporalio/temporal) | Current technical lead for production durable execution | MIT; event-sourced durable workflows; managed/self-host economics and spike still required |
+| [Temporal Python SDK](https://github.com/temporalio/sdk-python) | Python-worker integration | MIT; workflow determinism, activity idempotency, heartbeat/cancellation tests required |
+| [Temporal documentation](https://docs.temporal.io/) | Workflow recovery, deterministic code, activities, retries, versioning | Primary operational reference |
+| [Prefect](https://github.com/PrefectHQ/prefect) | Preferred Audio Lab workflow candidate | Apache-2.0; compare managed/self-host boundaries |
+| [Hatchet](https://github.com/hatchet-dev/hatchet) | Simpler Python/TS durable-task challenger | MIT; must pass multi-day and database/recovery fault injection before selection |
 
-The provider decision remains open under ADR-0004.
+The provider decision remains formally open under ADR-0004.
 
-## Editing and rendering references
+## Rendering, subtitles, and editing references
 
 | Source | Relevance | License/status note |
 |---|---|---|
+| [@napi-rs/canvas](https://github.com/Brooooooklyn/canvas) | Node/Skia frame rendering candidate | MIT; prototype shared render-spec performance and font behavior |
+| [libass](https://github.com/libass/libass) | Mature ASS/SSA subtitle rendering through FFmpeg | ISC; strong burn-in candidate |
 | [Dawn-Cut](https://github.com/kwakseongjae/dawn-cut) | Deterministic edit-core architecture candidate | MIT reported; young; code audit required |
 | [CutScript](https://github.com/DataAnts-AI/CutScript) | WhisperX/DeepFilterNet/text-edit/FFmpeg implementation reference | MIT reported; young desktop architecture |
 | [Auto-Editor](https://github.com/WyattBlue/auto-editor) | Silence/loudness edit and timeline export reference | Pin exact open CLI version; current product boundaries require verification |
@@ -120,7 +133,8 @@ These may inform independent research but require explicit legal architecture be
 - Essentia — AGPL in standard open distribution;
 - Matchering — GPL;
 - NISQA public pretrained weights — commonly noncommercial/share-alike;
-- any current source-available/noncommercial release of Rescript.
+- any current source-available/noncommercial release of Rescript;
+- Mutagen — GPL-2+; avoid casually embedding it in a proprietary distribution when FFmpeg/other metadata paths suffice.
 
 ## Ampersand legacy repository evidence
 
@@ -147,13 +161,16 @@ Before Phase 1 implementation:
 - exact DeepFilterNet checkpoint license/hash;
 - selected ClearerVoice checkpoint licenses/hashes;
 - Silero packaged model license/hash;
-- PANNs checkpoint provenance;
+- Parakeet model/runtime and attribution snapshot;
 - MOSS artifact/runtime requirements and license snapshot;
-- ViSQOL build/dependency manifest;
+- PANNs checkpoint provenance;
+- approved diarization pipeline terms;
+- ViSQOL/pystoi and any additional metric build/dependency manifests;
 - current waveform UI maintenance and license status;
-- managed Supabase terms, export, retention, and cost;
-- Hatchet/Temporal/Prefect current releases and managed/self-host terms;
+- managed storage/auth provider terms, export, retention, and cost;
+- Temporal/Hatchet/Prefect current releases and managed/self-host terms;
 - exact Dawn-Cut and Auto-Editor commits/licenses;
-- current FFmpeg build profile and codec obligations.
+- current FFmpeg/libsoxr build profile and codec obligations;
+- @napi-rs/canvas and libass font/render parity behavior.
 
 Before public release, every live link and changing term in this register must be re-verified and archived in the release record.
