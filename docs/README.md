@@ -12,13 +12,14 @@ The documents here are intentionally separated into product, research, architect
 
 1. [Master Plan](./MASTER_PLAN.md)
 2. [Target Architecture](./architecture/TARGET_ARCHITECTURE.md)
-3. [Phased Roadmap](./roadmap/PHASED_ROADMAP.md)
-4. [Audio Quality Evaluation Plan](./research/AUDIO_QUALITY_EVALUATION_PLAN.md)
-5. [Auphonic Capability and Research Boundary](./research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
-6. [Open-Source Dependency and License Matrix](./research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
-7. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
-8. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
-9. [Source Register](./research/SOURCE_REGISTER.md)
+3. [Technology and Algorithm Direction](./architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md)
+4. [Phased Roadmap](./roadmap/PHASED_ROADMAP.md)
+5. [Audio Quality Evaluation Plan](./research/AUDIO_QUALITY_EVALUATION_PLAN.md)
+6. [Auphonic Capability and Research Boundary](./research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
+7. [Open-Source Dependency and License Matrix](./research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
+8. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
+9. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
+10. [Source Register](./research/SOURCE_REGISTER.md)
 
 ## Architecture decision records
 
