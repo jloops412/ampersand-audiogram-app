@@ -1,20 +1,97 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Ampersand
 
-# Run and deploy your AI Studio app
+**Status:** V2 research, architecture, and refoundation planning  
+**Current implementation:** legacy audiogram prototype  
+**Last planning update:** 2026-08-18
 
-This contains everything you need to run your app locally.
+Ampersand is being refounded as an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1YvDF2_U_I6X2RFqOriTchUMgZ8vD3X7E
+The intended product combines:
 
-## Run Locally
+- conservative automatic spoken-word cleanup;
+- content- and speaker-aware leveling;
+- standards-based loudness and true-peak mastering;
+- transcripts, speakers, and a semantic audio timeline;
+- understandable Original/Master comparison and regional overrides;
+- deterministic outputs and provenance;
+- later transcript-driven editing, captions, audiograms, social clips, automation, and multitrack processing.
 
-**Prerequisites:**  Node.js
+## Start with the planning authority
 
+- [Ampersand V2 documentation index](./docs/README.md)
+- [Master Plan](./docs/MASTER_PLAN.md)
+- [Target Architecture](./docs/architecture/TARGET_ARCHITECTURE.md)
+- [Phased Roadmap](./docs/roadmap/PHASED_ROADMAP.md)
+- [Audio Quality Evaluation Plan](./docs/research/AUDIO_QUALITY_EVALUATION_PLAN.md)
+- [Dependency and License Matrix](./docs/research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
+- [Auphonic Capability and Research Boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Important governance boundary
+
+Ampersand is not planned as a reverse-engineered implementation of Auphonic.
+
+Auphonic's current Terms of Service restrict using its services, outputs, derivatives, evaluations, insights, or learnings to develop, train, evaluate, benchmark, or improve a competing system, and restrict using outputs as reference material, ground truth, design input, or a quality target without a tailored arrangement.
+
+Accordingly, Ampersand's Audio Lab will use independent rights-cleared references, synthetic degradations, human listening, standards-based measurements, and legally admissible open baselines. Auphonic services and outputs are excluded from Ampersand research unless written permission specifically authorizes the intended activity.
+
+See the full [research boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md).
+
+## What is in the repository today
+
+The current source is an early React/Vite audiogram prototype with:
+
+- several waveform visualization styles;
+- background image and text controls;
+- basic SRT/VTT transcript import;
+- a browser canvas preview;
+- browser real-time WebM rendering;
+- a legacy Express proxy to Auphonic.
+
+This implementation is useful as history and concept validation, but it is **not the V2 architecture** and should not be treated as production-ready.
+
+The file-level preservation and replacement decisions are documented in [Legacy Salvage Matrix](./docs/research/LEGACY_SALVAGE_MATRIX.md).
+
+## V2 development order
+
+1. planning authority and governance;
+2. rights-cleared Audio Lab and listening harness;
+3. deterministic DSP baseline and Ampersand Leveler V0;
+4. model/processor bake-offs with clean-input preservation;
+5. durable upload/storage/workflow architecture proof;
+6. singletrack Studio alpha;
+7. production hardening;
+8. deterministic editing, captions, and audiograms;
+9. automation, publishing, and multitrack research.
+
+The project deliberately does **not** begin with a major UI rewrite. Audio quality, legal admissibility, reproducibility, privacy, and worker recovery are the first product risks to prove.
+
+## Contribution rules during refoundation
+
+Before adding a dependency or model:
+
+- verify the exact code license;
+- verify the exact checkpoint/model license;
+- record provenance and hashes;
+- review training-data/gated-access terms;
+- run the applicable Ampersand quality tests;
+- document runtime, privacy, and rollback behavior;
+- link an approving issue/PR or ADR.
+
+Before changing architecture:
+
+- update or supersede the relevant ADR;
+- keep provider-specific state out of core domain schemas;
+- preserve immutable source and reproducible manifests;
+- avoid production dependencies on unapproved Lab-only components.
+
+## Legacy execution
+
+The legacy prototype should be preserved with a permanent tag before structural refactoring. Its old Auphonic integration must not be used in the Ampersand Audio Lab or as a product-quality benchmark.
+
+Updated legacy run instructions, if still needed, should live with the legacy tag rather than define the V2 project README.
+
+## Current planning branch
+
+`docs/ampersand-v2-research-plan-2026-08`
+
+The next implementation work should be created from the gated roadmap and linked back to the relevant planning document.
