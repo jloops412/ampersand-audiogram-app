@@ -26,6 +26,10 @@ Auphonic services and outputs are excluded from this evaluation unless written p
 
 ## Corpus structure
 
+### Current implementation checkpoint
+
+[Synthetic Fixture Corpus V0](./SYNTHETIC_FIXTURE_CORPUS_V0.md) now provides deterministic mathematical controls, clean/degraded lineage, development/validation/withheld partition semantics, and an opt-in one-hour durability stream. It is sufficient for automated control-law, protection, transition, channel, reproducibility, and pipeline tests. It is deliberately insufficient for human quality promotion; Tier A/C real recordings and blinded listening remain required.
+
 ### Tier A — Clean reference speech
 
 Purpose:

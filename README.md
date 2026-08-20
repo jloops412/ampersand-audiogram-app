@@ -27,7 +27,9 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - an Ampersand-owned, zero-model-cost energy/spectral VAD baseline;
 - provider-normalization adapters, deduplicated provenance, raw audit artifacts, and explicit conflicts;
 - a local Semantic Map visual debug report and safe protect/no-op/eligible decisions;
+- a deterministic Adaptive Leveler V0 shadow envelope with bounded speaker/content-aware gain and Studio-ready reasoning;
 - deterministic two-pass WAV/MP3 loudness mastering;
+- a versioned, rights-clear synthetic Audio Lab corpus with controls, degradations, lineage, and an opt-in one-hour stream;
 - output validation, provenance, step manifests, and an understandable report;
 - tests that reproduce manifests and media hashes across repeated runs.
 
@@ -45,6 +47,8 @@ uv run --package ampersand-media-worker ampersand-engine process \
   --output /tmp/ampersand-production
 ```
 
+Generate the broader deterministic Audio Lab controls separately with `uv run ampersand-generate-corpus /tmp/ampersand-fixture-corpus`.
+
 The output directory contains:
 
 ```text
@@ -58,7 +62,9 @@ semantic-map-debug.html
 provider-native/*.json
 provider-native/*.manifest.json
 processing-plan.json
+leveler-settings.json
 gain-envelope.json
+leveler-statistics.json
 recipe.json
 production.json
 production-run.json
@@ -79,7 +85,7 @@ uv run mypy
 uv run pytest
 ```
 
-See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md) and [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md) for the reproducibility, privacy, cost, validation, fusion, and rollback contracts.
+See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md), [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md), [Adaptive Leveler V0](./docs/architecture/ADAPTIVE_LEVELER_V0.md), and [Synthetic Fixture Corpus V0](./docs/research/SYNTHETIC_FIXTURE_CORPUS_V0.md) for the reproducibility, privacy, cost, validation, fusion, and rollback contracts.
 
 ## Repository responsibilities
 

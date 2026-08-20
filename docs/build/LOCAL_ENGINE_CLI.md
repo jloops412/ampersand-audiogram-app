@@ -20,6 +20,14 @@ uv run --package ampersand-media-worker ampersand-engine process \
 
 The output path must not exist. The engine refuses to overwrite it and publishes no partial directory when a step fails.
 
+For controlled Leveler, protection, channel, degradation, and long-form inputs, generate the versioned corpus separately:
+
+```bash
+uv run ampersand-generate-corpus /tmp/ampersand-fixture-corpus
+```
+
+See [Synthetic Fixture Corpus V0](../research/SYNTHETIC_FIXTURE_CORPUS_V0.md). Generated voice-shaped controls are technical fixtures, not substitutes for rights-cleared human speech or listening tests.
+
 ## Deterministic graph
 
 1. Validate the local file and normalize ffprobe metadata.
