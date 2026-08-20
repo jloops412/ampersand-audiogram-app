@@ -28,6 +28,7 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - provider-normalization adapters, deduplicated provenance, raw audit artifacts, and explicit conflicts;
 - a local Semantic Map visual debug report and safe protect/no-op/eligible decisions;
 - a deterministic Adaptive Leveler V0 shadow envelope with bounded speaker/content-aware gain and Studio-ready reasoning;
+- a sample-accurate, channel-linked, evaluation-only Leveler renderer that leaves production masters unchanged;
 - deterministic two-pass WAV/MP3 loudness mastering;
 - a versioned, rights-clear synthetic Audio Lab corpus with controls, degradations, lineage, and an opt-in one-hour stream;
 - a local-only blinded listening/regression harness with deterministic loudness-matched Original/A/B and clean-input
@@ -56,6 +57,15 @@ Prepare a versioned listening experiment and serve it only on localhost:
 ```bash
 uv run ampersand-listening prepare /absolute/path/to/experiment.json --output /tmp/listening-session
 uv run ampersand-listening serve /tmp/listening-session
+```
+
+Render a shadow Leveler envelope only for that evaluation workflow:
+
+```bash
+uv run --package ampersand-media-worker ampersand-engine render-leveler-candidate \
+  /absolute/path/to/exact-analysis-source.wav \
+  /tmp/ampersand-production/gain-envelope.json \
+  --output /tmp/ampersand-leveler-candidate
 ```
 
 The output directory contains:
@@ -97,6 +107,7 @@ uv run pytest
 See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md),
 [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md),
 [Adaptive Leveler V0](./docs/architecture/ADAPTIVE_LEVELER_V0.md),
+[Leveler Gain Renderer V0](./docs/architecture/LEVELER_GAIN_RENDERER_V0.md),
 [Synthetic Fixture Corpus V0](./docs/research/SYNTHETIC_FIXTURE_CORPUS_V0.md), and
 [Blinded Listening and Regression Harness V0](./docs/research/BLINDED_LISTENING_HARNESS_V0.md) for the reproducibility,
 privacy, cost, validation, evaluation, and rollback contracts.

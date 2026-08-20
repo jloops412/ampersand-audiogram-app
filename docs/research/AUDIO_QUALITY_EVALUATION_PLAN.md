@@ -36,6 +36,10 @@ versioned descriptive report needed to start #6/#7 pilots. It does not satisfy f
 rights-cleared human recordings, multiple listeners, power analysis, controlled access/deletion, and explicit human
 approval remain open.
 
+[Leveler Gain Renderer V0](../architecture/LEVELER_GAIN_RENDERER_V0.md) now creates separately labeled,
+sample-accurate Leveler candidates for those pilots without changing the production master path. Automated continuity,
+clipping, determinism, and channel checks are preconditions; human click/pumping/naturalness review remains mandatory.
+
 ### Tier A — Clean reference speech
 
 Purpose:
