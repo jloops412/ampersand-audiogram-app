@@ -8,7 +8,7 @@
 
 Build the actual Ampersand engine and Studio now.
 
-ChatGPT Sites and the custom domain remain the intended later publishing destination, but hosting migration, DNS work, and Sites-specific proof are not current engineering priorities and must not block implementation.
+OpenAI Sites is now the active web/Studio and lightweight control-plane destination. Sites work and engine work proceed together behind versioned contracts; neither may become an excuse to postpone the other. FFmpeg, native DSP, GPU inference, long-running durable workflows, large temporary processing, and authoritative rendering remain externally deployable. Custom-domain/DNS cutover remains deferred until the product is strong.
 
 ## Product target for the first working release
 
@@ -427,11 +427,13 @@ This follows the working mastering Studio. It does not precede the engine.
 Agents should begin these in parallel where dependencies permit:
 
 1. **#3** V2 workspace/refoundation;
-2. **#12** dependency/model manifest gate;
-3. **#21** core engine contracts and local CLI;
-4. **#22** Semantic Audio Map V0 schema/fusion;
-5. **#6** deterministic mastering and Leveler V0 using fixture inputs;
-6. **#4/#5** minimum fixture corpus and listening/regression harness.
+2. **#17** Sites product/control-plane foundation;
+3. **#18** durable D1/R2/external-worker boundary;
+4. **#12** dependency/model manifest gate;
+5. **#21** core engine contracts and local CLI;
+6. **#22** Semantic Audio Map V0 schema/fusion;
+7. **#6** deterministic mastering and Leveler V0 using fixture inputs;
+8. **#4/#5** minimum fixture corpus and listening/regression harness.
 
 ## Next integration wave
 
@@ -448,7 +450,7 @@ Agents should begin these in parallel where dependencies permit:
 14. **#27** deterministic audiogram migration;
 15. transcript-driven edits and automatic cut suggestions;
 16. publishing automation;
-17. ChatGPT Sites release and domain connection;
+17. custom-domain connection and retirement of the legacy Google-hosted surface;
 18. multitrack and advanced restoration research.
 
 ---
@@ -475,4 +477,4 @@ The build is ready for user testing when all are true:
 
 ## Deployment note
 
-Once that build exists, publish the compatible web experience to ChatGPT Sites and connect the domain. That action should be handled as a release task, not as a prerequisite to building Ampersand.
+The Sites product/control plane is established during implementation. Connect the domain and retire the legacy Google-hosted surface only after the release-readiness criteria above are satisfied.
