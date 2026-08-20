@@ -1,6 +1,6 @@
 # Local Engine CLI
 
-**Status:** Issues #21/#22 foundation + Adaptive Leveler V0 shadow planning and evaluation rendering
+**Status:** Issues #21/#22 foundation + Processing Router/Adaptive Leveler V0 shadow planning and Leveler evaluation rendering
 **Runtime:** local CPU, FFmpeg/ffprobe, Python 3.12
 **External API cost:** $0
 
@@ -63,13 +63,15 @@ loudness stage and never changes `master.wav`; its `candidate.wav` must go throu
 8. Preserve checksummed provider-native frames separately and normalize them through provider-neutral adapters.
 9. Fuse a full-coverage Semantic Map V0 with soft probabilities, provenance, optional-provider failures, and explicit conflicts.
 10. Emit a local debug HTML report while protecting uncertain or unsupported content.
-11. Plan a deterministic Adaptive Leveler V0 shadow envelope from reliable, unprotected speech evidence.
-12. Emit versioned Leveler settings/statistics and a sample-time linear Gain Envelope, without rendering it.
-13. Keep short-term compression separate and regional processing protected pending promotion and Router gates.
-14. Run two-pass final loudness normalization.
-15. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
-16. Probe, measure, checksum, and validate outputs.
-17. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
+11. Build a deterministic, full-coverage Processing Router V0 shadow plan with reasons, fallbacks, and safe overrides.
+12. Emit versioned router settings/report artifacts without applying regional cleanup to production audio.
+13. Plan a deterministic Adaptive Leveler V0 shadow envelope from reliable, unprotected speech evidence.
+14. Emit versioned Leveler settings/statistics and a sample-time linear Gain Envelope, without rendering it.
+15. Keep short-term compression separate and every regional processor candidate shadow-only pending promotion gates.
+16. Run two-pass final loudness normalization.
+17. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
+18. Probe, measure, checksum, and validate outputs.
+19. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
 
 ## Reproducibility envelope
 
@@ -106,15 +108,16 @@ These are technical gates, not a human audio-quality promotion. Listening eviden
 
 ## Current limitation
 
-The local graph implements Adaptive Leveler V0 **planning in shadow mode**. A standalone evaluation command can render
-that envelope for blind testing, but the pipeline deliberately does not render it into the master. The bootstrap VAD
-cannot reliably separate music from speech, so active mode fails closed when music/protected-content evidence is
-unavailable. Only standards-based final loudness mastering currently affects production output.
+The local graph implements Processing Router V0 and Adaptive Leveler V0 **planning in shadow mode**. A standalone
+evaluation command can render the Leveler envelope for blind testing, but the pipeline deliberately renders no regional
+processor or Leveler candidate into the master. The bootstrap VAD cannot reliably separate music from speech, so the
+router fails closed to protection when region-level music evidence is unavailable. Only standards-based final loudness
+mastering currently affects production output.
 
 Checkpoint-backed VAD, ASR, diarization, reliable music classification, advanced defect detection, denoise, production
-activation of the sample-accurate gain renderer, short-term compression, speaker-aware EQ, the Processing Router, and
-audiogram rendering remain open. Human listening and no-click render evidence are mandatory before active Leveler
-promotion.
+activation of the sample-accurate gain renderer, short-term compression, speaker-aware EQ, active Router execution,
+and audiogram rendering remain open. Human listening and no-click render evidence are mandatory before active Leveler
+or processor promotion.
 
 ## Dependency and license impact
 
@@ -130,6 +133,7 @@ No model or checkpoint is downloaded or admitted. The VAD is first-party determi
 The V2 packages are additive and do not import the legacy runtime. Semantic Map `1.0.0` placeholders upgrade explicitly through `read_semantic_map()`; unsupported versions fail closed. Rollback can disable the V0 analysis stage and keep the protected placeholder without touching source or master media. Generated production directories can be deleted without touching their original source.
 
 See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for evidence/fusion details,
+[Processing Router V0](../architecture/PROCESSING_ROUTER_V0.md) for regional policy and promotion boundaries,
 [Adaptive Leveler V0](../architecture/ADAPTIVE_LEVELER_V0.md) for the control law and promotion boundary, and
 [Leveler Gain Renderer V0](../architecture/LEVELER_GAIN_RENDERER_V0.md) plus
 [Blinded Listening and Regression Harness V0](../research/BLINDED_LISTENING_HARNESS_V0.md) for local evaluation.

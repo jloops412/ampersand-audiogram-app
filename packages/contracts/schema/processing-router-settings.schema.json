@@ -1,0 +1,186 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "admitted_speech_denoise_model_manifest_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Admitted Speech Denoise Model Manifest Id"
+    },
+    "admitted_speech_denoise_processor_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Admitted Speech Denoise Processor Id"
+    },
+    "algorithm_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "denoise_strength": {
+      "default": 0.25,
+      "maximum": 0.5,
+      "minimum": 0.0,
+      "title": "Denoise Strength",
+      "type": "number"
+    },
+    "deterministic_filters_enabled": {
+      "default": true,
+      "title": "Deterministic Filters Enabled",
+      "type": "boolean"
+    },
+    "high_pass_cutoff_hz": {
+      "default": 70,
+      "maximum": 100,
+      "minimum": 40,
+      "title": "High Pass Cutoff Hz",
+      "type": "integer"
+    },
+    "high_pass_slope_db_per_octave": {
+      "const": 12,
+      "default": 12,
+      "title": "High Pass Slope Db Per Octave",
+      "type": "integer"
+    },
+    "maximum_ambience_probability": {
+      "default": 0.55,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Ambience Probability",
+      "type": "number"
+    },
+    "maximum_bandwidth_limit_probability": {
+      "default": 0.8,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Bandwidth Limit Probability",
+      "type": "number"
+    },
+    "maximum_clipping_probability": {
+      "default": 0.2,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Clipping Probability",
+      "type": "number"
+    },
+    "maximum_music_probability": {
+      "default": 0.35,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Music Probability",
+      "type": "number"
+    },
+    "maximum_overlap_probability": {
+      "default": 0.35,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Overlap Probability",
+      "type": "number"
+    },
+    "maximum_reverb_probability": {
+      "default": 0.7,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Reverb Probability",
+      "type": "number"
+    },
+    "maximum_silence_probability": {
+      "default": 0.4,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Silence Probability",
+      "type": "number"
+    },
+    "minimum_hum_probability_for_filter": {
+      "default": 0.8,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Hum Probability For Filter",
+      "type": "number"
+    },
+    "minimum_noise_probability_for_denoise": {
+      "default": 0.65,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Noise Probability For Denoise",
+      "type": "number"
+    },
+    "minimum_region_confidence": {
+      "default": 0.6,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Region Confidence",
+      "type": "number"
+    },
+    "minimum_rumble_probability_for_filter": {
+      "default": 0.75,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Rumble Probability For Filter",
+      "type": "number"
+    },
+    "minimum_speech_probability": {
+      "default": 0.62,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Speech Probability",
+      "type": "number"
+    },
+    "planning_mode": {
+      "const": "shadow",
+      "default": "shadow",
+      "title": "Planning Mode",
+      "type": "string"
+    },
+    "require_music_evidence_for_processing": {
+      "const": true,
+      "default": true,
+      "title": "Require Music Evidence For Processing",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "settings_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Settings Id",
+      "type": "string"
+    },
+    "speech_denoise_enabled": {
+      "default": false,
+      "title": "Speech Denoise Enabled",
+      "type": "boolean"
+    },
+    "transition_us": {
+      "default": 25000,
+      "maximum": 5000000,
+      "minimum": 0,
+      "title": "Transition Us",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "settings_id",
+    "algorithm_version"
+  ],
+  "title": "ProcessingRouterSettings",
+  "type": "object"
+}

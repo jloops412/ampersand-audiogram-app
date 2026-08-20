@@ -19,10 +19,10 @@
       "title": "Confidence",
       "type": "number"
     },
-    "end_us": {
-      "minimum": 0,
-      "title": "End Us",
-      "type": "integer"
+    "decision_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Decision Id",
+      "type": "string"
     },
     "fallback_processor_id": {
       "anyOf": [
@@ -61,7 +61,8 @@
       "type": "object"
     },
     "planning_only": {
-      "default": false,
+      "const": true,
+      "default": true,
       "title": "Planning Only",
       "type": "boolean"
     },
@@ -82,7 +83,6 @@
       "type": "string"
     },
     "reason_code": {
-      "default": "router:unspecified",
       "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
       "title": "Reason Code",
       "type": "string"
@@ -93,26 +93,14 @@
       "title": "Schema Version",
       "type": "string"
     },
-    "source": {
-      "default": "automatic",
-      "enum": [
-        "recipe",
-        "automatic",
-        "user_override"
-      ],
-      "title": "Source",
-      "type": "string"
-    },
-    "start_us": {
-      "minimum": 0,
-      "title": "Start Us",
-      "type": "integer"
-    },
-    "transition_us": {
-      "default": 0,
-      "minimum": 0,
-      "title": "Transition Us",
-      "type": "integer"
+    "semantic_region_ids": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Semantic Region Ids",
+      "type": "array"
     },
     "warning_codes": {
       "default": [],
@@ -125,14 +113,15 @@
     }
   },
   "required": [
+    "decision_id",
     "processing_region_id",
-    "start_us",
-    "end_us",
+    "semantic_region_ids",
     "action",
     "processor_id",
-    "confidence",
-    "reason"
+    "reason_code",
+    "reason",
+    "confidence"
   ],
-  "title": "ProcessingRegion",
+  "title": "ProcessingRouteDecision",
   "type": "object"
 }

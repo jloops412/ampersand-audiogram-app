@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "protect",
+        "bypass"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "end_us": {
+      "minimum": 0,
+      "title": "End Us",
+      "type": "integer"
+    },
+    "override_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Override Id",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "start_us": {
+      "minimum": 0,
+      "title": "Start Us",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "override_id",
+    "start_us",
+    "end_us",
+    "action",
+    "reason"
+  ],
+  "title": "ProcessingRouteOverride",
+  "type": "object"
+}

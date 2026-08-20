@@ -6,9 +6,9 @@
 
 **Renderer algorithm:** `0.1.0`
 
-**Media worker:** `0.4.0`
+**Media worker:** `0.5.0`
 
-**Contract package:** `0.6.0`
+**Contract package:** `0.7.0`
 
 **Runtime/cost:** local CPU, bounded working memory, $0 external API cost
 

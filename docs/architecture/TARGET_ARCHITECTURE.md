@@ -292,11 +292,16 @@ A half-open interval `[start_us, end_us)` with:
 
 - processor selection;
 - strength/parameters;
-- reason;
+- machine-readable reason code plus human explanation;
 - confidence;
 - source: automatic, recipe, or user override;
 - transition/crossfade policy;
-- bypass state.
+- bypass/protect state;
+- fallback processor and warning codes;
+- planning-only versus approved execution state.
+
+Processing Router V0 requires these regions to be unique, ordered, contiguous, and full coverage; its separate report
+retains the exact settings/plan hashes and every decision for Studio explanation and audit.
 
 ### Transcript
 

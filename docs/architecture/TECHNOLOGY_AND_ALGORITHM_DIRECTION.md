@@ -456,6 +456,10 @@ Every region decision includes:
 - fallback;
 - whether it was automatic or user-selected.
 
+[Processing Router V0](./PROCESSING_ROUTER_V0.md) now implements this output as a deterministic shadow plan with strict
+settings, safe protect/bypass overrides, full-coverage validation, and fail-closed processor/recipe admission. Active
+regional sample processing and processor promotion remain separate gates.
+
 ## 7. Ampersand Adaptive Leveler
 
 ### Objective

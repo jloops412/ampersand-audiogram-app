@@ -104,7 +104,7 @@ th {{ color: #9fb0bf; font-size: .78rem; text-transform: uppercase; }}
 </div>
 <section><h2>Warnings and unavailable adapters</h2><ul>{warning_items}</ul>
 <p class="muted">Unavailable: {html.escape(", ".join(semantic_map.unavailable_adapters) or "none")}</p></section>
-<section class="scroll"><h2>Region evidence</h2>{truncation}<table><thead><tr><th>Start</th><th>End</th><th>Label</th><th>Speech</th><th>Silence</th><th>Eligible</th><th>Evidence</th><th>Conflicts</th></tr></thead><tbody>{region_rows}</tbody></table></section>
+<section class="scroll"><h2>Region evidence</h2>{truncation}<table><thead><tr><th>Start</th><th>End</th><th>Label</th><th>Speech</th><th>Silence</th><th>Music</th><th>Noise</th><th>Rumble</th><th>Hum</th><th>Eligible</th><th>Evidence</th><th>Conflicts</th></tr></thead><tbody>{region_rows}</tbody></table></section>
 <p class="muted">Transcript text and local paths are intentionally omitted from this debug report.</p>
 </main></body></html>
 """
@@ -127,6 +127,8 @@ def _region_row(region: SemanticRegion) -> str:
         f"<tr><td>{region.start_us / 1_000_000:.3f}</td><td>{region.end_us / 1_000_000:.3f}</td>"
         f"<td>{html.escape(region.content_label)}</td><td>{_probability(region.speech_probability)}</td>"
         f"<td>{_probability(region.silence_probability)}</td>"
+        f"<td>{_probability(region.music_probability)}</td><td>{_probability(region.noise_probability)}</td>"
+        f"<td>{_probability(region.rumble_probability)}</td><td>{_probability(region.hum_probability)}</td>"
         f"<td>{html.escape(region.processing_eligibility.value)}</td>"
         f"<td>{len(region.observation_ids)}</td><td>{len(region.conflict_ids)}</td></tr>"
     )

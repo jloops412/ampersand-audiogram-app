@@ -136,6 +136,11 @@ def _fuse_region(
     ambience = probabilities[ObservationKind.AMBIENCE_PROBABILITY]
     noise = probabilities[ObservationKind.NOISE_PROBABILITY]
     overlap = probabilities[ObservationKind.OVERLAP_PROBABILITY]
+    clipping = probabilities[ObservationKind.CLIPPING_PROBABILITY]
+    rumble = probabilities[ObservationKind.RUMBLE_PROBABILITY]
+    hum = probabilities[ObservationKind.HUM_PROBABILITY]
+    reverb = probabilities[ObservationKind.REVERB_PROBABILITY]
+    bandwidth_limit = probabilities[ObservationKind.BANDWIDTH_LIMIT_PROBABILITY]
 
     label, confidence, eligibility = _classify_region(
         speech=speech,
@@ -161,6 +166,11 @@ def _fuse_region(
         ambience_probability=_rounded(ambience),
         noise_probability=_rounded(noise),
         overlap_probability=_rounded(overlap),
+        clipping_probability=_rounded(clipping),
+        rumble_probability=_rounded(rumble),
+        hum_probability=_rounded(hum),
+        reverb_probability=_rounded(reverb),
+        bandwidth_limit_probability=_rounded(bandwidth_limit),
         active_speaker=active_speaker,
         active_speaker_confidence=_rounded(active_speaker_confidence),
         protected=eligibility is not ProcessingEligibility.ELIGIBLE,

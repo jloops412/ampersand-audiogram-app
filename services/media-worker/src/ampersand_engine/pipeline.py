@@ -21,8 +21,9 @@ from ampersand_contracts import (
     OutputArtifact,
     OutputManifest,
     ProcessingPlan,
-    ProcessingRegion,
     ProcessingReport,
+    ProcessingRouterReport,
+    ProcessingRouterSettings,
     Production,
     ProductionRun,
     RunStatus,
@@ -48,6 +49,7 @@ from .hashing import sha256_file, sha256_text, stable_id
 from .leveler import build_adaptive_leveler, default_leveler_settings
 from .provider_artifacts import write_provider_artifact
 from .recipe_loader import load_recipe
+from .router import build_processing_router
 from .semantic_adapters import normalize_loudness_frames, normalize_vad_frames
 from .semantic_debug import write_semantic_debug_report
 from .semantic_fusion import fuse_semantic_map
@@ -102,7 +104,6 @@ def process_source(
     probe_id = stable_id("probe", run_fingerprint)
     waveform_id = stable_id("waveform", run_fingerprint)
     semantic_map_id = stable_id("semantic-map", run_fingerprint)
-    processing_plan_id = stable_id("processing-plan", run_fingerprint)
     analysis_manifest_id = stable_id("analysis", run_fingerprint)
     output_manifest_id = stable_id("output", run_fingerprint)
     processing_report_id = stable_id("report", run_fingerprint)
@@ -260,6 +261,19 @@ def process_source(
         write_manifest(stage / "semantic-map-v0.json", semantic_map)
         write_semantic_debug_report(stage / "semantic-map-debug.html", semantic_map)
 
+        _notify(progress, "build Processing Router V0 shadow plan")
+        router_result = build_processing_router(
+            semantic_map,
+            run_id=run_id,
+            recipe=recipe,
+        )
+        router_settings = router_result.settings
+        processing_plan = router_result.processing_plan
+        router_report = router_result.report
+        write_manifest(stage / "router-settings.json", router_settings)
+        write_manifest(stage / "processing-plan.json", processing_plan)
+        write_manifest(stage / "processing-router-report.json", router_report)
+
         _notify(progress, "plan Adaptive Leveler shadow candidate")
         leveler_settings = default_leveler_settings(activation_mode="shadow")
         leveler_result = build_adaptive_leveler(
@@ -282,6 +296,7 @@ def process_source(
             loudness_before=loudness_before,
             warnings=(
                 "Semantic Map V0 includes deterministic loudness/peak evidence and a conservative first-party VAD.",
+                "Processing Router V0 emits an auditable shadow plan and does not change production audio.",
                 "Adaptive Leveler V0 emits a deterministic shadow candidate that is not rendered into the master.",
                 "ASR, diarization, music classification, and advanced defect classification remain "
                 "optional/unavailable.",
@@ -289,32 +304,6 @@ def process_source(
         )
         write_manifest(stage / "analysis.json", analysis)
 
-        _notify(progress, "build protected processing plan")
-        processing_region = ProcessingRegion(
-            processing_region_id=stable_id("processing-region", run_fingerprint),
-            start_us=0,
-            end_us=probe.duration_us,
-            action="protect",
-            processor_id="processor:no-op-v0",
-            confidence=1.0,
-            reason=(
-                "Semantic analysis and a Leveler shadow candidate are available, but issue #23 routing and "
-                "Leveler listening/promotion gates are not active; preserve every region before final mastering."
-            ),
-            parameters={"wet_mix": 0.0},
-            transition_us=0,
-            source="recipe",
-        )
-        processing_plan = ProcessingPlan(
-            processing_plan_id=processing_plan_id,
-            run_id=run_id,
-            recipe_version_id=recipe.recipe_version_id,
-            semantic_map_id=semantic_map_id,
-            duration_us=probe.duration_us,
-            regions=(processing_region,),
-            global_steps=("adaptive-leveler-shadow", "two-pass-loudness-master", "output-validation"),
-        )
-        write_manifest(stage / "processing-plan.json", processing_plan)
         write_manifest(stage / "recipe.json", recipe)
 
         _notify(progress, "render deterministic WAV and MP3")
@@ -403,6 +392,9 @@ def process_source(
             analysis=analysis,
             semantic_map=semantic_map,
             processing_plan=processing_plan,
+            recipe_hash=recipe_sha,
+            router_settings=router_settings,
+            router_report=router_report,
             leveler_settings=leveler_settings,
             leveler_statistics=leveler_statistics,
             gain_envelope=gain_envelope,
@@ -456,6 +448,13 @@ def process_source(
                     f"{len(semantic_map.conflicts)} explicit conflicts."
                 ),
                 (
+                    f"Built Processing Router V0 in shadow mode with {router_report.protected_region_count} "
+                    f"protected, {router_report.bypassed_region_count} bypassed, "
+                    f"{router_report.deterministic_filter_region_count} deterministic-filter, "
+                    f"{router_report.denoise_region_count} denoise, and "
+                    f"{router_report.leveler_region_count} Leveler candidate regions."
+                ),
+                (
                     f"Planned Adaptive Leveler V0 in shadow mode: {leveler_statistics.eligible_region_count} "
                     f"eligible regions, {leveler_statistics.changed_region_count} proposed changes, and "
                     f"{leveler_statistics.gain_min_db:.2f} to {leveler_statistics.gain_max_db:.2f} dB gain."
@@ -470,6 +469,9 @@ def process_source(
                 "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
                 "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
                 "loudness_before": manifest_sha256(loudness_before),
+                "router_settings": manifest_sha256(router_settings),
+                "processing_plan": manifest_sha256(processing_plan),
+                "processing_router_report": manifest_sha256(router_report),
                 "leveler_settings": manifest_sha256(leveler_settings),
                 "gain_envelope": manifest_sha256(gain_envelope),
                 "leveler_statistics": manifest_sha256(leveler_statistics),
@@ -479,10 +481,12 @@ def process_source(
                 "output_manifest": manifest_sha256(output_manifest),
             },
             warnings=(
-                "Adaptive Leveler V0 is shadow-only in this pipeline until music/protected-content evidence and "
-                "human listening gates authorize rendering; no denoise is performed.",
+                "Processing Router V0 and Adaptive Leveler V0 are shadow-only in this pipeline until admitted "
+                "processors, music/protected-content evidence, and human listening gates authorize rendering; "
+                "no denoise, regional cleanup, or Leveler gain is applied.",
                 "The bootstrap VAD is conservative; ASR, diarization, and music classification are not required "
                 "for mastering.",
+                *router_report.warnings,
             ),
             external_api_cost_usd=0.0,
             privacy_summary=(
@@ -522,6 +526,9 @@ def _build_steps(
     analysis: AnalysisManifest,
     semantic_map: SemanticMap,
     processing_plan: ProcessingPlan,
+    recipe_hash: str,
+    router_settings: ProcessingRouterSettings,
+    router_report: ProcessingRouterReport,
     leveler_settings: AdaptiveLevelerSettings,
     leveler_statistics: LevelerStatistics,
     gain_envelope: GainEnvelope,
@@ -532,6 +539,8 @@ def _build_steps(
     analysis_hash = manifest_sha256(analysis)
     semantic_hash = manifest_sha256(semantic_map)
     plan_hash = manifest_sha256(processing_plan)
+    router_settings_hash = manifest_sha256(router_settings)
+    router_report_hash = manifest_sha256(router_report)
     leveler_settings_hash = manifest_sha256(leveler_settings)
     leveler_statistics_hash = manifest_sha256(leveler_statistics)
     gain_hash = manifest_sha256(gain_envelope)
@@ -566,11 +575,21 @@ def _build_steps(
             },
         ),
         (
-            "regional-protect-pending-router",
-            semantic_hash,
+            "processing-router-v0-shadow",
+            sha256_text(f"{semantic_hash}|{router_settings_hash}|{recipe_hash}"),
             JobStatus.SUCCEEDED,
-            (processing_plan.processing_plan_id,),
-            {},
+            (processing_plan.processing_plan_id, router_report.processing_router_report_id),
+            {
+                "planning_mode": router_settings.planning_mode,
+                "protected_region_count": router_report.protected_region_count,
+                "bypassed_region_count": router_report.bypassed_region_count,
+                "deterministic_filter_region_count": router_report.deterministic_filter_region_count,
+                "denoise_region_count": router_report.denoise_region_count,
+                "leveler_region_count": router_report.leveler_region_count,
+                "processing_plan_hash": plan_hash,
+                "router_report_hash": router_report_hash,
+                "applied_to_audio": False,
+            },
         ),
         (
             "adaptive-leveler-shadow",

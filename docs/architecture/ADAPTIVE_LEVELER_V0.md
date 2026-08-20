@@ -6,7 +6,7 @@
 
 **Algorithm version:** `0.1.0`
 
-**Contract package:** `0.6.0`
+**Contract package:** `0.7.0`
 
 **Runtime/cost:** local CPU, linear memory, $0 external API cost
 

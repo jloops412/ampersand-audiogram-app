@@ -105,6 +105,11 @@ restricts FFmpeg decode protocols to local file/pipe, writes decoded float PCM o
 deletes that temporary before atomic publication, refuses overwrite, and sends nothing externally. Its candidate and
 runtime report inherit the source's privacy/retention class and remain outside Git.
 
+Processing Router V0 consumes only normalized Semantic Map, recipe, settings, and safe override contracts. Its plan and
+report contain timeline decisions, probabilities, processor/manifest IDs, reasons, parameters, hashes, and warnings—not
+local source paths, signed URLs, credentials, transcript text, or provider-native payloads. V0 performs no network or
+model operation and cannot force an unadmitted processor through a user override.
+
 ## Identity and access control
 
 Requirements:

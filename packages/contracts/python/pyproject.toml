@@ -1,6 +1,6 @@
 [project]
 name = "ampersand-contracts"
-version = "0.6.0"
+version = "0.7.0"
 description = "Versioned provider-neutral domain contracts for Ampersand"
 requires-python = ">=3.12"
 dependencies = ["pydantic>=2.11,<3"]

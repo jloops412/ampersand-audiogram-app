@@ -40,6 +40,10 @@ approval remain open.
 sample-accurate Leveler candidates for those pilots without changing the production master path. Automated continuity,
 clipping, determinism, and channel checks are preconditions; human click/pumping/naturalness review remains mandatory.
 
+[Processing Router V0](../architecture/PROCESSING_ROUTER_V0.md) now emits versioned regional candidate/fallback reasons
+and explicit protection/no-op decisions. Its filter and denoise routes remain shadow-only; each active route still needs
+use-case-specific clean-preservation, protected-content, boundary, artifact, runtime, and human-listening evidence.
+
 ### Tier A — Clean reference speech
 
 Purpose:

@@ -1,6 +1,6 @@
 {
   "$defs": {
-    "ProcessingRegion": {
+    "ProcessingRouteDecision": {
       "additionalProperties": false,
       "properties": {
         "action": {
@@ -21,10 +21,10 @@
           "title": "Confidence",
           "type": "number"
         },
-        "end_us": {
-          "minimum": 0,
-          "title": "End Us",
-          "type": "integer"
+        "decision_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Decision Id",
+          "type": "string"
         },
         "fallback_processor_id": {
           "anyOf": [
@@ -63,7 +63,8 @@
           "type": "object"
         },
         "planning_only": {
-          "default": false,
+          "const": true,
+          "default": true,
           "title": "Planning Only",
           "type": "boolean"
         },
@@ -84,7 +85,6 @@
           "type": "string"
         },
         "reason_code": {
-          "default": "router:unspecified",
           "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
           "title": "Reason Code",
           "type": "string"
@@ -95,26 +95,14 @@
           "title": "Schema Version",
           "type": "string"
         },
-        "source": {
-          "default": "automatic",
-          "enum": [
-            "recipe",
-            "automatic",
-            "user_override"
-          ],
-          "title": "Source",
-          "type": "string"
-        },
-        "start_us": {
-          "minimum": 0,
-          "title": "Start Us",
-          "type": "integer"
-        },
-        "transition_us": {
-          "default": 0,
-          "minimum": 0,
-          "title": "Transition Us",
-          "type": "integer"
+        "semantic_region_ids": {
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Semantic Region Ids",
+          "type": "array"
         },
         "warning_codes": {
           "default": [],
@@ -127,37 +115,73 @@
         }
       },
       "required": [
+        "decision_id",
         "processing_region_id",
-        "start_us",
-        "end_us",
+        "semantic_region_ids",
         "action",
         "processor_id",
-        "confidence",
-        "reason"
+        "reason_code",
+        "reason",
+        "confidence"
       ],
-      "title": "ProcessingRegion",
+      "title": "ProcessingRouteDecision",
       "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
-    "duration_us": {
+    "algorithm_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "bypassed_region_count": {
       "minimum": 0,
-      "title": "Duration Us",
+      "title": "Bypassed Region Count",
       "type": "integer"
     },
-    "global_steps": {
+    "decisions": {
+      "items": {
+        "$ref": "#/$defs/ProcessingRouteDecision"
+      },
+      "minItems": 1,
+      "title": "Decisions",
+      "type": "array"
+    },
+    "denoise_region_count": {
+      "minimum": 0,
+      "title": "Denoise Region Count",
+      "type": "integer"
+    },
+    "deterministic_filter_region_count": {
+      "minimum": 0,
+      "title": "Deterministic Filter Region Count",
+      "type": "integer"
+    },
+    "external_api_cost_usd": {
+      "const": 0,
+      "default": 0,
+      "title": "External Api Cost Usd",
+      "type": "integer"
+    },
+    "leveler_region_count": {
+      "minimum": 0,
+      "title": "Leveler Region Count",
+      "type": "integer"
+    },
+    "override_ids": {
+      "default": [],
       "items": {
         "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
         "type": "string"
       },
-      "title": "Global Steps",
+      "title": "Override Ids",
       "type": "array"
     },
-    "no_op_is_valid": {
+    "planning_only": {
       "const": true,
       "default": true,
-      "title": "No Op Is Valid",
+      "title": "Planning Only",
       "type": "boolean"
     },
     "processing_plan_id": {
@@ -165,17 +189,31 @@
       "title": "Processing Plan Id",
       "type": "string"
     },
+    "processing_plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Processing Plan Sha256",
+      "type": "string"
+    },
+    "processing_router_report_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Processing Router Report Id",
+      "type": "string"
+    },
+    "production_audio_changed": {
+      "const": false,
+      "default": false,
+      "title": "Production Audio Changed",
+      "type": "boolean"
+    },
+    "protected_region_count": {
+      "minimum": 0,
+      "title": "Protected Region Count",
+      "type": "integer"
+    },
     "recipe_version_id": {
       "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
       "title": "Recipe Version Id",
       "type": "string"
-    },
-    "regions": {
-      "items": {
-        "$ref": "#/$defs/ProcessingRegion"
-      },
-      "title": "Regions",
-      "type": "array"
     },
     "run_id": {
       "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
@@ -192,17 +230,43 @@
       "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
       "title": "Semantic Map Id",
       "type": "string"
+    },
+    "settings_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Settings Id",
+      "type": "string"
+    },
+    "settings_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Settings Sha256",
+      "type": "string"
+    },
+    "warnings": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
     }
   },
   "required": [
-    "processing_plan_id",
+    "processing_router_report_id",
     "run_id",
-    "recipe_version_id",
     "semantic_map_id",
-    "duration_us",
-    "regions",
-    "global_steps"
+    "recipe_version_id",
+    "settings_id",
+    "settings_sha256",
+    "algorithm_version",
+    "processing_plan_id",
+    "processing_plan_sha256",
+    "decisions",
+    "protected_region_count",
+    "bypassed_region_count",
+    "deterministic_filter_region_count",
+    "denoise_region_count",
+    "leveler_region_count"
   ],
-  "title": "ProcessingPlan",
+  "title": "ProcessingRouterReport",
   "type": "object"
 }

@@ -4,7 +4,7 @@
 
 **Issue:** #5
 
-**Contract package:** `0.5.0`
+**Contract package:** `0.7.0`
 
 **Runtime/cost:** localhost, local CPU, FFmpeg/ffprobe, $0 external API cost
 

@@ -10,7 +10,10 @@ from ampersand_contracts import (
     JobStep,
     LevelerStatistics,
     OutputManifest,
+    ProcessingPlan,
     ProcessingReport,
+    ProcessingRouterReport,
+    ProcessingRouterSettings,
     ProviderNativeArtifactManifest,
     read_manifest,
     read_semantic_map,
@@ -55,6 +58,13 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     leveler_settings = read_manifest(first.output_directory / "leveler-settings.json", AdaptiveLevelerSettings)
     gain_envelope = read_manifest(first.output_directory / "gain-envelope.json", GainEnvelope)
     leveler_statistics = read_manifest(first.output_directory / "leveler-statistics.json", LevelerStatistics)
+    router_settings = read_manifest(first.output_directory / "router-settings.json", ProcessingRouterSettings)
+    processing_plan = read_manifest(first.output_directory / "processing-plan.json", ProcessingPlan)
+    router_report = read_manifest(
+        first.output_directory / "processing-router-report.json",
+        ProcessingRouterReport,
+    )
+    router_step = read_manifest(first.output_directory / "steps/processing-router-v0-shadow.json", JobStep)
     leveler_step = read_manifest(first.output_directory / "steps/adaptive-leveler-shadow.json", JobStep)
     assert output.validation_status == "valid"
     assert abs(output.loudness_after.integrated_lufs - output.target_integrated_lufs) <= 0.35
@@ -74,6 +84,17 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     assert leveler_settings.activation_mode == "shadow"
     assert leveler_statistics.activation_mode == "shadow"
     assert leveler_statistics.settings_sha256 == report.artifact_sha256["leveler_settings"]
+    assert router_report.settings_sha256 == report.artifact_sha256["router_settings"]
+    assert router_report.processing_plan_sha256 == report.artifact_sha256["processing_plan"]
+    assert report.artifact_sha256["processing_router_report"]
+    assert processing_plan.processing_plan_id == router_report.processing_plan_id
+    assert processing_plan.regions[0].start_us == 0
+    assert processing_plan.regions[-1].end_us == processing_plan.duration_us
+    assert all(region.planning_only for region in processing_plan.regions)
+    assert router_settings.planning_mode == "shadow"
+    assert router_report.planning_only
+    assert router_report.production_audio_changed is False
+    assert router_report.denoise_region_count == 0
     assert leveler_statistics.eligible_region_count > 0
     assert leveler_statistics.changed_region_count > 0
     assert leveler_statistics.maximum_gain_slope_db_per_second <= leveler_settings.max_gain_slope_db_per_second
@@ -83,6 +104,8 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     )
     assert leveler_step.step_key == "adaptive-leveler-shadow"
     assert leveler_step.metrics["applied_to_audio"] is False
+    assert router_step.step_key == "processing-router-v0-shadow"
+    assert router_step.metrics["applied_to_audio"] is False
     assert (first.output_directory / "loudness-before.json").is_file()
     assert (first.output_directory / "loudness-after.json").is_file()
     assert {provenance.provider_id for provenance in semantic_map.provenance_sources} == {

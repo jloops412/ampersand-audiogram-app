@@ -2,7 +2,11 @@
 
 This package is the first independent CPU media-engine baseline. It runs only against an explicitly supplied local file, performs no hosted processor calls, and emits canonical Ampersand manifests plus validated WAV and MP3 outputs.
 
-The current graph includes Semantic Audio Map V0: deterministic R128 timeline measurements, an Ampersand-owned confidence-bounded VAD, provider adapters, conflict-preserving fusion, raw audit artifacts, and a local debug report. It still protects all regional processing and performs only final loudness mastering until the Adaptive Leveler and Processing Router pass their gates.
+The current graph includes Semantic Audio Map V0, a conservative Processing Router V0 shadow plan, and Adaptive
+Leveler V0 shadow planning: deterministic R128 timeline measurements, an Ampersand-owned confidence-bounded VAD,
+provider adapters, conflict-preserving fusion, raw audit artifacts, explicit regional reasons/fallbacks, and local debug
+reports. It still applies no regional processor or Leveler gain and performs only final loudness mastering until the
+separate promotion gates pass.
 
 Run it from the repository root:
 
@@ -25,3 +29,6 @@ path and deliberately skips final loudness normalization so the listening harnes
 
 See [Leveler Gain Renderer V0](../../docs/architecture/LEVELER_GAIN_RENDERER_V0.md) for its deterministic artifacts,
 fail-closed validation, privacy boundary, and production-promotion gates.
+
+See [Processing Router V0](../../docs/architecture/PROCESSING_ROUTER_V0.md) for the settings snapshot, conservative
+policy, safe overrides, admission boundary, and machine-readable decision report.
