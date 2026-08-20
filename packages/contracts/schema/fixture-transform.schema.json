@@ -1,0 +1,70 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "family": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Family",
+      "type": "string"
+    },
+    "implementation_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Implementation Version",
+      "type": "string"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "seed": {
+      "anyOf": [
+        {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Seed"
+    },
+    "transform_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Transform Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "transform_id",
+    "family",
+    "implementation_version"
+  ],
+  "title": "FixtureTransform",
+  "type": "object"
+}

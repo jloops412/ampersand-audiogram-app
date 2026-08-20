@@ -1,0 +1,87 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "end_us": {
+      "minimum": 0,
+      "title": "End Us",
+      "type": "integer"
+    },
+    "expected_role": {
+      "enum": [
+        "speech",
+        "silence",
+        "noise",
+        "music",
+        "transient",
+        "mixed",
+        "unknown"
+      ],
+      "title": "Expected Role",
+      "type": "string"
+    },
+    "fixture_region_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Fixture Region Id",
+      "type": "string"
+    },
+    "notes": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Notes",
+      "type": "string"
+    },
+    "protected": {
+      "default": false,
+      "title": "Protected",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "speaker_label": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Speaker Label"
+    },
+    "start_us": {
+      "minimum": 0,
+      "title": "Start Us",
+      "type": "integer"
+    },
+    "target_relative_level_db": {
+      "anyOf": [
+        {
+          "maximum": 24.0,
+          "minimum": -60.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Relative Level Db"
+    }
+  },
+  "required": [
+    "fixture_region_id",
+    "start_us",
+    "end_us",
+    "expected_role",
+    "notes"
+  ],
+  "title": "FixtureRegion",
+  "type": "object"
+}

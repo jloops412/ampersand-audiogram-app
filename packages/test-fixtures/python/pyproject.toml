@@ -1,12 +1,13 @@
 [project]
 name = "ampersand-test-fixtures"
-version = "0.1.0"
+version = "0.2.0"
 description = "Rights-clear synthetic fixtures for Ampersand engine tests"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["ampersand-contracts"]
 
 [project.scripts]
 ampersand-generate-fixture = "ampersand_test_fixtures.cli:main"
+ampersand-generate-corpus = "ampersand_test_fixtures.cli:corpus_main"
 
 [build-system]
 requires = ["hatchling"]

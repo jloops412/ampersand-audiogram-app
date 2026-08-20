@@ -102,6 +102,181 @@ class ProcessingEligibility(StrEnum):
     NO_OP = "no_op"
 
 
+class FixturePartition(StrEnum):
+    DEVELOPMENT = "development"
+    VALIDATION = "validation"
+    HIDDEN_TEST = "hidden_test"
+
+
+class FixtureSourceKind(StrEnum):
+    SYNTHETIC_CONTROL = "synthetic_control"
+    RIGHTS_CLEARED_REAL_WORLD = "rights_cleared_real_world"
+    ENGINEER_REFERENCE = "engineer_reference"
+
+
+class FixtureRightsStatus(StrEnum):
+    MATHEMATICAL_GENERATION = "mathematical_generation"
+    DOCUMENTED_COMMERCIAL_RESEARCH = "documented_commercial_research"
+    RESTRICTED_INTERNAL_RESEARCH = "restricted_internal_research"
+
+
+class FixtureConsentStatus(StrEnum):
+    NOT_APPLICABLE_SYNTHETIC = "not_applicable_synthetic"
+    DOCUMENTED = "documented"
+    RESTRICTED = "restricted"
+
+
+class FixtureRelationship(StrEnum):
+    CLEAN_CONTROL = "clean_control"
+    DEGRADED_FROM_CLEAN = "degraded_from_clean"
+    STANDALONE_CONTROL = "standalone_control"
+    REAL_WORLD_SOURCE = "real_world_source"
+    ENGINEER_DERIVATIVE = "engineer_derivative"
+
+
+class FixtureRegion(ContractModel):
+    fixture_region_id: Identifier
+    start_us: Microseconds
+    end_us: Microseconds
+    expected_role: Literal["speech", "silence", "noise", "music", "transient", "mixed", "unknown"]
+    speaker_label: str | None = Field(default=None, min_length=1, max_length=128)
+    protected: bool = False
+    target_relative_level_db: float | None = Field(default=None, ge=-60.0, le=24.0)
+    notes: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def nonempty_region(self) -> Self:
+        if self.end_us <= self.start_us:
+            raise ValueError("fixture regions use non-empty half-open [start_us, end_us) intervals")
+        return self
+
+
+class FixtureTransform(ContractModel):
+    transform_id: Identifier
+    family: Identifier
+    implementation_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    seed: int | None = Field(default=None, ge=0, le=2**63 - 1)
+    parameters: dict[str, JsonScalar] = Field(default_factory=dict)
+
+
+class FixtureAssetManifest(ContractModel):
+    fixture_id: Identifier
+    corpus_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    partition: FixturePartition
+    visibility: Literal["development_visible", "validation_visible", "promotion_withheld"]
+    filename: str = Field(min_length=1, max_length=255)
+    sha256: Sha256
+    size_bytes: int = Field(gt=0)
+    mime_type: Literal["audio/wav"] = "audio/wav"
+    duration_us: Microseconds
+    sample_rate_hz: int = Field(ge=8_000, le=192_000)
+    channels: int = Field(ge=1, le=8)
+    sample_width_bits: Literal[16, 24, 32]
+    source_kind: FixtureSourceKind
+    rights_status: FixtureRightsStatus
+    consent_status: FixtureConsentStatus
+    contains_personal_data: bool
+    contains_customer_media: bool
+    contains_copyrighted_music: bool
+    session_group_id: Identifier
+    speaker_group_ids: tuple[Identifier, ...] = ()
+    relationship: FixtureRelationship
+    parent_fixture_id: Identifier | None = None
+    parent_sha256: Sha256 | None = None
+    transforms: tuple[FixtureTransform, ...] = ()
+    regions: tuple[FixtureRegion, ...]
+    generator_id: Identifier
+    generator_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    generation_command: tuple[str, ...]
+    permitted_environments: tuple[Identifier, ...]
+    permitted_processor_classes: tuple[Identifier, ...]
+    retention_class: Identifier
+    deletion_policy: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def valid_fixture_lineage_and_timeline(self) -> Self:
+        path = PurePosixPath(self.filename)
+        if path.is_absolute() or ".." in path.parts or len(path.parts) != 1:
+            raise ValueError("fixture filename must be a portable basename")
+        if self.duration_us <= 0:
+            raise ValueError("fixture duration must be positive")
+        if not self.generation_command:
+            raise ValueError("generation_command cannot be empty")
+        if not self.permitted_environments or not self.permitted_processor_classes:
+            raise ValueError("fixture permissions cannot be empty")
+        if self.partition is FixturePartition.HIDDEN_TEST and self.visibility != "promotion_withheld":
+            raise ValueError("hidden-test fixtures must be promotion_withheld")
+        if self.partition is not FixturePartition.HIDDEN_TEST and self.visibility == "promotion_withheld":
+            raise ValueError("only hidden-test fixtures may be promotion_withheld")
+        if self.source_kind is FixtureSourceKind.SYNTHETIC_CONTROL and (
+            self.rights_status is not FixtureRightsStatus.MATHEMATICAL_GENERATION
+            or self.consent_status is not FixtureConsentStatus.NOT_APPLICABLE_SYNTHETIC
+            or self.contains_personal_data
+            or self.contains_customer_media
+            or self.contains_copyrighted_music
+        ):
+            raise ValueError(
+                "synthetic controls must be mathematical, non-customer, and free of personal/copyrighted media"
+            )
+        requires_parent = self.relationship in {
+            FixtureRelationship.DEGRADED_FROM_CLEAN,
+            FixtureRelationship.ENGINEER_DERIVATIVE,
+        }
+        if requires_parent != (self.parent_fixture_id is not None and self.parent_sha256 is not None):
+            raise ValueError("derived fixtures require both parent_fixture_id and parent_sha256")
+        if self.relationship is FixtureRelationship.DEGRADED_FROM_CLEAN and not self.transforms:
+            raise ValueError("degraded fixtures require at least one transform")
+        previous_end = 0
+        for region in self.regions:
+            if region.end_us > self.duration_us:
+                raise ValueError(f"fixture region {region.fixture_region_id} exceeds the asset duration")
+            if region.start_us < previous_end:
+                raise ValueError("fixture regions must be ordered and non-overlapping")
+            previous_end = region.end_us
+        return self
+
+
+class FixtureCorpusManifest(ContractModel):
+    corpus_id: Identifier
+    corpus_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    generator_id: Identifier
+    generator_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    fixtures: tuple[FixtureAssetManifest, ...]
+    partitions_present: tuple[FixturePartition, ...]
+    local_package_contains_customer_media: Literal[False] = False
+    external_api_cost_usd: Literal[0] = 0
+    prohibited_sources: tuple[
+        Literal["hosted_processor_service", "hosted_processor_output", "production_customer_media"], ...
+    ]
+    governance_summary: str = Field(min_length=1, max_length=1024)
+
+    @model_validator(mode="after")
+    def valid_corpus(self) -> Self:
+        if not self.fixtures:
+            raise ValueError("fixture corpus cannot be empty")
+        ids = [fixture.fixture_id for fixture in self.fixtures]
+        filenames = [fixture.filename for fixture in self.fixtures]
+        if len(ids) != len(set(ids)) or len(filenames) != len(set(filenames)):
+            raise ValueError("fixture IDs and filenames must be unique")
+        if any(fixture.corpus_version != self.corpus_version for fixture in self.fixtures):
+            raise ValueError("every fixture must use the corpus version")
+        expected_partitions = tuple(sorted({fixture.partition for fixture in self.fixtures}, key=str))
+        if self.partitions_present != expected_partitions:
+            raise ValueError("partitions_present must exactly match the fixture partitions")
+        by_id = {fixture.fixture_id: fixture for fixture in self.fixtures}
+        for fixture in self.fixtures:
+            if fixture.parent_fixture_id is None:
+                continue
+            parent = by_id.get(fixture.parent_fixture_id)
+            if parent is None:
+                raise ValueError(f"fixture {fixture.fixture_id} references a parent outside this corpus")
+            if parent.partition is not fixture.partition:
+                raise ValueError("synthetic variants and their parent must remain in the same partition")
+            if parent.sha256 != fixture.parent_sha256:
+                raise ValueError("fixture parent_sha256 must match the parent asset")
+        return self
+
+
 class AssetManifest(ContractModel):
     asset_id: Identifier
     kind: AssetKind

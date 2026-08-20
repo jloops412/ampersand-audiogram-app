@@ -1,0 +1,441 @@
+{
+  "$defs": {
+    "FixtureConsentStatus": {
+      "enum": [
+        "not_applicable_synthetic",
+        "documented",
+        "restricted"
+      ],
+      "title": "FixtureConsentStatus",
+      "type": "string"
+    },
+    "FixturePartition": {
+      "enum": [
+        "development",
+        "validation",
+        "hidden_test"
+      ],
+      "title": "FixturePartition",
+      "type": "string"
+    },
+    "FixtureRegion": {
+      "additionalProperties": false,
+      "properties": {
+        "end_us": {
+          "minimum": 0,
+          "title": "End Us",
+          "type": "integer"
+        },
+        "expected_role": {
+          "enum": [
+            "speech",
+            "silence",
+            "noise",
+            "music",
+            "transient",
+            "mixed",
+            "unknown"
+          ],
+          "title": "Expected Role",
+          "type": "string"
+        },
+        "fixture_region_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Fixture Region Id",
+          "type": "string"
+        },
+        "notes": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Notes",
+          "type": "string"
+        },
+        "protected": {
+          "default": false,
+          "title": "Protected",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "speaker_label": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speaker Label"
+        },
+        "start_us": {
+          "minimum": 0,
+          "title": "Start Us",
+          "type": "integer"
+        },
+        "target_relative_level_db": {
+          "anyOf": [
+            {
+              "maximum": 24.0,
+              "minimum": -60.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Relative Level Db"
+        }
+      },
+      "required": [
+        "fixture_region_id",
+        "start_us",
+        "end_us",
+        "expected_role",
+        "notes"
+      ],
+      "title": "FixtureRegion",
+      "type": "object"
+    },
+    "FixtureRelationship": {
+      "enum": [
+        "clean_control",
+        "degraded_from_clean",
+        "standalone_control",
+        "real_world_source",
+        "engineer_derivative"
+      ],
+      "title": "FixtureRelationship",
+      "type": "string"
+    },
+    "FixtureRightsStatus": {
+      "enum": [
+        "mathematical_generation",
+        "documented_commercial_research",
+        "restricted_internal_research"
+      ],
+      "title": "FixtureRightsStatus",
+      "type": "string"
+    },
+    "FixtureSourceKind": {
+      "enum": [
+        "synthetic_control",
+        "rights_cleared_real_world",
+        "engineer_reference"
+      ],
+      "title": "FixtureSourceKind",
+      "type": "string"
+    },
+    "FixtureTransform": {
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Family",
+          "type": "string"
+        },
+        "implementation_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Implementation Version",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Parameters",
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed"
+        },
+        "transform_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Transform Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transform_id",
+        "family",
+        "implementation_version"
+      ],
+      "title": "FixtureTransform",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "channels": {
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Channels",
+      "type": "integer"
+    },
+    "consent_status": {
+      "$ref": "#/$defs/FixtureConsentStatus"
+    },
+    "contains_copyrighted_music": {
+      "title": "Contains Copyrighted Music",
+      "type": "boolean"
+    },
+    "contains_customer_media": {
+      "title": "Contains Customer Media",
+      "type": "boolean"
+    },
+    "contains_personal_data": {
+      "title": "Contains Personal Data",
+      "type": "boolean"
+    },
+    "corpus_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Corpus Version",
+      "type": "string"
+    },
+    "deletion_policy": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Deletion Policy",
+      "type": "string"
+    },
+    "duration_us": {
+      "minimum": 0,
+      "title": "Duration Us",
+      "type": "integer"
+    },
+    "filename": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+    },
+    "fixture_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Fixture Id",
+      "type": "string"
+    },
+    "generation_command": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Generation Command",
+      "type": "array"
+    },
+    "generator_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Generator Id",
+      "type": "string"
+    },
+    "generator_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Generator Version",
+      "type": "string"
+    },
+    "mime_type": {
+      "const": "audio/wav",
+      "default": "audio/wav",
+      "title": "Mime Type",
+      "type": "string"
+    },
+    "parent_fixture_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Fixture Id"
+    },
+    "parent_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Sha256"
+    },
+    "partition": {
+      "$ref": "#/$defs/FixturePartition"
+    },
+    "permitted_environments": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Permitted Environments",
+      "type": "array"
+    },
+    "permitted_processor_classes": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Permitted Processor Classes",
+      "type": "array"
+    },
+    "regions": {
+      "items": {
+        "$ref": "#/$defs/FixtureRegion"
+      },
+      "title": "Regions",
+      "type": "array"
+    },
+    "relationship": {
+      "$ref": "#/$defs/FixtureRelationship"
+    },
+    "retention_class": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Retention Class",
+      "type": "string"
+    },
+    "rights_status": {
+      "$ref": "#/$defs/FixtureRightsStatus"
+    },
+    "sample_rate_hz": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "title": "Sample Rate Hz",
+      "type": "integer"
+    },
+    "sample_width_bits": {
+      "enum": [
+        16,
+        24,
+        32
+      ],
+      "title": "Sample Width Bits",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_group_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Session Group Id",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sha256",
+      "type": "string"
+    },
+    "size_bytes": {
+      "exclusiveMinimum": 0,
+      "title": "Size Bytes",
+      "type": "integer"
+    },
+    "source_kind": {
+      "$ref": "#/$defs/FixtureSourceKind"
+    },
+    "speaker_group_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Speaker Group Ids",
+      "type": "array"
+    },
+    "transforms": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FixtureTransform"
+      },
+      "title": "Transforms",
+      "type": "array"
+    },
+    "visibility": {
+      "enum": [
+        "development_visible",
+        "validation_visible",
+        "promotion_withheld"
+      ],
+      "title": "Visibility",
+      "type": "string"
+    }
+  },
+  "required": [
+    "fixture_id",
+    "corpus_version",
+    "partition",
+    "visibility",
+    "filename",
+    "sha256",
+    "size_bytes",
+    "duration_us",
+    "sample_rate_hz",
+    "channels",
+    "sample_width_bits",
+    "source_kind",
+    "rights_status",
+    "consent_status",
+    "contains_personal_data",
+    "contains_customer_media",
+    "contains_copyrighted_music",
+    "session_group_id",
+    "relationship",
+    "regions",
+    "generator_id",
+    "generator_version",
+    "generation_command",
+    "permitted_environments",
+    "permitted_processor_classes",
+    "retention_class",
+    "deletion_policy"
+  ],
+  "title": "FixtureAssetManifest",
+  "type": "object"
+}
