@@ -20,14 +20,14 @@ JsonScalar = str | int | float | bool | None
 class ContractModel(BaseModel):
     """Strict, immutable base for Ampersand-owned serialized contracts."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True, validate_default=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, validate_default=True, allow_inf_nan=False)
     schema_version: Literal["1.0.0"] = SCHEMA_VERSION
 
 
 class SemanticContractModel(BaseModel):
     """Versioned base for the richer Semantic Audio Map introduced by issue #22."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True, validate_default=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, validate_default=True, allow_inf_nan=False)
     schema_version: Literal["1.1.0"] = SEMANTIC_SCHEMA_VERSION
 
 
@@ -776,6 +776,500 @@ class LoudnessMeasurement(ContractModel):
     threshold_lufs: float
     measurement_backend: str = Field(min_length=1, max_length=128)
     backend_version: str = Field(min_length=1, max_length=256)
+
+
+class ListeningMode(StrEnum):
+    PAIRWISE_PREFERENCE = "pairwise_preference"
+    CLEAN_PRESERVATION = "clean_preservation"
+
+
+class ListeningCandidateRole(StrEnum):
+    ORIGINAL = "original"
+    CANDIDATE = "candidate"
+    REFERENCE = "reference"
+    ANCHOR = "anchor"
+
+
+class ListeningArtifactFlag(StrEnum):
+    MUSICAL_NOISE = "musical_noise"
+    CHIRPING_WARBLING = "chirping_warbling"
+    WATERY_PHASEY_SPEECH = "watery_phasey_speech"
+    ROBOTIC_VOICE_CHANGE = "robotic_voice_change"
+    MISSING_PHONEME_OR_WORD = "missing_phoneme_or_word"
+    PUMPING_BREATHING = "pumping_breathing"
+    GATING_CHOPPING = "gating_chopping"
+    TRANSIENT_SMEARING = "transient_smearing"
+    SIBILANCE_HARSHNESS = "sibilance_harshness"
+    MUFFLING_LOST_AIR = "muffling_lost_air"
+    BASS_BOOM_MUD = "bass_boom_mud"
+    PLOSIVE_DAMAGE = "plosive_damage"
+    REVERB_TAIL_TRUNCATION = "reverb_tail_truncation"
+    AMBIENCE_COLLAPSE = "ambience_collapse"
+    MUSIC_DAMAGE = "music_damage"
+    SPEAKER_LEVEL_INCONSISTENCY = "speaker_level_inconsistency"
+    PROCESSING_BOUNDARY_CLICK = "processing_boundary_click"
+    CLIPPING_DISTORTION = "clipping_distortion"
+    TIMING_DRIFT = "timing_drift"
+    IDENTITY_EMOTION_CHANGE = "identity_emotion_change"
+    OTHER = "other"
+
+
+class ListeningRuntimeMetrics(ContractModel):
+    wall_seconds: float = Field(ge=0.0)
+    peak_memory_mb: float | None = Field(default=None, ge=0.0)
+    device_summary: str = Field(min_length=1, max_length=256)
+    external_cost_usd: float = Field(default=0.0, ge=0.0)
+
+
+class ListeningExperimentCandidate(ContractModel):
+    candidate_id: Identifier
+    relative_path: str = Field(min_length=1, max_length=512)
+    archived_sha256: Sha256
+    role: ListeningCandidateRole
+    source_fixture_id: Identifier
+    processor_id: Identifier
+    processor_version: str = Field(min_length=1, max_length=128)
+    recipe_version_id: Identifier | None = None
+    model_manifest_ids: tuple[Identifier, ...] = ()
+    engine_build_id: Identifier
+    runtime: ListeningRuntimeMetrics
+    archived_master_immutable: Literal[True] = True
+    notes: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def portable_audio_path(self) -> Self:
+        path = PurePosixPath(self.relative_path)
+        if path.is_absolute() or ".." in path.parts or path.suffix.lower() not in {".wav", ".flac", ".mp3"}:
+            raise ValueError("listening candidates require a portable relative audio path")
+        return self
+
+
+class ListeningExperimentItem(ContractModel):
+    item_id: Identifier
+    mode: ListeningMode
+    source_fixture_id: Identifier
+    source_sha256: Sha256
+    source_region_ids: tuple[Identifier, ...] = ()
+    candidate_ids: tuple[Identifier, ...]
+    segment_start_us: Microseconds = 0
+    segment_end_us: Microseconds | None = None
+    evaluation_prompt: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def valid_candidate_set_and_segment(self) -> Self:
+        if len(self.candidate_ids) < 2 or len(self.candidate_ids) != len(set(self.candidate_ids)):
+            raise ValueError("listening items require at least two unique candidates")
+        if len(self.source_region_ids) != len(set(self.source_region_ids)):
+            raise ValueError("listening source region IDs must be unique")
+        if self.mode is ListeningMode.CLEAN_PRESERVATION and len(self.candidate_ids) != 2:
+            raise ValueError("clean-preservation items require exactly two candidates")
+        if self.segment_end_us is not None and self.segment_end_us <= self.segment_start_us:
+            raise ValueError("listening segments use non-empty half-open intervals")
+        return self
+
+
+class ListeningExperimentManifest(ContractModel):
+    experiment_id: Identifier
+    experiment_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    corpus_id: Identifier
+    corpus_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    randomization_seed: int = Field(ge=0, le=2**63 - 1)
+    target_integrated_lufs: float = Field(ge=-30.0, le=-12.0)
+    max_true_peak_dbtp: float = Field(ge=-6.0, le=0.0)
+    candidates: tuple[ListeningExperimentCandidate, ...]
+    items: tuple[ListeningExperimentItem, ...]
+    identity_reveal_policy: Literal["after_session_close"] = "after_session_close"
+    objective_metrics_diagnostic_only: Literal[True] = True
+    archived_masters_immutable: Literal[True] = True
+    private_local_only: Literal[True] = True
+    prohibited_sources: tuple[
+        Literal["hosted_processor_service", "hosted_processor_output", "production_customer_media"], ...
+    ]
+    hypothesis: str = Field(min_length=1, max_length=1024)
+
+    @model_validator(mode="after")
+    def valid_experiment_graph(self) -> Self:
+        if not self.candidates or not self.items:
+            raise ValueError("listening experiments require candidates and items")
+        required_prohibitions = {
+            "hosted_processor_service",
+            "hosted_processor_output",
+            "production_customer_media",
+        }
+        if set(self.prohibited_sources) != required_prohibitions or len(self.prohibited_sources) != len(
+            required_prohibitions
+        ):
+            raise ValueError("listening experiments require the complete unique prohibited-source boundary")
+        candidate_ids = [candidate.candidate_id for candidate in self.candidates]
+        paths = [candidate.relative_path for candidate in self.candidates]
+        item_ids = [item.item_id for item in self.items]
+        if len(candidate_ids) != len(set(candidate_ids)) or len(paths) != len(set(paths)):
+            raise ValueError("candidate IDs and paths must be unique")
+        if len(item_ids) != len(set(item_ids)):
+            raise ValueError("listening item IDs must be unique")
+        candidates = {candidate.candidate_id: candidate for candidate in self.candidates}
+        used: set[str] = set()
+        for item in self.items:
+            missing = set(item.candidate_ids) - candidates.keys()
+            if missing:
+                raise ValueError(f"listening item {item.item_id} references unknown candidates")
+            if any(
+                candidates[candidate_id].source_fixture_id != item.source_fixture_id
+                for candidate_id in item.candidate_ids
+            ):
+                raise ValueError("all item candidates must share its source_fixture_id")
+            if item.mode is ListeningMode.CLEAN_PRESERVATION:
+                roles = {candidates[candidate_id].role for candidate_id in item.candidate_ids}
+                if ListeningCandidateRole.ORIGINAL not in roles or ListeningCandidateRole.CANDIDATE not in roles:
+                    raise ValueError("clean-preservation items require original and candidate roles")
+            source_controls = [
+                candidates[candidate_id]
+                for candidate_id in item.candidate_ids
+                if candidates[candidate_id].role in {ListeningCandidateRole.ORIGINAL, ListeningCandidateRole.REFERENCE}
+            ]
+            if source_controls and all(
+                candidate.archived_sha256 != item.source_sha256 for candidate in source_controls
+            ):
+                raise ValueError("item source_sha256 must match an original or reference candidate")
+            used.update(item.candidate_ids)
+        if used != set(candidate_ids):
+            raise ValueError("every experiment candidate must be used by at least one item")
+        return self
+
+
+class ListeningOption(ContractModel):
+    option_id: Identifier
+    audio_relative_path: str = Field(min_length=1, max_length=512)
+    listening_sha256: Sha256
+    loudness: LoudnessMeasurement
+    duration_us: Microseconds
+    sample_rate_hz: int = Field(gt=0, le=192_000)
+    channels: int = Field(gt=0, le=8)
+
+    @model_validator(mode="after")
+    def portable_listening_path(self) -> Self:
+        path = PurePosixPath(self.audio_relative_path)
+        if path.is_absolute() or ".." in path.parts or path.suffix.lower() != ".wav":
+            raise ValueError("listening option path must be a portable WAV path")
+        if self.duration_us <= 0:
+            raise ValueError("listening option duration must be positive")
+        return self
+
+
+class ListeningTrial(ContractModel):
+    trial_id: Identifier
+    source_token: Identifier
+    mode: ListeningMode
+    evaluation_prompt: str = Field(min_length=1, max_length=512)
+    options: tuple[ListeningOption, ...]
+
+    @model_validator(mode="after")
+    def valid_options(self) -> Self:
+        option_ids = [option.option_id for option in self.options]
+        if len(option_ids) < 2 or len(option_ids) != len(set(option_ids)):
+            raise ValueError("listening trials require at least two unique options")
+        if self.mode is ListeningMode.CLEAN_PRESERVATION and len(option_ids) != 2:
+            raise ValueError("clean-preservation trials require exactly two options")
+        return self
+
+
+class ListeningSessionManifest(ContractModel):
+    session_id: Identifier
+    experiment_commitment_sha256: Sha256
+    randomization_algorithm: Literal["sha256-seed-item-candidate-v1"]
+    target_integrated_lufs: float
+    max_true_peak_dbtp: float
+    trials: tuple[ListeningTrial, ...]
+    artifact_flags: tuple[ListeningArtifactFlag, ...]
+    state: Literal["open"] = "open"
+    identity_hidden: Literal[True] = True
+    instructions: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def valid_public_session(self) -> Self:
+        trial_ids = [trial.trial_id for trial in self.trials]
+        if not trial_ids or len(trial_ids) != len(set(trial_ids)):
+            raise ValueError("public session trial IDs must be non-empty and unique")
+        if set(self.artifact_flags) != set(ListeningArtifactFlag):
+            raise ValueError("public sessions require the complete unique artifact taxonomy")
+        if not self.instructions:
+            raise ValueError("public session requires artifact flags and instructions")
+        return self
+
+
+class ListeningOptionRating(ContractModel):
+    option_id: Identifier
+    speech_quality: int = Field(ge=1, le=5)
+    background_quality: int = Field(ge=1, le=5)
+    overall_quality: int = Field(ge=1, le=5)
+    artifact_flags: tuple[ListeningArtifactFlag, ...] = ()
+
+
+class ListeningScore(ContractModel):
+    score_id: Identifier
+    session_id: Identifier
+    trial_id: Identifier
+    listener_id: Identifier
+    mode: ListeningMode
+    preferred_option_id: Identifier | None = None
+    no_meaningful_preference: bool
+    option_ratings: tuple[ListeningOptionRating, ...]
+    confidence: int = Field(ge=1, le=5)
+    trial_artifact_flags: tuple[ListeningArtifactFlag, ...] = ()
+    audible_degradation: bool | None = None
+    voice_identity_changed: bool | None = None
+    speech_less_natural: bool | None = None
+    ambience_or_music_changed: bool | None = None
+    processing_preferred: bool | None = None
+    notes: str | None = Field(default=None, max_length=1024)
+    submission_sequence: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def valid_score(self) -> Self:
+        if (self.preferred_option_id is None) == (not self.no_meaningful_preference):
+            raise ValueError("select one preferred option or no meaningful preference")
+        rating_ids = [rating.option_id for rating in self.option_ratings]
+        if len(rating_ids) < 2 or len(rating_ids) != len(set(rating_ids)):
+            raise ValueError("scores require unique ratings for every presented option")
+        if self.preferred_option_id is not None and self.preferred_option_id not in rating_ids:
+            raise ValueError("preferred_option_id must reference a rated option")
+        clean_answers = (
+            self.audible_degradation,
+            self.voice_identity_changed,
+            self.speech_less_natural,
+            self.ambience_or_music_changed,
+            self.processing_preferred,
+        )
+        if self.mode is ListeningMode.CLEAN_PRESERVATION and any(answer is None for answer in clean_answers):
+            raise ValueError("clean-preservation scores require all preservation answers")
+        if self.mode is ListeningMode.PAIRWISE_PREFERENCE and any(answer is not None for answer in clean_answers):
+            raise ValueError("pairwise scores cannot include clean-preservation answers")
+        if len(self.trial_artifact_flags) != len(set(self.trial_artifact_flags)) or any(
+            len(rating.artifact_flags) != len(set(rating.artifact_flags)) for rating in self.option_ratings
+        ):
+            raise ValueError("artifact flags must be unique within their score scope")
+        return self
+
+
+class ListeningSessionState(ContractModel):
+    session_id: Identifier
+    state: Literal["open", "closed"]
+    next_submission_sequence: int = Field(ge=1)
+    score_ids: tuple[Identifier, ...] = ()
+    report_sha256: Sha256 | None = None
+
+    @model_validator(mode="after")
+    def valid_state(self) -> Self:
+        if len(self.score_ids) != len(set(self.score_ids)):
+            raise ValueError("session state score IDs must be unique")
+        if self.state == "open" and self.report_sha256 is not None:
+            raise ValueError("open listening sessions cannot reference a report")
+        if self.state == "closed" and self.report_sha256 is None:
+            raise ValueError("closed listening sessions require a report hash")
+        return self
+
+
+class ListeningObjectiveMetrics(ContractModel):
+    item_id: Identifier
+    candidate_id: Identifier
+    archived_sha256: Sha256
+    listening_sha256: Sha256
+    loudness_before: LoudnessMeasurement
+    loudness_after: LoudnessMeasurement
+    duration_us: Microseconds
+    sample_rate_hz: int = Field(gt=0, le=192_000)
+    channels: int = Field(gt=0, le=8)
+    loudness_hop_us: Microseconds
+    loudness_frame_count: int = Field(gt=0)
+    momentary_lufs_min: float
+    momentary_lufs_max: float
+    short_term_lufs_min: float
+    short_term_lufs_max: float
+    sample_peak_dbfs: float = Field(ge=-200.0, le=0.0)
+    clipping_sample_count: int = Field(ge=0)
+    snr_db: float | None = None
+    si_sdr_db: float | None = None
+    runtime: ListeningRuntimeMetrics
+    diagnostic_only: Literal[True] = True
+
+    @model_validator(mode="after")
+    def valid_loudness_timeline_summary(self) -> Self:
+        if self.loudness_hop_us <= 0:
+            raise ValueError("loudness diagnostic hop must be positive")
+        if self.momentary_lufs_min > self.momentary_lufs_max:
+            raise ValueError("momentary loudness bounds are reversed")
+        if self.short_term_lufs_min > self.short_term_lufs_max:
+            raise ValueError("short-term loudness bounds are reversed")
+        return self
+
+
+class ListeningIdentityReveal(ContractModel):
+    trial_id: Identifier
+    option_id: Identifier
+    candidate_id: Identifier
+    role: ListeningCandidateRole
+    processor_id: Identifier
+    processor_version: str
+    recipe_version_id: Identifier | None = None
+    model_manifest_ids: tuple[Identifier, ...] = ()
+    engine_build_id: Identifier
+
+
+class ListeningItemReveal(ContractModel):
+    trial_id: Identifier
+    item_id: Identifier
+    source_fixture_id: Identifier
+    source_sha256: Sha256
+    source_region_ids: tuple[Identifier, ...] = ()
+    segment_start_us: Microseconds
+    segment_end_us: Microseconds | None = None
+    evaluation_prompt: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def valid_revealed_segment(self) -> Self:
+        if len(self.source_region_ids) != len(set(self.source_region_ids)):
+            raise ValueError("revealed source region IDs must be unique")
+        if self.segment_end_us is not None and self.segment_end_us <= self.segment_start_us:
+            raise ValueError("revealed listening segments use non-empty half-open intervals")
+        return self
+
+
+class PreparedListeningExperiment(ContractModel):
+    prepared_experiment_id: Identifier
+    experiment_commitment_sha256: Sha256
+    experiment: ListeningExperimentManifest
+    session: ListeningSessionManifest
+    identity_reveals: tuple[ListeningIdentityReveal, ...]
+    item_reveals: tuple[ListeningItemReveal, ...]
+    objective_metrics: tuple[ListeningObjectiveMetrics, ...]
+
+    @model_validator(mode="after")
+    def valid_prepared_experiment(self) -> Self:
+        from .serialization import manifest_sha256
+
+        if manifest_sha256(self.experiment) != self.experiment_commitment_sha256:
+            raise ValueError("experiment commitment must match the private experiment manifest")
+        if self.session.experiment_commitment_sha256 != self.experiment_commitment_sha256:
+            raise ValueError("session commitment must match the private experiment manifest")
+        reveal_keys = [(reveal.trial_id, reveal.option_id) for reveal in self.identity_reveals]
+        presented_keys = [
+            (trial.trial_id, option.option_id) for trial in self.session.trials for option in trial.options
+        ]
+        if sorted(reveal_keys) != sorted(presented_keys):
+            raise ValueError("private identity reveals must exactly cover public options")
+        candidate_ids = {candidate.candidate_id for candidate in self.experiment.candidates}
+        if any(reveal.candidate_id not in candidate_ids for reveal in self.identity_reveals):
+            raise ValueError("private identity reveals must reference experiment candidates")
+        item_reveals = {reveal.item_id: reveal for reveal in self.item_reveals}
+        experiment_items = {item.item_id: item for item in self.experiment.items}
+        if len(item_reveals) != len(self.item_reveals) or set(item_reveals) != set(experiment_items):
+            raise ValueError("private item reveals must uniquely cover experiment items")
+        if {reveal.trial_id for reveal in self.item_reveals} != {trial.trial_id for trial in self.session.trials}:
+            raise ValueError("private item reveals must uniquely cover public trials")
+        for item_id, reveal in item_reveals.items():
+            item = experiment_items[item_id]
+            if (
+                reveal.source_fixture_id != item.source_fixture_id
+                or reveal.source_sha256 != item.source_sha256
+                or reveal.source_region_ids != item.source_region_ids
+                or reveal.segment_start_us != item.segment_start_us
+                or reveal.segment_end_us != item.segment_end_us
+                or reveal.evaluation_prompt != item.evaluation_prompt
+            ):
+                raise ValueError("private item reveal metadata must match the experiment item")
+        metric_keys = [(metric.item_id, metric.candidate_id) for metric in self.objective_metrics]
+        expected_metric_keys = {
+            (item.item_id, candidate_id) for item in self.experiment.items for candidate_id in item.candidate_ids
+        }
+        if set(metric_keys) != expected_metric_keys or len(metric_keys) != len(set(metric_keys)):
+            raise ValueError("prepared objective metrics must exactly cover every item/candidate")
+        return self
+
+
+class CandidateListeningSummary(ContractModel):
+    candidate_id: Identifier
+    exposures: int = Field(ge=0)
+    preference_wins: int = Field(ge=0)
+    mean_speech_quality: float | None = Field(default=None, ge=1.0, le=5.0)
+    mean_background_quality: float | None = Field(default=None, ge=1.0, le=5.0)
+    mean_overall_quality: float | None = Field(default=None, ge=1.0, le=5.0)
+    artifact_flag_counts: dict[ListeningArtifactFlag, int] = Field(default_factory=dict)
+    clean_audible_degradation_count: int = Field(default=0, ge=0)
+    clean_processing_preferred_count: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def valid_summary_counts(self) -> Self:
+        bounded_counts = (
+            self.preference_wins,
+            self.clean_audible_degradation_count,
+            self.clean_processing_preferred_count,
+            *self.artifact_flag_counts.values(),
+        )
+        if any(count < 0 or count > self.exposures for count in bounded_counts):
+            raise ValueError("candidate summary event counts cannot exceed exposures")
+        return self
+
+
+class ListeningReport(ContractModel):
+    listening_report_id: Identifier
+    experiment_id: Identifier
+    experiment_version: str
+    corpus_id: Identifier
+    corpus_version: str
+    session_id: Identifier
+    experiment_commitment_sha256: Sha256
+    closed: Literal[True] = True
+    scores: tuple[ListeningScore, ...]
+    identity_reveals: tuple[ListeningIdentityReveal, ...]
+    item_reveals: tuple[ListeningItemReveal, ...]
+    objective_metrics: tuple[ListeningObjectiveMetrics, ...]
+    candidate_summaries: tuple[CandidateListeningSummary, ...]
+    trial_count: int = Field(ge=1)
+    score_count: int = Field(ge=0)
+    no_preference_count: int = Field(ge=0)
+    decision: Literal["descriptive_pilot_only"] = "descriptive_pilot_only"
+    uncertainty_summary: str = Field(min_length=1, max_length=1024)
+    human_approval_status: Literal["not_evaluated", "pilot_only", "approved", "rejected"]
+    objective_metrics_diagnostic_only: Literal[True] = True
+    external_api_cost_usd: float = Field(ge=0.0)
+    warnings: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def valid_report(self) -> Self:
+        if self.score_count != len(self.scores):
+            raise ValueError("score_count must match the serialized scores")
+        if self.no_preference_count != sum(score.no_meaningful_preference for score in self.scores):
+            raise ValueError("no_preference_count must match serialized scores")
+        reveal_keys = [(reveal.trial_id, reveal.option_id) for reveal in self.identity_reveals]
+        if not reveal_keys or len(reveal_keys) != len(set(reveal_keys)):
+            raise ValueError("identity reveal trial/option pairs must be unique")
+        revealed_trials = {trial_id for trial_id, _option_id in reveal_keys}
+        if self.trial_count != len(revealed_trials):
+            raise ValueError("trial_count must match identity-revealed trials")
+        item_trial_ids = [reveal.trial_id for reveal in self.item_reveals]
+        item_ids = [reveal.item_id for reveal in self.item_reveals]
+        if (
+            set(item_trial_ids) != revealed_trials
+            or len(item_trial_ids) != len(set(item_trial_ids))
+            or len(item_ids) != len(set(item_ids))
+        ):
+            raise ValueError("item reveals must uniquely cover identity-revealed trials and items")
+        revealed_options = set(reveal_keys)
+        score_ids = [score.score_id for score in self.scores]
+        if len(score_ids) != len(set(score_ids)) or any(score.session_id != self.session_id for score in self.scores):
+            raise ValueError("report scores must have unique IDs and reference its session")
+        for score in self.scores:
+            rated = {(score.trial_id, rating.option_id) for rating in score.option_ratings}
+            presented = {key for key in revealed_options if key[0] == score.trial_id}
+            if rated != presented:
+                raise ValueError("report scores must exactly rate identity-revealed trial options")
+        candidate_ids = [summary.candidate_id for summary in self.candidate_summaries]
+        revealed_candidates = {reveal.candidate_id for reveal in self.identity_reveals}
+        if set(candidate_ids) != revealed_candidates or len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("candidate summaries must uniquely cover identity-revealed candidates")
+        if any(metric.candidate_id not in revealed_candidates for metric in self.objective_metrics):
+            raise ValueError("objective metrics must reference identity-revealed candidates")
+        return self
 
 
 class WaveformLevel(ContractModel):

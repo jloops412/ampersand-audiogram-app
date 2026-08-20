@@ -1,0 +1,23 @@
+[project]
+name = "ampersand-listening-lab"
+version = "0.1.0"
+description = "Local-only blinded listening and regression harness for Ampersand"
+requires-python = ">=3.12"
+dependencies = [
+  "ampersand-contracts",
+  "ampersand-media-worker",
+]
+
+[project.scripts]
+ampersand-listening = "ampersand_listening.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ampersand_listening"]
+
+[tool.uv.sources]
+ampersand-contracts = { workspace = true }
+ampersand-media-worker = { workspace = true }

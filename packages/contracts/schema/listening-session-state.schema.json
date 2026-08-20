@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "next_submission_sequence": {
+      "minimum": 1,
+      "title": "Next Submission Sequence",
+      "type": "integer"
+    },
+    "report_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Report Sha256"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "score_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Score Ids",
+      "type": "array"
+    },
+    "session_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "open",
+        "closed"
+      ],
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "state",
+    "next_submission_sequence"
+  ],
+  "title": "ListeningSessionState",
+  "type": "object"
+}

@@ -1,7 +1,7 @@
 # Audio Quality Evaluation Plan
 
 **Status:** Accepted methodology baseline; numerical promotion thresholds remain provisional until pilot power analysis  
-**Last verified:** 2026-08-18
+**Last verified:** 2026-08-20
 
 ## Purpose
 
@@ -29,6 +29,12 @@ Auphonic services and outputs are excluded from this evaluation unless written p
 ### Current implementation checkpoint
 
 [Synthetic Fixture Corpus V0](./SYNTHETIC_FIXTURE_CORPUS_V0.md) now provides deterministic mathematical controls, clean/degraded lineage, development/validation/withheld partition semantics, and an opt-in one-hour durability stream. It is sufficient for automated control-law, protection, transition, channel, reproducibility, and pipeline tests. It is deliberately insufficient for human quality promotion; Tier A/C real recordings and blinded listening remain required.
+
+[Blinded Listening and Regression Harness V0](./BLINDED_LISTENING_HARNESS_V0.md) now implements the internal
+localhost preparation, delayed-identity scoring, clean-preservation/Original-A-B modes, diagnostic capture, and
+versioned descriptive report needed to start #6/#7 pilots. It does not satisfy formal promotion evidence by itself:
+rights-cleared human recordings, multiple listeners, power analysis, controlled access/deletion, and explicit human
+approval remain open.
 
 ### Tier A — Clean reference speech
 

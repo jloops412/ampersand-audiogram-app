@@ -1,0 +1,270 @@
+{
+  "$defs": {
+    "ListeningArtifactFlag": {
+      "enum": [
+        "musical_noise",
+        "chirping_warbling",
+        "watery_phasey_speech",
+        "robotic_voice_change",
+        "missing_phoneme_or_word",
+        "pumping_breathing",
+        "gating_chopping",
+        "transient_smearing",
+        "sibilance_harshness",
+        "muffling_lost_air",
+        "bass_boom_mud",
+        "plosive_damage",
+        "reverb_tail_truncation",
+        "ambience_collapse",
+        "music_damage",
+        "speaker_level_inconsistency",
+        "processing_boundary_click",
+        "clipping_distortion",
+        "timing_drift",
+        "identity_emotion_change",
+        "other"
+      ],
+      "title": "ListeningArtifactFlag",
+      "type": "string"
+    },
+    "ListeningMode": {
+      "enum": [
+        "pairwise_preference",
+        "clean_preservation"
+      ],
+      "title": "ListeningMode",
+      "type": "string"
+    },
+    "ListeningOption": {
+      "additionalProperties": false,
+      "properties": {
+        "audio_relative_path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Audio Relative Path",
+          "type": "string"
+        },
+        "channels": {
+          "exclusiveMinimum": 0,
+          "maximum": 8,
+          "title": "Channels",
+          "type": "integer"
+        },
+        "duration_us": {
+          "minimum": 0,
+          "title": "Duration Us",
+          "type": "integer"
+        },
+        "listening_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Listening Sha256",
+          "type": "string"
+        },
+        "loudness": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "sample_rate_hz": {
+          "exclusiveMinimum": 0,
+          "maximum": 192000,
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "option_id",
+        "audio_relative_path",
+        "listening_sha256",
+        "loudness",
+        "duration_us",
+        "sample_rate_hz",
+        "channels"
+      ],
+      "title": "ListeningOption",
+      "type": "object"
+    },
+    "ListeningTrial": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluation_prompt": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Evaluation Prompt",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/ListeningMode"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/ListeningOption"
+          },
+          "title": "Options",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_token": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Token",
+          "type": "string"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "source_token",
+        "mode",
+        "evaluation_prompt",
+        "options"
+      ],
+      "title": "ListeningTrial",
+      "type": "object"
+    },
+    "LoudnessMeasurement": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Backend Version",
+          "type": "string"
+        },
+        "integrated_lufs": {
+          "title": "Integrated Lufs",
+          "type": "number"
+        },
+        "loudness_range_lu": {
+          "minimum": 0.0,
+          "title": "Loudness Range Lu",
+          "type": "number"
+        },
+        "measurement_backend": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Measurement Backend",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "threshold_lufs": {
+          "title": "Threshold Lufs",
+          "type": "number"
+        },
+        "true_peak_dbtp": {
+          "title": "True Peak Dbtp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "integrated_lufs",
+        "true_peak_dbtp",
+        "loudness_range_lu",
+        "threshold_lufs",
+        "measurement_backend",
+        "backend_version"
+      ],
+      "title": "LoudnessMeasurement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifact_flags": {
+      "items": {
+        "$ref": "#/$defs/ListeningArtifactFlag"
+      },
+      "title": "Artifact Flags",
+      "type": "array"
+    },
+    "experiment_commitment_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Experiment Commitment Sha256",
+      "type": "string"
+    },
+    "identity_hidden": {
+      "const": true,
+      "default": true,
+      "title": "Identity Hidden",
+      "type": "boolean"
+    },
+    "instructions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Instructions",
+      "type": "array"
+    },
+    "max_true_peak_dbtp": {
+      "title": "Max True Peak Dbtp",
+      "type": "number"
+    },
+    "randomization_algorithm": {
+      "const": "sha256-seed-item-candidate-v1",
+      "title": "Randomization Algorithm",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "state": {
+      "const": "open",
+      "default": "open",
+      "title": "State",
+      "type": "string"
+    },
+    "target_integrated_lufs": {
+      "title": "Target Integrated Lufs",
+      "type": "number"
+    },
+    "trials": {
+      "items": {
+        "$ref": "#/$defs/ListeningTrial"
+      },
+      "title": "Trials",
+      "type": "array"
+    }
+  },
+  "required": [
+    "session_id",
+    "experiment_commitment_sha256",
+    "randomization_algorithm",
+    "target_integrated_lufs",
+    "max_true_peak_dbtp",
+    "trials",
+    "artifact_flags",
+    "instructions"
+  ],
+  "title": "ListeningSessionManifest",
+  "type": "object"
+}

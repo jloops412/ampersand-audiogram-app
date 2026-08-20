@@ -17,8 +17,8 @@ from .errors import DependencyUnavailable, EngineError, InvalidMedia
 from .semantic_types import JsonValue, LoudnessFrame, LoudnessTimelineResult
 
 _EBUR128_FRAME = re.compile(
-    r"t:\s*(?P<time>\d+(?:\.\d+)?)\s+.*?M:\s*(?P<momentary>-?inf|-?\d+(?:\.\d+)?)"
-    r"\s+S:\s*(?P<short_term>-?inf|-?\d+(?:\.\d+)?)\s+.*?FTPK:\s*(?P<frame_peak>.*?)\s+dBFS"
+    r"t:\s*(?P<time>\d+(?:\.\d+)?)\s+.*?M:\s*(?P<momentary>-?inf|nan|-?\d+(?:\.\d+)?)"
+    r"\s+S:\s*(?P<short_term>-?inf|nan|-?\d+(?:\.\d+)?)\s+.*?FTPK:\s*(?P<frame_peak>.*?)\s+dBFS"
 )
 
 

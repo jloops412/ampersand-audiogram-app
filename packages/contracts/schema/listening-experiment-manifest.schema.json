@@ -1,0 +1,370 @@
+{
+  "$defs": {
+    "ListeningCandidateRole": {
+      "enum": [
+        "original",
+        "candidate",
+        "reference",
+        "anchor"
+      ],
+      "title": "ListeningCandidateRole",
+      "type": "string"
+    },
+    "ListeningExperimentCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_master_immutable": {
+          "const": true,
+          "default": true,
+          "title": "Archived Master Immutable",
+          "type": "boolean"
+        },
+        "archived_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Archived Sha256",
+          "type": "string"
+        },
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "engine_build_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Engine Build Id",
+          "type": "string"
+        },
+        "model_manifest_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Model Manifest Ids",
+          "type": "array"
+        },
+        "notes": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Notes",
+          "type": "string"
+        },
+        "processor_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Processor Id",
+          "type": "string"
+        },
+        "processor_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Processor Version",
+          "type": "string"
+        },
+        "recipe_version_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipe Version Id"
+        },
+        "relative_path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/ListeningCandidateRole"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ListeningRuntimeMetrics"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_fixture_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Fixture Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "relative_path",
+        "archived_sha256",
+        "role",
+        "source_fixture_id",
+        "processor_id",
+        "processor_version",
+        "engine_build_id",
+        "runtime",
+        "notes"
+      ],
+      "title": "ListeningExperimentCandidate",
+      "type": "object"
+    },
+    "ListeningExperimentItem": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_ids": {
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Candidate Ids",
+          "type": "array"
+        },
+        "evaluation_prompt": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Evaluation Prompt",
+          "type": "string"
+        },
+        "item_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/ListeningMode"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "segment_end_us": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Segment End Us"
+        },
+        "segment_start_us": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Segment Start Us",
+          "type": "integer"
+        },
+        "source_fixture_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Fixture Id",
+          "type": "string"
+        },
+        "source_region_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Source Region Ids",
+          "type": "array"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "mode",
+        "source_fixture_id",
+        "source_sha256",
+        "candidate_ids",
+        "evaluation_prompt"
+      ],
+      "title": "ListeningExperimentItem",
+      "type": "object"
+    },
+    "ListeningMode": {
+      "enum": [
+        "pairwise_preference",
+        "clean_preservation"
+      ],
+      "title": "ListeningMode",
+      "type": "string"
+    },
+    "ListeningRuntimeMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "device_summary": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Device Summary",
+          "type": "string"
+        },
+        "external_cost_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "External Cost Usd",
+          "type": "number"
+        },
+        "peak_memory_mb": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peak Memory Mb"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wall_seconds": {
+          "minimum": 0.0,
+          "title": "Wall Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "device_summary"
+      ],
+      "title": "ListeningRuntimeMetrics",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "archived_masters_immutable": {
+      "const": true,
+      "default": true,
+      "title": "Archived Masters Immutable",
+      "type": "boolean"
+    },
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/ListeningExperimentCandidate"
+      },
+      "title": "Candidates",
+      "type": "array"
+    },
+    "corpus_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Corpus Id",
+      "type": "string"
+    },
+    "corpus_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Corpus Version",
+      "type": "string"
+    },
+    "experiment_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Experiment Id",
+      "type": "string"
+    },
+    "experiment_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Experiment Version",
+      "type": "string"
+    },
+    "hypothesis": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Hypothesis",
+      "type": "string"
+    },
+    "identity_reveal_policy": {
+      "const": "after_session_close",
+      "default": "after_session_close",
+      "title": "Identity Reveal Policy",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ListeningExperimentItem"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "max_true_peak_dbtp": {
+      "maximum": 0.0,
+      "minimum": -6.0,
+      "title": "Max True Peak Dbtp",
+      "type": "number"
+    },
+    "objective_metrics_diagnostic_only": {
+      "const": true,
+      "default": true,
+      "title": "Objective Metrics Diagnostic Only",
+      "type": "boolean"
+    },
+    "private_local_only": {
+      "const": true,
+      "default": true,
+      "title": "Private Local Only",
+      "type": "boolean"
+    },
+    "prohibited_sources": {
+      "items": {
+        "enum": [
+          "hosted_processor_service",
+          "hosted_processor_output",
+          "production_customer_media"
+        ],
+        "type": "string"
+      },
+      "title": "Prohibited Sources",
+      "type": "array"
+    },
+    "randomization_seed": {
+      "maximum": 9223372036854775807,
+      "minimum": 0,
+      "title": "Randomization Seed",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "target_integrated_lufs": {
+      "maximum": -12.0,
+      "minimum": -30.0,
+      "title": "Target Integrated Lufs",
+      "type": "number"
+    }
+  },
+  "required": [
+    "experiment_id",
+    "experiment_version",
+    "corpus_id",
+    "corpus_version",
+    "randomization_seed",
+    "target_integrated_lufs",
+    "max_true_peak_dbtp",
+    "candidates",
+    "items",
+    "prohibited_sources",
+    "hypothesis"
+  ],
+  "title": "ListeningExperimentManifest",
+  "type": "object"
+}

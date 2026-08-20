@@ -1,0 +1,161 @@
+{
+  "$defs": {
+    "ListeningCandidateRole": {
+      "enum": [
+        "original",
+        "candidate",
+        "reference",
+        "anchor"
+      ],
+      "title": "ListeningCandidateRole",
+      "type": "string"
+    },
+    "ListeningRuntimeMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "device_summary": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Device Summary",
+          "type": "string"
+        },
+        "external_cost_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "External Cost Usd",
+          "type": "number"
+        },
+        "peak_memory_mb": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peak Memory Mb"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wall_seconds": {
+          "minimum": 0.0,
+          "title": "Wall Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "device_summary"
+      ],
+      "title": "ListeningRuntimeMetrics",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "archived_master_immutable": {
+      "const": true,
+      "default": true,
+      "title": "Archived Master Immutable",
+      "type": "boolean"
+    },
+    "archived_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Archived Sha256",
+      "type": "string"
+    },
+    "candidate_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "engine_build_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Engine Build Id",
+      "type": "string"
+    },
+    "model_manifest_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Model Manifest Ids",
+      "type": "array"
+    },
+    "notes": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Notes",
+      "type": "string"
+    },
+    "processor_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Processor Id",
+      "type": "string"
+    },
+    "processor_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Processor Version",
+      "type": "string"
+    },
+    "recipe_version_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recipe Version Id"
+    },
+    "relative_path": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Relative Path",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/ListeningCandidateRole"
+    },
+    "runtime": {
+      "$ref": "#/$defs/ListeningRuntimeMetrics"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_fixture_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Source Fixture Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "relative_path",
+    "archived_sha256",
+    "role",
+    "source_fixture_id",
+    "processor_id",
+    "processor_version",
+    "engine_build_id",
+    "runtime",
+    "notes"
+  ],
+  "title": "ListeningExperimentCandidate",
+  "type": "object"
+}

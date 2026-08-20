@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "device_summary": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Device Summary",
+      "type": "string"
+    },
+    "external_cost_usd": {
+      "default": 0.0,
+      "minimum": 0.0,
+      "title": "External Cost Usd",
+      "type": "number"
+    },
+    "peak_memory_mb": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Peak Memory Mb"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "wall_seconds": {
+      "minimum": 0.0,
+      "title": "Wall Seconds",
+      "type": "number"
+    }
+  },
+  "required": [
+    "wall_seconds",
+    "device_summary"
+  ],
+  "title": "ListeningRuntimeMetrics",
+  "type": "object"
+}

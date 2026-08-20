@@ -1,0 +1,88 @@
+{
+  "$defs": {
+    "ListeningCandidateRole": {
+      "enum": [
+        "original",
+        "candidate",
+        "reference",
+        "anchor"
+      ],
+      "title": "ListeningCandidateRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "engine_build_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Engine Build Id",
+      "type": "string"
+    },
+    "model_manifest_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Model Manifest Ids",
+      "type": "array"
+    },
+    "option_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Option Id",
+      "type": "string"
+    },
+    "processor_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Processor Id",
+      "type": "string"
+    },
+    "processor_version": {
+      "title": "Processor Version",
+      "type": "string"
+    },
+    "recipe_version_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recipe Version Id"
+    },
+    "role": {
+      "$ref": "#/$defs/ListeningCandidateRole"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "trial_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Trial Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "trial_id",
+    "option_id",
+    "candidate_id",
+    "role",
+    "processor_id",
+    "processor_version",
+    "engine_build_id"
+  ],
+  "title": "ListeningIdentityReveal",
+  "type": "object"
+}

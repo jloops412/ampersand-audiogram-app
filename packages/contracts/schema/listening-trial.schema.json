@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "ListeningMode": {
+      "enum": [
+        "pairwise_preference",
+        "clean_preservation"
+      ],
+      "title": "ListeningMode",
+      "type": "string"
+    },
+    "ListeningOption": {
+      "additionalProperties": false,
+      "properties": {
+        "audio_relative_path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Audio Relative Path",
+          "type": "string"
+        },
+        "channels": {
+          "exclusiveMinimum": 0,
+          "maximum": 8,
+          "title": "Channels",
+          "type": "integer"
+        },
+        "duration_us": {
+          "minimum": 0,
+          "title": "Duration Us",
+          "type": "integer"
+        },
+        "listening_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Listening Sha256",
+          "type": "string"
+        },
+        "loudness": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "sample_rate_hz": {
+          "exclusiveMinimum": 0,
+          "maximum": 192000,
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "option_id",
+        "audio_relative_path",
+        "listening_sha256",
+        "loudness",
+        "duration_us",
+        "sample_rate_hz",
+        "channels"
+      ],
+      "title": "ListeningOption",
+      "type": "object"
+    },
+    "LoudnessMeasurement": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Backend Version",
+          "type": "string"
+        },
+        "integrated_lufs": {
+          "title": "Integrated Lufs",
+          "type": "number"
+        },
+        "loudness_range_lu": {
+          "minimum": 0.0,
+          "title": "Loudness Range Lu",
+          "type": "number"
+        },
+        "measurement_backend": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Measurement Backend",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "threshold_lufs": {
+          "title": "Threshold Lufs",
+          "type": "number"
+        },
+        "true_peak_dbtp": {
+          "title": "True Peak Dbtp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "integrated_lufs",
+        "true_peak_dbtp",
+        "loudness_range_lu",
+        "threshold_lufs",
+        "measurement_backend",
+        "backend_version"
+      ],
+      "title": "LoudnessMeasurement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "evaluation_prompt": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Evaluation Prompt",
+      "type": "string"
+    },
+    "mode": {
+      "$ref": "#/$defs/ListeningMode"
+    },
+    "options": {
+      "items": {
+        "$ref": "#/$defs/ListeningOption"
+      },
+      "title": "Options",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_token": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Source Token",
+      "type": "string"
+    },
+    "trial_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Trial Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "trial_id",
+    "source_token",
+    "mode",
+    "evaluation_prompt",
+    "options"
+  ],
+  "title": "ListeningTrial",
+  "type": "object"
+}
