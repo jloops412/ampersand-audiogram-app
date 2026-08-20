@@ -28,6 +28,16 @@ uv run ampersand-generate-corpus /tmp/ampersand-fixture-corpus
 
 See [Synthetic Fixture Corpus V0](../research/SYNTHETIC_FIXTURE_CORPUS_V0.md). Generated voice-shaped controls are technical fixtures, not substitutes for rights-cleared human speech or listening tests.
 
+Prepare and serve a local blinded experiment separately:
+
+```bash
+uv run ampersand-listening prepare /absolute/path/to/experiment.json --output /tmp/listening-session
+uv run ampersand-listening serve /tmp/listening-session
+```
+
+See [Blinded Listening and Regression Harness V0](../research/BLINDED_LISTENING_HARNESS_V0.md). The harness accepts
+immutable candidate masters and never activates the shadow Leveler inside the production graph.
+
 ## Deterministic graph
 
 1. Validate the local file and normalize ffprobe metadata.
@@ -100,4 +110,6 @@ No model or checkpoint is downloaded or admitted. The VAD is first-party determi
 
 The V2 packages are additive and do not import the legacy runtime. Semantic Map `1.0.0` placeholders upgrade explicitly through `read_semantic_map()`; unsupported versions fail closed. Rollback can disable the V0 analysis stage and keep the protected placeholder without touching source or master media. Generated production directories can be deleted without touching their original source.
 
-See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for evidence/fusion details and [Adaptive Leveler V0](../architecture/ADAPTIVE_LEVELER_V0.md) for the control law, artifacts, safety gates, and promotion boundary.
+See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for evidence/fusion details,
+[Adaptive Leveler V0](../architecture/ADAPTIVE_LEVELER_V0.md) for the control law and promotion boundary, and
+[Blinded Listening and Regression Harness V0](../research/BLINDED_LISTENING_HARNESS_V0.md) for local evaluation.

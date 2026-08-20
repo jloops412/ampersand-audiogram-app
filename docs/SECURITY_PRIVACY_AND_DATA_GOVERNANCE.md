@@ -1,7 +1,7 @@
 # Security, Privacy, and Data Governance
 
 **Status:** Accepted baseline requirements; jurisdiction-specific legal review remains required  
-**Last verified:** 2026-08-18
+**Last verified:** 2026-08-20
 
 ## Purpose
 
@@ -86,6 +86,19 @@ A customer uploading media must represent that they have necessary rights and pe
 - no production database dumps;
 - no production signed URLs;
 - fixture package small enough to audit and remove.
+
+The V0 listening harness adds these local-only controls:
+
+- bind only to loopback and load no third-party web assets;
+- expose only the opaque public session and explicitly whitelisted listening WAV paths;
+- keep experiment identity, source/region metadata, scores, and state under the private session tree;
+- reveal identities only after permanent session close;
+- use pseudonymous listener IDs and prohibit names, emails, or customer identifiers in the UI guidance;
+- bound JSON requests, disable response caching, omit request logs, and integrity-check the closed report;
+- make the generated session directory the deletion unit while leaving archived candidate masters immutable.
+
+These controls make synthetic/local pilot work safer; they do not authorize restricted real recordings without the
+rights, access, encryption, retention, and deletion controls required elsewhere in this document.
 
 ## Identity and access control
 

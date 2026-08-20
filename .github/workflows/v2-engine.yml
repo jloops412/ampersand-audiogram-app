@@ -50,8 +50,8 @@ jobs:
         run: .bootstrap/bin/uv run python scripts/check_v2_boundaries.py
       - name: Lint and format-check
         run: |
-          .bootstrap/bin/uv run ruff check packages services scripts
-          .bootstrap/bin/uv run ruff format --check packages services scripts
+          .bootstrap/bin/uv run ruff check packages services lab scripts
+          .bootstrap/bin/uv run ruff format --check packages services lab scripts
       - name: Type-check
         run: .bootstrap/bin/uv run mypy
       - name: Test contracts and engine

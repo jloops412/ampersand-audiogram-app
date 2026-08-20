@@ -1,0 +1,245 @@
+{
+  "$defs": {
+    "ListeningRuntimeMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "device_summary": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Device Summary",
+          "type": "string"
+        },
+        "external_cost_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "External Cost Usd",
+          "type": "number"
+        },
+        "peak_memory_mb": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peak Memory Mb"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wall_seconds": {
+          "minimum": 0.0,
+          "title": "Wall Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "device_summary"
+      ],
+      "title": "ListeningRuntimeMetrics",
+      "type": "object"
+    },
+    "LoudnessMeasurement": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Backend Version",
+          "type": "string"
+        },
+        "integrated_lufs": {
+          "title": "Integrated Lufs",
+          "type": "number"
+        },
+        "loudness_range_lu": {
+          "minimum": 0.0,
+          "title": "Loudness Range Lu",
+          "type": "number"
+        },
+        "measurement_backend": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Measurement Backend",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "threshold_lufs": {
+          "title": "Threshold Lufs",
+          "type": "number"
+        },
+        "true_peak_dbtp": {
+          "title": "True Peak Dbtp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "integrated_lufs",
+        "true_peak_dbtp",
+        "loudness_range_lu",
+        "threshold_lufs",
+        "measurement_backend",
+        "backend_version"
+      ],
+      "title": "LoudnessMeasurement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "archived_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Archived Sha256",
+      "type": "string"
+    },
+    "candidate_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "channels": {
+      "exclusiveMinimum": 0,
+      "maximum": 8,
+      "title": "Channels",
+      "type": "integer"
+    },
+    "clipping_sample_count": {
+      "minimum": 0,
+      "title": "Clipping Sample Count",
+      "type": "integer"
+    },
+    "diagnostic_only": {
+      "const": true,
+      "default": true,
+      "title": "Diagnostic Only",
+      "type": "boolean"
+    },
+    "duration_us": {
+      "minimum": 0,
+      "title": "Duration Us",
+      "type": "integer"
+    },
+    "item_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Item Id",
+      "type": "string"
+    },
+    "listening_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Listening Sha256",
+      "type": "string"
+    },
+    "loudness_after": {
+      "$ref": "#/$defs/LoudnessMeasurement"
+    },
+    "loudness_before": {
+      "$ref": "#/$defs/LoudnessMeasurement"
+    },
+    "loudness_frame_count": {
+      "exclusiveMinimum": 0,
+      "title": "Loudness Frame Count",
+      "type": "integer"
+    },
+    "loudness_hop_us": {
+      "minimum": 0,
+      "title": "Loudness Hop Us",
+      "type": "integer"
+    },
+    "momentary_lufs_max": {
+      "title": "Momentary Lufs Max",
+      "type": "number"
+    },
+    "momentary_lufs_min": {
+      "title": "Momentary Lufs Min",
+      "type": "number"
+    },
+    "runtime": {
+      "$ref": "#/$defs/ListeningRuntimeMetrics"
+    },
+    "sample_peak_dbfs": {
+      "maximum": 0.0,
+      "minimum": -200.0,
+      "title": "Sample Peak Dbfs",
+      "type": "number"
+    },
+    "sample_rate_hz": {
+      "exclusiveMinimum": 0,
+      "maximum": 192000,
+      "title": "Sample Rate Hz",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "short_term_lufs_max": {
+      "title": "Short Term Lufs Max",
+      "type": "number"
+    },
+    "short_term_lufs_min": {
+      "title": "Short Term Lufs Min",
+      "type": "number"
+    },
+    "si_sdr_db": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Si Sdr Db"
+    },
+    "snr_db": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snr Db"
+    }
+  },
+  "required": [
+    "item_id",
+    "candidate_id",
+    "archived_sha256",
+    "listening_sha256",
+    "loudness_before",
+    "loudness_after",
+    "duration_us",
+    "sample_rate_hz",
+    "channels",
+    "loudness_hop_us",
+    "loudness_frame_count",
+    "momentary_lufs_min",
+    "momentary_lufs_max",
+    "short_term_lufs_min",
+    "short_term_lufs_max",
+    "sample_peak_dbfs",
+    "clipping_sample_count",
+    "runtime"
+  ],
+  "title": "ListeningObjectiveMetrics",
+  "type": "object"
+}

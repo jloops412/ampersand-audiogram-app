@@ -1,0 +1,985 @@
+{
+  "$defs": {
+    "ListeningArtifactFlag": {
+      "enum": [
+        "musical_noise",
+        "chirping_warbling",
+        "watery_phasey_speech",
+        "robotic_voice_change",
+        "missing_phoneme_or_word",
+        "pumping_breathing",
+        "gating_chopping",
+        "transient_smearing",
+        "sibilance_harshness",
+        "muffling_lost_air",
+        "bass_boom_mud",
+        "plosive_damage",
+        "reverb_tail_truncation",
+        "ambience_collapse",
+        "music_damage",
+        "speaker_level_inconsistency",
+        "processing_boundary_click",
+        "clipping_distortion",
+        "timing_drift",
+        "identity_emotion_change",
+        "other"
+      ],
+      "title": "ListeningArtifactFlag",
+      "type": "string"
+    },
+    "ListeningCandidateRole": {
+      "enum": [
+        "original",
+        "candidate",
+        "reference",
+        "anchor"
+      ],
+      "title": "ListeningCandidateRole",
+      "type": "string"
+    },
+    "ListeningExperimentCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_master_immutable": {
+          "const": true,
+          "default": true,
+          "title": "Archived Master Immutable",
+          "type": "boolean"
+        },
+        "archived_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Archived Sha256",
+          "type": "string"
+        },
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "engine_build_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Engine Build Id",
+          "type": "string"
+        },
+        "model_manifest_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Model Manifest Ids",
+          "type": "array"
+        },
+        "notes": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Notes",
+          "type": "string"
+        },
+        "processor_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Processor Id",
+          "type": "string"
+        },
+        "processor_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Processor Version",
+          "type": "string"
+        },
+        "recipe_version_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipe Version Id"
+        },
+        "relative_path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/ListeningCandidateRole"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ListeningRuntimeMetrics"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_fixture_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Fixture Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "relative_path",
+        "archived_sha256",
+        "role",
+        "source_fixture_id",
+        "processor_id",
+        "processor_version",
+        "engine_build_id",
+        "runtime",
+        "notes"
+      ],
+      "title": "ListeningExperimentCandidate",
+      "type": "object"
+    },
+    "ListeningExperimentItem": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_ids": {
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Candidate Ids",
+          "type": "array"
+        },
+        "evaluation_prompt": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Evaluation Prompt",
+          "type": "string"
+        },
+        "item_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/ListeningMode"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "segment_end_us": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Segment End Us"
+        },
+        "segment_start_us": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Segment Start Us",
+          "type": "integer"
+        },
+        "source_fixture_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Fixture Id",
+          "type": "string"
+        },
+        "source_region_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Source Region Ids",
+          "type": "array"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "mode",
+        "source_fixture_id",
+        "source_sha256",
+        "candidate_ids",
+        "evaluation_prompt"
+      ],
+      "title": "ListeningExperimentItem",
+      "type": "object"
+    },
+    "ListeningExperimentManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_masters_immutable": {
+          "const": true,
+          "default": true,
+          "title": "Archived Masters Immutable",
+          "type": "boolean"
+        },
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/ListeningExperimentCandidate"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "corpus_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Corpus Id",
+          "type": "string"
+        },
+        "corpus_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Corpus Version",
+          "type": "string"
+        },
+        "experiment_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Experiment Id",
+          "type": "string"
+        },
+        "experiment_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Experiment Version",
+          "type": "string"
+        },
+        "hypothesis": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Hypothesis",
+          "type": "string"
+        },
+        "identity_reveal_policy": {
+          "const": "after_session_close",
+          "default": "after_session_close",
+          "title": "Identity Reveal Policy",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/ListeningExperimentItem"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "max_true_peak_dbtp": {
+          "maximum": 0.0,
+          "minimum": -6.0,
+          "title": "Max True Peak Dbtp",
+          "type": "number"
+        },
+        "objective_metrics_diagnostic_only": {
+          "const": true,
+          "default": true,
+          "title": "Objective Metrics Diagnostic Only",
+          "type": "boolean"
+        },
+        "private_local_only": {
+          "const": true,
+          "default": true,
+          "title": "Private Local Only",
+          "type": "boolean"
+        },
+        "prohibited_sources": {
+          "items": {
+            "enum": [
+              "hosted_processor_service",
+              "hosted_processor_output",
+              "production_customer_media"
+            ],
+            "type": "string"
+          },
+          "title": "Prohibited Sources",
+          "type": "array"
+        },
+        "randomization_seed": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Randomization Seed",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target_integrated_lufs": {
+          "maximum": -12.0,
+          "minimum": -30.0,
+          "title": "Target Integrated Lufs",
+          "type": "number"
+        }
+      },
+      "required": [
+        "experiment_id",
+        "experiment_version",
+        "corpus_id",
+        "corpus_version",
+        "randomization_seed",
+        "target_integrated_lufs",
+        "max_true_peak_dbtp",
+        "candidates",
+        "items",
+        "prohibited_sources",
+        "hypothesis"
+      ],
+      "title": "ListeningExperimentManifest",
+      "type": "object"
+    },
+    "ListeningIdentityReveal": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "engine_build_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Engine Build Id",
+          "type": "string"
+        },
+        "model_manifest_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Model Manifest Ids",
+          "type": "array"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "processor_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Processor Id",
+          "type": "string"
+        },
+        "processor_version": {
+          "title": "Processor Version",
+          "type": "string"
+        },
+        "recipe_version_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipe Version Id"
+        },
+        "role": {
+          "$ref": "#/$defs/ListeningCandidateRole"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "option_id",
+        "candidate_id",
+        "role",
+        "processor_id",
+        "processor_version",
+        "engine_build_id"
+      ],
+      "title": "ListeningIdentityReveal",
+      "type": "object"
+    },
+    "ListeningItemReveal": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluation_prompt": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Evaluation Prompt",
+          "type": "string"
+        },
+        "item_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "segment_end_us": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Segment End Us"
+        },
+        "segment_start_us": {
+          "minimum": 0,
+          "title": "Segment Start Us",
+          "type": "integer"
+        },
+        "source_fixture_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Fixture Id",
+          "type": "string"
+        },
+        "source_region_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Source Region Ids",
+          "type": "array"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "item_id",
+        "source_fixture_id",
+        "source_sha256",
+        "segment_start_us",
+        "evaluation_prompt"
+      ],
+      "title": "ListeningItemReveal",
+      "type": "object"
+    },
+    "ListeningMode": {
+      "enum": [
+        "pairwise_preference",
+        "clean_preservation"
+      ],
+      "title": "ListeningMode",
+      "type": "string"
+    },
+    "ListeningObjectiveMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Archived Sha256",
+          "type": "string"
+        },
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "channels": {
+          "exclusiveMinimum": 0,
+          "maximum": 8,
+          "title": "Channels",
+          "type": "integer"
+        },
+        "clipping_sample_count": {
+          "minimum": 0,
+          "title": "Clipping Sample Count",
+          "type": "integer"
+        },
+        "diagnostic_only": {
+          "const": true,
+          "default": true,
+          "title": "Diagnostic Only",
+          "type": "boolean"
+        },
+        "duration_us": {
+          "minimum": 0,
+          "title": "Duration Us",
+          "type": "integer"
+        },
+        "item_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "listening_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Listening Sha256",
+          "type": "string"
+        },
+        "loudness_after": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "loudness_before": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "loudness_frame_count": {
+          "exclusiveMinimum": 0,
+          "title": "Loudness Frame Count",
+          "type": "integer"
+        },
+        "loudness_hop_us": {
+          "minimum": 0,
+          "title": "Loudness Hop Us",
+          "type": "integer"
+        },
+        "momentary_lufs_max": {
+          "title": "Momentary Lufs Max",
+          "type": "number"
+        },
+        "momentary_lufs_min": {
+          "title": "Momentary Lufs Min",
+          "type": "number"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ListeningRuntimeMetrics"
+        },
+        "sample_peak_dbfs": {
+          "maximum": 0.0,
+          "minimum": -200.0,
+          "title": "Sample Peak Dbfs",
+          "type": "number"
+        },
+        "sample_rate_hz": {
+          "exclusiveMinimum": 0,
+          "maximum": 192000,
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "short_term_lufs_max": {
+          "title": "Short Term Lufs Max",
+          "type": "number"
+        },
+        "short_term_lufs_min": {
+          "title": "Short Term Lufs Min",
+          "type": "number"
+        },
+        "si_sdr_db": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Si Sdr Db"
+        },
+        "snr_db": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snr Db"
+        }
+      },
+      "required": [
+        "item_id",
+        "candidate_id",
+        "archived_sha256",
+        "listening_sha256",
+        "loudness_before",
+        "loudness_after",
+        "duration_us",
+        "sample_rate_hz",
+        "channels",
+        "loudness_hop_us",
+        "loudness_frame_count",
+        "momentary_lufs_min",
+        "momentary_lufs_max",
+        "short_term_lufs_min",
+        "short_term_lufs_max",
+        "sample_peak_dbfs",
+        "clipping_sample_count",
+        "runtime"
+      ],
+      "title": "ListeningObjectiveMetrics",
+      "type": "object"
+    },
+    "ListeningOption": {
+      "additionalProperties": false,
+      "properties": {
+        "audio_relative_path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Audio Relative Path",
+          "type": "string"
+        },
+        "channels": {
+          "exclusiveMinimum": 0,
+          "maximum": 8,
+          "title": "Channels",
+          "type": "integer"
+        },
+        "duration_us": {
+          "minimum": 0,
+          "title": "Duration Us",
+          "type": "integer"
+        },
+        "listening_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Listening Sha256",
+          "type": "string"
+        },
+        "loudness": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "sample_rate_hz": {
+          "exclusiveMinimum": 0,
+          "maximum": 192000,
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "option_id",
+        "audio_relative_path",
+        "listening_sha256",
+        "loudness",
+        "duration_us",
+        "sample_rate_hz",
+        "channels"
+      ],
+      "title": "ListeningOption",
+      "type": "object"
+    },
+    "ListeningRuntimeMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "device_summary": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Device Summary",
+          "type": "string"
+        },
+        "external_cost_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "External Cost Usd",
+          "type": "number"
+        },
+        "peak_memory_mb": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peak Memory Mb"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wall_seconds": {
+          "minimum": 0.0,
+          "title": "Wall Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "device_summary"
+      ],
+      "title": "ListeningRuntimeMetrics",
+      "type": "object"
+    },
+    "ListeningSessionManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_flags": {
+          "items": {
+            "$ref": "#/$defs/ListeningArtifactFlag"
+          },
+          "title": "Artifact Flags",
+          "type": "array"
+        },
+        "experiment_commitment_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Experiment Commitment Sha256",
+          "type": "string"
+        },
+        "identity_hidden": {
+          "const": true,
+          "default": true,
+          "title": "Identity Hidden",
+          "type": "boolean"
+        },
+        "instructions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Instructions",
+          "type": "array"
+        },
+        "max_true_peak_dbtp": {
+          "title": "Max True Peak Dbtp",
+          "type": "number"
+        },
+        "randomization_algorithm": {
+          "const": "sha256-seed-item-candidate-v1",
+          "title": "Randomization Algorithm",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "state": {
+          "const": "open",
+          "default": "open",
+          "title": "State",
+          "type": "string"
+        },
+        "target_integrated_lufs": {
+          "title": "Target Integrated Lufs",
+          "type": "number"
+        },
+        "trials": {
+          "items": {
+            "$ref": "#/$defs/ListeningTrial"
+          },
+          "title": "Trials",
+          "type": "array"
+        }
+      },
+      "required": [
+        "session_id",
+        "experiment_commitment_sha256",
+        "randomization_algorithm",
+        "target_integrated_lufs",
+        "max_true_peak_dbtp",
+        "trials",
+        "artifact_flags",
+        "instructions"
+      ],
+      "title": "ListeningSessionManifest",
+      "type": "object"
+    },
+    "ListeningTrial": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluation_prompt": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Evaluation Prompt",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/ListeningMode"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/ListeningOption"
+          },
+          "title": "Options",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_token": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Token",
+          "type": "string"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "source_token",
+        "mode",
+        "evaluation_prompt",
+        "options"
+      ],
+      "title": "ListeningTrial",
+      "type": "object"
+    },
+    "LoudnessMeasurement": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Backend Version",
+          "type": "string"
+        },
+        "integrated_lufs": {
+          "title": "Integrated Lufs",
+          "type": "number"
+        },
+        "loudness_range_lu": {
+          "minimum": 0.0,
+          "title": "Loudness Range Lu",
+          "type": "number"
+        },
+        "measurement_backend": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Measurement Backend",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "threshold_lufs": {
+          "title": "Threshold Lufs",
+          "type": "number"
+        },
+        "true_peak_dbtp": {
+          "title": "True Peak Dbtp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "integrated_lufs",
+        "true_peak_dbtp",
+        "loudness_range_lu",
+        "threshold_lufs",
+        "measurement_backend",
+        "backend_version"
+      ],
+      "title": "LoudnessMeasurement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "experiment": {
+      "$ref": "#/$defs/ListeningExperimentManifest"
+    },
+    "experiment_commitment_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Experiment Commitment Sha256",
+      "type": "string"
+    },
+    "identity_reveals": {
+      "items": {
+        "$ref": "#/$defs/ListeningIdentityReveal"
+      },
+      "title": "Identity Reveals",
+      "type": "array"
+    },
+    "item_reveals": {
+      "items": {
+        "$ref": "#/$defs/ListeningItemReveal"
+      },
+      "title": "Item Reveals",
+      "type": "array"
+    },
+    "objective_metrics": {
+      "items": {
+        "$ref": "#/$defs/ListeningObjectiveMetrics"
+      },
+      "title": "Objective Metrics",
+      "type": "array"
+    },
+    "prepared_experiment_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Prepared Experiment Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session": {
+      "$ref": "#/$defs/ListeningSessionManifest"
+    }
+  },
+  "required": [
+    "prepared_experiment_id",
+    "experiment_commitment_sha256",
+    "experiment",
+    "session",
+    "identity_reveals",
+    "item_reveals",
+    "objective_metrics"
+  ],
+  "title": "PreparedListeningExperiment",
+  "type": "object"
+}

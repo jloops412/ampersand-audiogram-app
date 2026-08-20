@@ -9,6 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "ampersand-contracts",
+    "ampersand-listening-lab",
     "ampersand-media-worker",
     "ampersand-test-fixtures",
     "ampersand-workspace",
@@ -16,7 +17,7 @@ members = [
 
 [[package]]
 name = "ampersand-contracts"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "packages/contracts/python" }
 dependencies = [
     { name = "pydantic" },
@@ -24,6 +25,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "pydantic", specifier = ">=2.11,<3" }]
+
+[[package]]
+name = "ampersand-listening-lab"
+version = "0.1.0"
+source = { editable = "lab/listening/python" }
+dependencies = [
+    { name = "ampersand-contracts" },
+    { name = "ampersand-media-worker" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ampersand-contracts", editable = "packages/contracts/python" },
+    { name = "ampersand-media-worker", editable = "services/media-worker" },
+]
 
 [[package]]
 name = "ampersand-media-worker"

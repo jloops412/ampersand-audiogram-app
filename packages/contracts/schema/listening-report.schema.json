@@ -1,0 +1,913 @@
+{
+  "$defs": {
+    "CandidateListeningSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_flag_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/ListeningArtifactFlag"
+          },
+          "title": "Artifact Flag Counts",
+          "type": "object"
+        },
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "clean_audible_degradation_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Clean Audible Degradation Count",
+          "type": "integer"
+        },
+        "clean_processing_preferred_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Clean Processing Preferred Count",
+          "type": "integer"
+        },
+        "exposures": {
+          "minimum": 0,
+          "title": "Exposures",
+          "type": "integer"
+        },
+        "mean_background_quality": {
+          "anyOf": [
+            {
+              "maximum": 5.0,
+              "minimum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Background Quality"
+        },
+        "mean_overall_quality": {
+          "anyOf": [
+            {
+              "maximum": 5.0,
+              "minimum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Overall Quality"
+        },
+        "mean_speech_quality": {
+          "anyOf": [
+            {
+              "maximum": 5.0,
+              "minimum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Speech Quality"
+        },
+        "preference_wins": {
+          "minimum": 0,
+          "title": "Preference Wins",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "exposures",
+        "preference_wins"
+      ],
+      "title": "CandidateListeningSummary",
+      "type": "object"
+    },
+    "ListeningArtifactFlag": {
+      "enum": [
+        "musical_noise",
+        "chirping_warbling",
+        "watery_phasey_speech",
+        "robotic_voice_change",
+        "missing_phoneme_or_word",
+        "pumping_breathing",
+        "gating_chopping",
+        "transient_smearing",
+        "sibilance_harshness",
+        "muffling_lost_air",
+        "bass_boom_mud",
+        "plosive_damage",
+        "reverb_tail_truncation",
+        "ambience_collapse",
+        "music_damage",
+        "speaker_level_inconsistency",
+        "processing_boundary_click",
+        "clipping_distortion",
+        "timing_drift",
+        "identity_emotion_change",
+        "other"
+      ],
+      "title": "ListeningArtifactFlag",
+      "type": "string"
+    },
+    "ListeningCandidateRole": {
+      "enum": [
+        "original",
+        "candidate",
+        "reference",
+        "anchor"
+      ],
+      "title": "ListeningCandidateRole",
+      "type": "string"
+    },
+    "ListeningIdentityReveal": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "engine_build_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Engine Build Id",
+          "type": "string"
+        },
+        "model_manifest_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Model Manifest Ids",
+          "type": "array"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "processor_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Processor Id",
+          "type": "string"
+        },
+        "processor_version": {
+          "title": "Processor Version",
+          "type": "string"
+        },
+        "recipe_version_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipe Version Id"
+        },
+        "role": {
+          "$ref": "#/$defs/ListeningCandidateRole"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "option_id",
+        "candidate_id",
+        "role",
+        "processor_id",
+        "processor_version",
+        "engine_build_id"
+      ],
+      "title": "ListeningIdentityReveal",
+      "type": "object"
+    },
+    "ListeningItemReveal": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluation_prompt": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Evaluation Prompt",
+          "type": "string"
+        },
+        "item_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "segment_end_us": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Segment End Us"
+        },
+        "segment_start_us": {
+          "minimum": 0,
+          "title": "Segment Start Us",
+          "type": "integer"
+        },
+        "source_fixture_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Source Fixture Id",
+          "type": "string"
+        },
+        "source_region_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Source Region Ids",
+          "type": "array"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trial_id",
+        "item_id",
+        "source_fixture_id",
+        "source_sha256",
+        "segment_start_us",
+        "evaluation_prompt"
+      ],
+      "title": "ListeningItemReveal",
+      "type": "object"
+    },
+    "ListeningMode": {
+      "enum": [
+        "pairwise_preference",
+        "clean_preservation"
+      ],
+      "title": "ListeningMode",
+      "type": "string"
+    },
+    "ListeningObjectiveMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Archived Sha256",
+          "type": "string"
+        },
+        "candidate_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "channels": {
+          "exclusiveMinimum": 0,
+          "maximum": 8,
+          "title": "Channels",
+          "type": "integer"
+        },
+        "clipping_sample_count": {
+          "minimum": 0,
+          "title": "Clipping Sample Count",
+          "type": "integer"
+        },
+        "diagnostic_only": {
+          "const": true,
+          "default": true,
+          "title": "Diagnostic Only",
+          "type": "boolean"
+        },
+        "duration_us": {
+          "minimum": 0,
+          "title": "Duration Us",
+          "type": "integer"
+        },
+        "item_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "listening_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Listening Sha256",
+          "type": "string"
+        },
+        "loudness_after": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "loudness_before": {
+          "$ref": "#/$defs/LoudnessMeasurement"
+        },
+        "loudness_frame_count": {
+          "exclusiveMinimum": 0,
+          "title": "Loudness Frame Count",
+          "type": "integer"
+        },
+        "loudness_hop_us": {
+          "minimum": 0,
+          "title": "Loudness Hop Us",
+          "type": "integer"
+        },
+        "momentary_lufs_max": {
+          "title": "Momentary Lufs Max",
+          "type": "number"
+        },
+        "momentary_lufs_min": {
+          "title": "Momentary Lufs Min",
+          "type": "number"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ListeningRuntimeMetrics"
+        },
+        "sample_peak_dbfs": {
+          "maximum": 0.0,
+          "minimum": -200.0,
+          "title": "Sample Peak Dbfs",
+          "type": "number"
+        },
+        "sample_rate_hz": {
+          "exclusiveMinimum": 0,
+          "maximum": 192000,
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "short_term_lufs_max": {
+          "title": "Short Term Lufs Max",
+          "type": "number"
+        },
+        "short_term_lufs_min": {
+          "title": "Short Term Lufs Min",
+          "type": "number"
+        },
+        "si_sdr_db": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Si Sdr Db"
+        },
+        "snr_db": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snr Db"
+        }
+      },
+      "required": [
+        "item_id",
+        "candidate_id",
+        "archived_sha256",
+        "listening_sha256",
+        "loudness_before",
+        "loudness_after",
+        "duration_us",
+        "sample_rate_hz",
+        "channels",
+        "loudness_hop_us",
+        "loudness_frame_count",
+        "momentary_lufs_min",
+        "momentary_lufs_max",
+        "short_term_lufs_min",
+        "short_term_lufs_max",
+        "sample_peak_dbfs",
+        "clipping_sample_count",
+        "runtime"
+      ],
+      "title": "ListeningObjectiveMetrics",
+      "type": "object"
+    },
+    "ListeningOptionRating": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_flags": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ListeningArtifactFlag"
+          },
+          "title": "Artifact Flags",
+          "type": "array"
+        },
+        "background_quality": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Background Quality",
+          "type": "integer"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "overall_quality": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Overall Quality",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "speech_quality": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Speech Quality",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "option_id",
+        "speech_quality",
+        "background_quality",
+        "overall_quality"
+      ],
+      "title": "ListeningOptionRating",
+      "type": "object"
+    },
+    "ListeningRuntimeMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "device_summary": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Device Summary",
+          "type": "string"
+        },
+        "external_cost_usd": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "External Cost Usd",
+          "type": "number"
+        },
+        "peak_memory_mb": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peak Memory Mb"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wall_seconds": {
+          "minimum": 0.0,
+          "title": "Wall Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "device_summary"
+      ],
+      "title": "ListeningRuntimeMetrics",
+      "type": "object"
+    },
+    "ListeningScore": {
+      "additionalProperties": false,
+      "properties": {
+        "ambience_or_music_changed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ambience Or Music Changed"
+        },
+        "audible_degradation": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Audible Degradation"
+        },
+        "confidence": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Confidence",
+          "type": "integer"
+        },
+        "listener_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Listener Id",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/ListeningMode"
+        },
+        "no_meaningful_preference": {
+          "title": "No Meaningful Preference",
+          "type": "boolean"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "maxLength": 1024,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "option_ratings": {
+          "items": {
+            "$ref": "#/$defs/ListeningOptionRating"
+          },
+          "title": "Option Ratings",
+          "type": "array"
+        },
+        "preferred_option_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preferred Option Id"
+        },
+        "processing_preferred": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processing Preferred"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Score Id",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "speech_less_natural": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speech Less Natural"
+        },
+        "submission_sequence": {
+          "minimum": 1,
+          "title": "Submission Sequence",
+          "type": "integer"
+        },
+        "trial_artifact_flags": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ListeningArtifactFlag"
+          },
+          "title": "Trial Artifact Flags",
+          "type": "array"
+        },
+        "trial_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "voice_identity_changed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Voice Identity Changed"
+        }
+      },
+      "required": [
+        "score_id",
+        "session_id",
+        "trial_id",
+        "listener_id",
+        "mode",
+        "no_meaningful_preference",
+        "option_ratings",
+        "confidence",
+        "submission_sequence"
+      ],
+      "title": "ListeningScore",
+      "type": "object"
+    },
+    "LoudnessMeasurement": {
+      "additionalProperties": false,
+      "properties": {
+        "backend_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Backend Version",
+          "type": "string"
+        },
+        "integrated_lufs": {
+          "title": "Integrated Lufs",
+          "type": "number"
+        },
+        "loudness_range_lu": {
+          "minimum": 0.0,
+          "title": "Loudness Range Lu",
+          "type": "number"
+        },
+        "measurement_backend": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Measurement Backend",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "threshold_lufs": {
+          "title": "Threshold Lufs",
+          "type": "number"
+        },
+        "true_peak_dbtp": {
+          "title": "True Peak Dbtp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "integrated_lufs",
+        "true_peak_dbtp",
+        "loudness_range_lu",
+        "threshold_lufs",
+        "measurement_backend",
+        "backend_version"
+      ],
+      "title": "LoudnessMeasurement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_summaries": {
+      "items": {
+        "$ref": "#/$defs/CandidateListeningSummary"
+      },
+      "title": "Candidate Summaries",
+      "type": "array"
+    },
+    "closed": {
+      "const": true,
+      "default": true,
+      "title": "Closed",
+      "type": "boolean"
+    },
+    "corpus_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Corpus Id",
+      "type": "string"
+    },
+    "corpus_version": {
+      "title": "Corpus Version",
+      "type": "string"
+    },
+    "decision": {
+      "const": "descriptive_pilot_only",
+      "default": "descriptive_pilot_only",
+      "title": "Decision",
+      "type": "string"
+    },
+    "experiment_commitment_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Experiment Commitment Sha256",
+      "type": "string"
+    },
+    "experiment_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Experiment Id",
+      "type": "string"
+    },
+    "experiment_version": {
+      "title": "Experiment Version",
+      "type": "string"
+    },
+    "external_api_cost_usd": {
+      "minimum": 0.0,
+      "title": "External Api Cost Usd",
+      "type": "number"
+    },
+    "human_approval_status": {
+      "enum": [
+        "not_evaluated",
+        "pilot_only",
+        "approved",
+        "rejected"
+      ],
+      "title": "Human Approval Status",
+      "type": "string"
+    },
+    "identity_reveals": {
+      "items": {
+        "$ref": "#/$defs/ListeningIdentityReveal"
+      },
+      "title": "Identity Reveals",
+      "type": "array"
+    },
+    "item_reveals": {
+      "items": {
+        "$ref": "#/$defs/ListeningItemReveal"
+      },
+      "title": "Item Reveals",
+      "type": "array"
+    },
+    "listening_report_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Listening Report Id",
+      "type": "string"
+    },
+    "no_preference_count": {
+      "minimum": 0,
+      "title": "No Preference Count",
+      "type": "integer"
+    },
+    "objective_metrics": {
+      "items": {
+        "$ref": "#/$defs/ListeningObjectiveMetrics"
+      },
+      "title": "Objective Metrics",
+      "type": "array"
+    },
+    "objective_metrics_diagnostic_only": {
+      "const": true,
+      "default": true,
+      "title": "Objective Metrics Diagnostic Only",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "score_count": {
+      "minimum": 0,
+      "title": "Score Count",
+      "type": "integer"
+    },
+    "scores": {
+      "items": {
+        "$ref": "#/$defs/ListeningScore"
+      },
+      "title": "Scores",
+      "type": "array"
+    },
+    "session_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "trial_count": {
+      "minimum": 1,
+      "title": "Trial Count",
+      "type": "integer"
+    },
+    "uncertainty_summary": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Uncertainty Summary",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "listening_report_id",
+    "experiment_id",
+    "experiment_version",
+    "corpus_id",
+    "corpus_version",
+    "session_id",
+    "experiment_commitment_sha256",
+    "scores",
+    "identity_reveals",
+    "item_reveals",
+    "objective_metrics",
+    "candidate_summaries",
+    "trial_count",
+    "score_count",
+    "no_preference_count",
+    "uncertainty_summary",
+    "human_approval_status",
+    "external_api_cost_usd",
+    "warnings"
+  ],
+  "title": "ListeningReport",
+  "type": "object"
+}

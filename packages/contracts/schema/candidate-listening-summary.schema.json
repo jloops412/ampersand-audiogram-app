@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "ListeningArtifactFlag": {
+      "enum": [
+        "musical_noise",
+        "chirping_warbling",
+        "watery_phasey_speech",
+        "robotic_voice_change",
+        "missing_phoneme_or_word",
+        "pumping_breathing",
+        "gating_chopping",
+        "transient_smearing",
+        "sibilance_harshness",
+        "muffling_lost_air",
+        "bass_boom_mud",
+        "plosive_damage",
+        "reverb_tail_truncation",
+        "ambience_collapse",
+        "music_damage",
+        "speaker_level_inconsistency",
+        "processing_boundary_click",
+        "clipping_distortion",
+        "timing_drift",
+        "identity_emotion_change",
+        "other"
+      ],
+      "title": "ListeningArtifactFlag",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifact_flag_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/ListeningArtifactFlag"
+      },
+      "title": "Artifact Flag Counts",
+      "type": "object"
+    },
+    "candidate_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "clean_audible_degradation_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Clean Audible Degradation Count",
+      "type": "integer"
+    },
+    "clean_processing_preferred_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Clean Processing Preferred Count",
+      "type": "integer"
+    },
+    "exposures": {
+      "minimum": 0,
+      "title": "Exposures",
+      "type": "integer"
+    },
+    "mean_background_quality": {
+      "anyOf": [
+        {
+          "maximum": 5.0,
+          "minimum": 1.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mean Background Quality"
+    },
+    "mean_overall_quality": {
+      "anyOf": [
+        {
+          "maximum": 5.0,
+          "minimum": 1.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mean Overall Quality"
+    },
+    "mean_speech_quality": {
+      "anyOf": [
+        {
+          "maximum": 5.0,
+          "minimum": 1.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mean Speech Quality"
+    },
+    "preference_wins": {
+      "minimum": 0,
+      "title": "Preference Wins",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "exposures",
+    "preference_wins"
+  ],
+  "title": "CandidateListeningSummary",
+  "type": "object"
+}

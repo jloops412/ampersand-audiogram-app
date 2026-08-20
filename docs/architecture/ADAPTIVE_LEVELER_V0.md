@@ -6,7 +6,7 @@
 
 **Algorithm version:** `0.1.0`
 
-**Contract package:** `0.4.0`
+**Contract package:** `0.5.0`
 
 **Runtime/cost:** local CPU, linear memory, $0 external API cost
 
@@ -104,3 +104,7 @@ V0 must not become active merely because its unit tests pass. Issue #6 remains o
 - documented rollback to the unity envelope plus final loudness master.
 
 Until then, the pipeline reports the proposed envelope but renders unity at the Leveler stage.
+
+The local [Blinded Listening and Regression Harness V0](../research/BLINDED_LISTENING_HARNESS_V0.md) can now ingest
+archived Leveler renders and compare them against original/no-op/prior candidates. This removes the tooling blocker; it
+does not remove any of the human-listening, rights, rendering, protection, or long-form gates above.

@@ -1,0 +1,250 @@
+{
+  "$defs": {
+    "ListeningArtifactFlag": {
+      "enum": [
+        "musical_noise",
+        "chirping_warbling",
+        "watery_phasey_speech",
+        "robotic_voice_change",
+        "missing_phoneme_or_word",
+        "pumping_breathing",
+        "gating_chopping",
+        "transient_smearing",
+        "sibilance_harshness",
+        "muffling_lost_air",
+        "bass_boom_mud",
+        "plosive_damage",
+        "reverb_tail_truncation",
+        "ambience_collapse",
+        "music_damage",
+        "speaker_level_inconsistency",
+        "processing_boundary_click",
+        "clipping_distortion",
+        "timing_drift",
+        "identity_emotion_change",
+        "other"
+      ],
+      "title": "ListeningArtifactFlag",
+      "type": "string"
+    },
+    "ListeningMode": {
+      "enum": [
+        "pairwise_preference",
+        "clean_preservation"
+      ],
+      "title": "ListeningMode",
+      "type": "string"
+    },
+    "ListeningOptionRating": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_flags": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ListeningArtifactFlag"
+          },
+          "title": "Artifact Flags",
+          "type": "array"
+        },
+        "background_quality": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Background Quality",
+          "type": "integer"
+        },
+        "option_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "overall_quality": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Overall Quality",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "speech_quality": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Speech Quality",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "option_id",
+        "speech_quality",
+        "background_quality",
+        "overall_quality"
+      ],
+      "title": "ListeningOptionRating",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "ambience_or_music_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ambience Or Music Changed"
+    },
+    "audible_degradation": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Audible Degradation"
+    },
+    "confidence": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Confidence",
+      "type": "integer"
+    },
+    "listener_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Listener Id",
+      "type": "string"
+    },
+    "mode": {
+      "$ref": "#/$defs/ListeningMode"
+    },
+    "no_meaningful_preference": {
+      "title": "No Meaningful Preference",
+      "type": "boolean"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "maxLength": 1024,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Notes"
+    },
+    "option_ratings": {
+      "items": {
+        "$ref": "#/$defs/ListeningOptionRating"
+      },
+      "title": "Option Ratings",
+      "type": "array"
+    },
+    "preferred_option_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Preferred Option Id"
+    },
+    "processing_preferred": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Processing Preferred"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "score_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Score Id",
+      "type": "string"
+    },
+    "session_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "speech_less_natural": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Speech Less Natural"
+    },
+    "submission_sequence": {
+      "minimum": 1,
+      "title": "Submission Sequence",
+      "type": "integer"
+    },
+    "trial_artifact_flags": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ListeningArtifactFlag"
+      },
+      "title": "Trial Artifact Flags",
+      "type": "array"
+    },
+    "trial_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Trial Id",
+      "type": "string"
+    },
+    "voice_identity_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Voice Identity Changed"
+    }
+  },
+  "required": [
+    "score_id",
+    "session_id",
+    "trial_id",
+    "listener_id",
+    "mode",
+    "no_meaningful_preference",
+    "option_ratings",
+    "confidence",
+    "submission_sequence"
+  ],
+  "title": "ListeningScore",
+  "type": "object"
+}

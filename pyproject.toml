@@ -18,6 +18,7 @@ package = false
 
 [tool.uv.workspace]
 members = [
+  "lab/listening/python",
   "packages/contracts/python",
   "packages/test-fixtures/python",
   "services/media-worker",
@@ -25,11 +26,14 @@ members = [
 
 [tool.uv.sources]
 ampersand-contracts = { workspace = true }
+ampersand-listening-lab = { workspace = true }
+ampersand-media-worker = { workspace = true }
 ampersand-test-fixtures = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = [
+  "lab/listening/python/tests",
   "packages/contracts/python/tests",
   "packages/test-fixtures/python/tests",
   "services/media-worker/tests",
@@ -46,8 +50,9 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 warn_unreachable = true
-packages = ["ampersand_contracts", "ampersand_engine", "ampersand_test_fixtures"]
+packages = ["ampersand_contracts", "ampersand_engine", "ampersand_listening", "ampersand_test_fixtures"]
 mypy_path = [
+  "lab/listening/python/src",
   "packages/contracts/python/src",
   "packages/test-fixtures/python/src",
   "services/media-worker/src",

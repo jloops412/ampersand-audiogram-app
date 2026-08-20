@@ -30,6 +30,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - a deterministic Adaptive Leveler V0 shadow envelope with bounded speaker/content-aware gain and Studio-ready reasoning;
 - deterministic two-pass WAV/MP3 loudness mastering;
 - a versioned, rights-clear synthetic Audio Lab corpus with controls, degradations, lineage, and an opt-in one-hour stream;
+- a local-only blinded listening/regression harness with deterministic loudness-matched Original/A/B and clean-input
+  preservation sessions, delayed identity reveal, artifact scoring, diagnostics, and tamper-checked reports;
 - output validation, provenance, step manifests, and an understandable report;
 - tests that reproduce manifests and media hashes across repeated runs.
 
@@ -48,6 +50,13 @@ uv run --package ampersand-media-worker ampersand-engine process \
 ```
 
 Generate the broader deterministic Audio Lab controls separately with `uv run ampersand-generate-corpus /tmp/ampersand-fixture-corpus`.
+
+Prepare a versioned listening experiment and serve it only on localhost:
+
+```bash
+uv run ampersand-listening prepare /absolute/path/to/experiment.json --output /tmp/listening-session
+uv run ampersand-listening serve /tmp/listening-session
+```
 
 The output directory contains:
 
@@ -79,13 +88,18 @@ Run all V2 gates:
 
 ```bash
 uv run python scripts/check_v2_boundaries.py
-uv run ruff check packages services scripts
-uv run ruff format --check packages services scripts
+uv run ruff check packages services lab scripts
+uv run ruff format --check packages services lab scripts
 uv run mypy
 uv run pytest
 ```
 
-See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md), [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md), [Adaptive Leveler V0](./docs/architecture/ADAPTIVE_LEVELER_V0.md), and [Synthetic Fixture Corpus V0](./docs/research/SYNTHETIC_FIXTURE_CORPUS_V0.md) for the reproducibility, privacy, cost, validation, fusion, and rollback contracts.
+See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md),
+[Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md),
+[Adaptive Leveler V0](./docs/architecture/ADAPTIVE_LEVELER_V0.md),
+[Synthetic Fixture Corpus V0](./docs/research/SYNTHETIC_FIXTURE_CORPUS_V0.md), and
+[Blinded Listening and Regression Harness V0](./docs/research/BLINDED_LISTENING_HARNESS_V0.md) for the reproducibility,
+privacy, cost, validation, evaluation, and rollback contracts.
 
 ## Repository responsibilities
 

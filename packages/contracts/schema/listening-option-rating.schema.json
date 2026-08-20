@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "ListeningArtifactFlag": {
+      "enum": [
+        "musical_noise",
+        "chirping_warbling",
+        "watery_phasey_speech",
+        "robotic_voice_change",
+        "missing_phoneme_or_word",
+        "pumping_breathing",
+        "gating_chopping",
+        "transient_smearing",
+        "sibilance_harshness",
+        "muffling_lost_air",
+        "bass_boom_mud",
+        "plosive_damage",
+        "reverb_tail_truncation",
+        "ambience_collapse",
+        "music_damage",
+        "speaker_level_inconsistency",
+        "processing_boundary_click",
+        "clipping_distortion",
+        "timing_drift",
+        "identity_emotion_change",
+        "other"
+      ],
+      "title": "ListeningArtifactFlag",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifact_flags": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ListeningArtifactFlag"
+      },
+      "title": "Artifact Flags",
+      "type": "array"
+    },
+    "background_quality": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Background Quality",
+      "type": "integer"
+    },
+    "option_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Option Id",
+      "type": "string"
+    },
+    "overall_quality": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Overall Quality",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "speech_quality": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Speech Quality",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "option_id",
+    "speech_quality",
+    "background_quality",
+    "overall_quality"
+  ],
+  "title": "ListeningOptionRating",
+  "type": "object"
+}
