@@ -1,8 +1,8 @@
 # ADR-0006: ChatGPT Sites Web/Worker Boundary
 
-- **Status:** Superseded as an execution plan by ADR-0007
+- **Status:** Historical; hosting destination superseded by ADR-0009
 - **Date:** 2026-08-18
-- **Superseded by:** [ADR-0007: Build the Product First; Defer Hosting Migration Work](./ADR-0007-BUILD-FIRST-HOSTING-DEFERRED.md)
+- **Current hosting decision:** [ADR-0009: Keep Google Hosting and Make Studio Settings/Template-Driven](./ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 
 ## Historical decision
 

@@ -1,14 +1,15 @@
-# Deferred ChatGPT Sites and Custom-Domain Release Note
+# Historical ChatGPT Sites Migration Note
 
-**Status:** Deferred until Ampersand has a working publishable build  
-**Last verified:** 2026-08-18  
-**Authority:** [ADR-0007](../decisions/ADR-0007-BUILD-FIRST-HOSTING-DEFERRED.md)
+**Status:** Superseded; retained for history
+
+**Last verified:** 2026-08-20
+**Current authority:** [ADR-0009](../decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 
 ## Owner intent
 
-After the actual Ampersand product is working, publish its compatible web experience through ChatGPT Sites and connect the owner's existing domain.
+The owner previously intended to publish Ampersand through ChatGPT Sites. On 2026-08-20 the owner chose to preserve the already deployed Google-hosted site instead.
 
-This is a **release task**, not a current engineering epic, compatibility proof, Google-host audit, data-platform decision, or prerequisite for the engine and Studio.
+Do not execute the former Sites migration or Google retirement checklist. Use [Google Hosting Integration Plan](./GOOGLE_HOSTING_INTEGRATION_PLAN.md) when the owner connects the existing Google account/project.
 
 ## Portability requirements that remain relevant during the build
 
@@ -20,9 +21,9 @@ This is a **release task**, not a current engineering epic, compatibility proof,
 - do not use the browser as the authoritative long-form processor or renderer;
 - tie release artifacts to reviewed Git commits.
 
-## Later release checklist
+## Historical release checklist
 
-Create a fresh GitHub issue when the first publishable build defined in `docs/build/IMPLEMENTATION_EXECUTION_PLAN.md` exists.
+The following checklist is preserved only to explain the superseded plan:
 
 That issue should then:
 
@@ -35,15 +36,15 @@ That issue should then:
 7. retain the previous deployment as rollback until validation passes;
 8. update the active-host documentation.
 
-## Current prohibition
+## Current rule
 
-Agents must not spend current product-development time on:
+Agents must not:
 
 - proving ChatGPT Sites compatibility;
-- auditing the current Google host;
+- retire or mutate the current Google host;
 - evaluating Sites D1/R2 as canonical product infrastructure;
 - DNS planning or changes;
 - custom-domain cutover;
 - retiring the current host.
 
-Issues #16–#20 were closed because they represented that over-planning. The active work is issue #14 and the build issues it governs.
+ADR-0009 and issue #31 govern the active direction.

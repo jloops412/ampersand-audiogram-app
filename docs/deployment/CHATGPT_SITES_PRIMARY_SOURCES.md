@@ -1,7 +1,8 @@
-# ChatGPT Sites Primary-Source Notes
+# Historical ChatGPT Sites Primary-Source Notes
 
-**Status:** Active deployment-source register  
-**Last verified:** 2026-08-18  
+**Status:** Historical reference register after [ADR-0009](../decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md); not an active deployment destination.
+
+**Last verified:** 2026-08-20
 **Policy:** Re-verify before the compatibility spike, every public deployment, and custom-domain cutover because Sites is in public beta.
 
 ## Official sources

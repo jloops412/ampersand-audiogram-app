@@ -1,3 +1,3 @@
 # Shared UI boundary
 
-Reusable accessible interface tokens and components may live here when the OpenAI Sites Studio needs a synchronized package. Product behavior remains driven by real engine contracts.
+Reusable accessible interface tokens and schema-driven settings/template components may live here for the Google-hosted Studio. Product behavior remains driven by real engine contracts; the OpenAI Sites checkpoint is reference-only.

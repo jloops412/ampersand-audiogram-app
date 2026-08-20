@@ -2,20 +2,20 @@
 
 **Status:** V2 implementation is active
 
-**Studio/control plane:** OpenAI Sites
+**Studio/control plane:** existing Google-hosted deployment, integration pending owner connection
 
 **Heavy processing:** independent media and render workers
 **Legacy prototype:** retained for history; not the V2 foundation
 
 Ampersand is an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform. The product goal is one-click automatic mastering when that is enough, plus an understandable visual Studio when a user needs to inspect, compare, or override a decision.
 
-The first OpenAI Sites Studio checkpoint is live for its owner at:
+The OpenAI Sites Studio checkpoint remains available as a non-production design/reference artifact at:
 
 https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 
 ## What works now
 
-- an OpenAI Sites Studio/control-plane foundation with private durable source uploads;
+- a product-specific Studio reference shell with private durable source uploads;
 - strict provider-neutral V2 contracts and exported JSON Schemas;
 - a local, no-credential media-engine CLI;
 - immutable source hashing and normalized media probing;
@@ -85,7 +85,7 @@ See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md) and [Semantic Audio Map
 
 | Path | Responsibility |
 |---|---|
-| `apps/web` | OpenAI Sites Studio integration notes and future shared client adapters |
+| `apps/web` | Google-hosted Studio source boundary and shared client adapters |
 | `apps/worker-control` | lightweight provider-neutral job/control API boundary |
 | `packages/contracts` | canonical Pydantic contracts and runtime-neutral JSON Schemas |
 | `packages/test-fixtures` | deterministic rights-clear synthetic fixture generation |
@@ -98,7 +98,7 @@ See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md) and [Semantic Audio Map
 ## Product architecture
 
 ```text
-OpenAI Sites Studio + lightweight control plane
+Google-hosted Studio + lightweight control plane
                   ↓ versioned Ampersand contracts
 immutable objects + durable job records
                   ↓
@@ -124,7 +124,9 @@ Original media is immutable. Expensive work is checkpointable. Provider-native r
 9. #13 — one-hour recovery proof;
 10. #27 — deterministic professional audiogram renderer.
 
-Domain/DNS cutover remains deferred until those pieces produce a strong product.
+Publishing into the existing Google deployment, operational management, and domain/DNS work remain deferred until those pieces produce a strong product and the owner connects the relevant Google account/project.
+
+The four current production intents are convenience shortcuts, not the final settings model. Each run will support rich contract-backed settings and an immutable resolved-settings snapshot; users will be able to create and reuse versioned templates without changing historical runs.
 
 ## Governance boundary
 

@@ -1,6 +1,7 @@
 # ADR-0007: Build the Product First; Defer Hosting Migration Work
 
-- **Status:** Accepted; supersedes ADR-0006 as an execution priority
+- **Status:** Historical; hosting destination superseded by ADR-0009
+- **Current hosting decision:** [ADR-0009](./ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 - **Date:** 2026-08-18
 - **Decision owners:** Ampersand product and engineering
 
