@@ -1,41 +1,49 @@
-# Stage 1: Build the React frontend
-# Use an official Node.js image. Alpine is a small, secure Linux distribution.
-FROM node:18-alpine AS builder
-# Set the working directory inside the container
-WORKDIR /app
-# Copy package.json and package-lock.json to leverage Docker's layer caching
-COPY package*.json ./
-# Install frontend dependencies
-RUN npm install
-# Copy the rest of your app's source code
-COPY . .
-# Build the frontend for production
+# syntax=docker/dockerfile:1.7
+
+FROM node:20-bookworm-slim AS web-builder
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY apps/web ./apps/web
 RUN npm run build
 
-# Stage 2: Install backend dependencies
-# Use a fresh stage to keep the final image small
-FROM node:18-alpine AS backend-builder
+FROM node:20-bookworm-slim AS control-builder
+WORKDIR /build/apps/worker-control
+COPY apps/worker-control/package.json apps/worker-control/package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY apps/worker-control/*.js ./
+
+FROM python:3.12-slim-bookworm AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    AMPERSAND_DATA_DIR=/data/ampersand \
+    AMPERSAND_STATIC_DIR=/app/dist \
+    PORT=8080
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates ffmpeg libstdc++6 tini \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=control-builder /usr/local/bin/node /usr/local/bin/node
+
 WORKDIR /app
-# Copy only the backend's package files
-COPY backend/package*.json ./backend/
-# Install only production dependencies for the backend
-RUN cd backend && npm install --production
-# Copy the backend server code
-COPY backend/server.js ./backend/
+COPY packages/contracts/python ./packages/contracts/python
+COPY services/media-worker ./services/media-worker
+RUN python -m pip install --no-cache-dir ./packages/contracts/python ./services/media-worker
 
-# Stage 3: Create the final production image
-FROM node:18-alpine
-# Set the working directory
-WORKDIR /app
+COPY --from=web-builder /build/dist ./dist
+COPY --from=control-builder /build/apps/worker-control ./apps/worker-control
 
-# Copy the built frontend assets from the 'builder' stage
-COPY --from=builder /app/dist ./dist
+RUN groupadd --gid 10001 ampersand \
+    && useradd --uid 10001 --gid ampersand --no-create-home --home-dir /nonexistent \
+        --shell /usr/sbin/nologin ampersand \
+    && mkdir -p /data/ampersand \
+    && chown -R ampersand:ampersand /app /data/ampersand
 
-# Copy the backend server and its installed dependencies from the 'backend-builder' stage
-COPY --from=backend-builder /app/backend ./backend
-
-# The port your backend server listens on
+USER ampersand
 EXPOSE 8080
-
-# The command to start your backend server
-CMD ["node", "backend/server.js"]
+VOLUME ["/data/ampersand"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "/app/apps/worker-control/server.js"]

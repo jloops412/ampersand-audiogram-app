@@ -1,16 +1,41 @@
 # Ampersand V2 Implementation Execution Plan
 
-**Status:** Active engineering execution authority  
-**Last verified:** 2026-08-18  
+**Status:** Active engineering execution authority
+
+**Last verified:** 2026-08-20
 **Primary objective:** turn the Auphonic public research and independent technical direction into a working singletrack product
 
 ## Owner directive
 
 Build the actual Ampersand engine and Studio now.
 
-The owner's existing Google deployment remains the active web/Studio destination. Do not select or mutate a Google service until the owner connects the relevant account/project at the integration stage. The OpenAI Sites checkpoint is a non-production reference artifact. Studio and engine work proceed together behind versioned contracts; neither may become an excuse to postpone the other. FFmpeg, native DSP, GPU inference, long-running durable workflows, large temporary processing, and authoritative rendering remain externally deployable. Publishing, operations wiring, and custom-domain/DNS work remain deferred until the product is strong.
+The owner has identified Google Cloud project `gen-lang-client-0564514768` and requested a useful V1 beta quickly. Build
+and review the new Cloud Run private-beta service from GitHub as Ampersand's fresh hosted baseline.
+The OpenAI Sites checkpoint remains a non-production reference artifact. Studio and engine work proceed together behind
+versioned contracts; neither may become an excuse to postpone the other. FFmpeg, native DSP, GPU inference, long-running
+durable workflows, large temporary processing, and authoritative rendering remain independently deployable. The custom
+domain and public production cutover remain deferred until the stronger release criteria pass.
 
 The current four intents are quick-start defaults only. The production flow must expose rich supported settings and reusable immutable-versioned templates, with a complete resolved-settings snapshot attached to every run.
+
+## Issue #24 private-beta checkpoint
+
+This checkpoint accelerates real owner testing without redefining the first release or audio-quality gates. It must:
+
+- run the independent deterministic engine with no hosted audio-processing dependency;
+- expose only controls that currently execute, while labeling Router, Leveler, cleanup, transcript, and audiogram limits;
+- provide four quick starts plus per-run settings and reusable local template versions;
+- preserve immutable source bytes, settings identity/hash, reports, WAV/MP3 outputs, A/B playback, retry, and deletion;
+- use one Cloud Run instance and one private Cloud Storage mount for this filesystem-backed beta runner;
+- perform FFmpeg working I/O on instance-local temporary storage, then persist only durable inputs and completed outputs;
+- keep legacy deployment cleanup and custom-domain work outside this beta publish;
+- cap direct browser uploads at 30 MiB until direct-to-object-storage resumable upload is implemented;
+- treat active Router execution, production Adaptive Leveler, neural cleanup, one-hour proof, server-side workspace
+  templates, and audiogram rendering as required follow-on work rather than implied beta features.
+
+The deployment choice is provisional until the first staging smoke test; see
+[ADR-0010](../decisions/ADR-0010-CLOUD-RUN-GITHUB-PRIVATE-BETA.md) and the
+[publish guide](../deployment/GOOGLE_V1_BETA_PUBLISH.md).
 
 ## Product target for the first working release
 
@@ -456,7 +481,7 @@ Agents should begin these in parallel where dependencies permit:
 4. **#22** Semantic Audio Map V0 schema/fusion;
 5. **#6** deterministic mastering and Leveler V0 using fixture inputs;
 6. **#4/#5** minimum fixture corpus and listening/regression harness;
-7. **#31** settings/template contracts while preserving the Google deployment decision.
+7. **#31** settings/template contracts under the fresh Cloud Run baseline decision.
 
 ## Next integration wave
 
@@ -466,14 +491,14 @@ Agents should begin these in parallel where dependencies permit:
 11. **#9/#10** durable workflow and storage lifecycle;
 12. **#24** durable singletrack engine vertical slice;
 13. **#25/#26** rich Studio/templates, A/B, and report;
-14. **#18** adapt the existing Google-hosted control/upload boundary after owner connection;
+14. **#18** harden the new Cloud Run web/control boundary after beta verification;
 15. **#13** one-hour end-to-end product proof.
 
 ## After the real product works
 
 16. **#27** deterministic audiogram migration;
 17. transcript-driven edits and automatic cut suggestions;
-18. Google publishing/operations automation against the inspected existing deployment;
+18. Google publishing/operations automation against the new Cloud Run baseline;
 19. custom-domain connection after release readiness;
 20. multitrack and advanced restoration research.
 
@@ -503,4 +528,7 @@ The build is ready for user testing when all are true:
 
 ## Deployment note
 
-Preserve the existing Google deployment during implementation. After the owner connects the relevant Google account/project, inspect it read-only, establish a reviewed staging/publish/rollback workflow, and integrate the contract-driven Studio. Connect the custom domain only after the release-readiness criteria above are satisfied. The OpenAI Sites checkpoint remains reference-only.
+Publish the issue #24 checkpoint as the new private-beta Cloud Run baseline from a reviewed Git commit, then smoke-test
+and retain revision rollback. Inventory and remove older deployments only through a separate explicit cleanup after the
+new service is verified. Connect the custom domain only after the release-readiness criteria above are satisfied. The
+OpenAI Sites checkpoint remains reference-only.

@@ -11,7 +11,11 @@ This directory is the durable authority for rebuilding Ampersand from an audiogr
 
 **Build the actual Ampersand engine and Google-hosted Studio together.**
 
-The owner's existing Google deployment remains the production web destination while the independent engine owns heavy audio work. Its exact Google service/project must be inspected only after the owner connects it at the integration stage. The OpenAI Sites checkpoint is reference-only. Rich per-production settings and immutable-versioned reusable templates are required; four intent shortcuts are not a complete Studio. ADR-0009 supersedes ADR-0008's hosting destination without weakening the engine-first quality boundaries.
+The owner selected Google Cloud project `gen-lang-client-0564514768` and the reviewed GitHub-to-Cloud Run service as the
+fresh Ampersand baseline. Older deployments are deprecated and no longer constrain the product; their inventory and
+deletion are a separate cleanup task after the new beta is verified. The OpenAI Sites checkpoint is reference-only. Rich
+per-production settings and immutable-versioned reusable templates are required; four intent shortcuts are not a
+complete Studio. ADR-0011 records this superseding deployment direction.
 
 ## Start here
 
@@ -32,10 +36,11 @@ The owner's existing Google deployment remains the production web destination wh
 15. [Local Engine CLI](./build/LOCAL_ENGINE_CLI.md)
 16. [Semantic Audio Map V0](./architecture/SEMANTIC_AUDIO_MAP_V0.md)
 17. [Studio Settings and Templates](./architecture/STUDIO_SETTINGS_AND_TEMPLATES.md)
-18. [Synthetic Fixture Corpus V0](./research/SYNTHETIC_FIXTURE_CORPUS_V0.md)
-19. [Blinded Listening and Regression Harness V0](./research/BLINDED_LISTENING_HARNESS_V0.md)
-20. [Leveler Gain Renderer V0](./architecture/LEVELER_GAIN_RENDERER_V0.md)
-21. [Processing Router V0](./architecture/PROCESSING_ROUTER_V0.md)
+18. [Google V1 Beta Publish Guide](./deployment/GOOGLE_V1_BETA_PUBLISH.md)
+19. [Synthetic Fixture Corpus V0](./research/SYNTHETIC_FIXTURE_CORPUS_V0.md)
+20. [Blinded Listening and Regression Harness V0](./research/BLINDED_LISTENING_HARNESS_V0.md)
+21. [Leveler Gain Renderer V0](./architecture/LEVELER_GAIN_RENDERER_V0.md)
+22. [Processing Router V0](./architecture/PROCESSING_ROUTER_V0.md)
 
 ## Architecture decision records
 
@@ -48,6 +53,8 @@ The owner's existing Google deployment remains the production web destination wh
 - [ADR-0007: Build the product first; defer hosting migration work](./decisions/ADR-0007-BUILD-FIRST-HOSTING-DEFERRED.md)
 - [ADR-0008: Establish Sites now without collapsing the engine boundary](./decisions/ADR-0008-SITES-CONTROL-PLANE-NOW.md)
 - [ADR-0009: Keep Google hosting and make Studio settings/template-driven](./decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
+- [ADR-0010: Cloud Run + GitHub private-beta checkpoint](./decisions/ADR-0010-CLOUD-RUN-GITHUB-PRIVATE-BETA.md)
+- [ADR-0011: Make the new Cloud Run service the baseline](./decisions/ADR-0011-FRESH-CLOUD-RUN-BASELINE.md)
 
 ## Governing rules
 
@@ -93,7 +100,9 @@ The owner's existing Google deployment remains the production web destination wh
 - #13 — one-hour end-to-end proof
 - #27 — deterministic audiogram renderer
 
-Issue #31 records the owner's 2026-08-20 direction. #17, #18, #19, #20, and #25 must be read with ADR-0009: Google remains the production host, Sites is reference-only, and live deployment work waits for the owner connection.
+Issue #31 records the settings/template direction. Issue #24 carries the Cloud Run private-beta checkpoint. #17, #18,
+#19, #20, and #25 must be read with ADR-0011: the new Cloud Run service is the baseline, Sites is reference-only, legacy
+deployments are deprecated, and custom-domain work waits for release readiness.
 
 ## Decision status legend
 

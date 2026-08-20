@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "ExportSettings": {
+      "additionalProperties": false,
+      "description": "Delivery choices that map directly to admitted encoder paths.",
+      "properties": {
+        "mp3": {
+          "default": true,
+          "title": "Mp3",
+          "type": "boolean"
+        },
+        "mp3_bitrate_kbps": {
+          "default": 192,
+          "enum": [
+            128,
+            160,
+            192,
+            256,
+            320
+          ],
+          "title": "Mp3 Bitrate Kbps",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wav": {
+          "default": true,
+          "title": "Wav",
+          "type": "boolean"
+        }
+      },
+      "title": "ExportSettings",
+      "type": "object"
+    },
+    "MasteringSettings": {
+      "additionalProperties": false,
+      "description": "Safe, executable mastering controls exposed by the private beta.",
+      "properties": {
+        "max_true_peak_dbtp": {
+          "maximum": -1.0,
+          "minimum": -3.0,
+          "title": "Max True Peak Dbtp",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target_integrated_lufs": {
+          "maximum": -14.0,
+          "minimum": -24.0,
+          "title": "Target Integrated Lufs",
+          "type": "number"
+        },
+        "target_loudness_range_lu": {
+          "maximum": 30.0,
+          "minimum": 5.0,
+          "title": "Target Loudness Range Lu",
+          "type": "number"
+        }
+      },
+      "required": [
+        "target_integrated_lufs",
+        "max_true_peak_dbtp",
+        "target_loudness_range_lu"
+      ],
+      "title": "MasteringSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete executable settings for one beta production.",
+  "properties": {
+    "export": {
+      "$ref": "#/$defs/ExportSettings"
+    },
+    "mastering": {
+      "$ref": "#/$defs/MasteringSettings"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "mastering",
+    "export"
+  ],
+  "title": "ProductionSettings",
+  "type": "object"
+}

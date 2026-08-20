@@ -164,6 +164,16 @@
       "title": "Recipe Version Id",
       "type": "string"
     },
+    "resolved_settings_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Resolved Settings Id",
+      "type": "string"
+    },
+    "resolved_settings_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Resolved Settings Sha256",
+      "type": "string"
+    },
     "run_id": {
       "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
       "title": "Run Id",
@@ -207,6 +217,8 @@
     "run_id",
     "source_asset_id",
     "recipe_version_id",
+    "resolved_settings_id",
+    "resolved_settings_sha256",
     "artifacts",
     "loudness_after",
     "target_integrated_lufs",

@@ -11,7 +11,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any, cast
 
-from ampersand_contracts import LoudnessMeasurement, MediaProbe, RecipeVersion
+from ampersand_contracts import LoudnessMeasurement, MasteringSettings, MediaProbe
 
 from .errors import DependencyUnavailable, EngineError, InvalidMedia
 from .semantic_types import JsonValue, LoudnessFrame, LoudnessTimelineResult
@@ -278,15 +278,15 @@ def render_master_wav(
     destination: Path,
     *,
     measurement: LoudnessMeasurement,
-    recipe: RecipeVersion,
+    settings: MasteringSettings,
     tools: FFmpegTools,
 ) -> None:
-    first_pass = _measure_loudnorm_pass(source, recipe=recipe, tools=tools)
+    first_pass = _measure_loudnorm_pass(source, settings=settings, tools=tools)
     loudnorm = ":".join(
         (
-            f"loudnorm=I={recipe.target_integrated_lufs:.3f}",
-            f"TP={recipe.max_true_peak_dbtp:.3f}",
-            f"LRA={recipe.target_loudness_range_lu:.3f}",
+            f"loudnorm=I={settings.target_integrated_lufs:.3f}",
+            f"TP={settings.max_true_peak_dbtp:.3f}",
+            f"LRA={settings.target_loudness_range_lu:.3f}",
             f"measured_I={measurement.integrated_lufs:.6f}",
             f"measured_TP={measurement.true_peak_dbtp:.6f}",
             f"measured_LRA={measurement.loudness_range_lu:.6f}",
@@ -330,7 +330,15 @@ def render_master_wav(
     )
 
 
-def encode_master_mp3(source_wav: Path, destination: Path, tools: FFmpegTools) -> None:
+def encode_master_mp3(
+    source_wav: Path,
+    destination: Path,
+    tools: FFmpegTools,
+    *,
+    bitrate_kbps: int = 192,
+) -> None:
+    if bitrate_kbps not in {128, 160, 192, 256, 320}:
+        raise ValueError("unsupported MP3 bitrate")
     destination.parent.mkdir(parents=True, exist_ok=True)
     _run(
         [
@@ -355,7 +363,7 @@ def encode_master_mp3(source_wav: Path, destination: Path, tools: FFmpegTools) -
             "-c:a",
             "libmp3lame",
             "-b:a",
-            "192k",
+            f"{bitrate_kbps}k",
             "-id3v2_version",
             "0",
             "-write_xing",
@@ -412,10 +420,15 @@ def subprocess_environment() -> dict[str, str]:
     return environment
 
 
-def _measure_loudnorm_pass(path: Path, *, recipe: RecipeVersion, tools: FFmpegTools) -> dict[str, Any]:
+def _measure_loudnorm_pass(
+    path: Path,
+    *,
+    settings: MasteringSettings,
+    tools: FFmpegTools,
+) -> dict[str, Any]:
     filter_value = (
-        f"loudnorm=I={recipe.target_integrated_lufs:.3f}:TP={recipe.max_true_peak_dbtp:.3f}:"
-        f"LRA={recipe.target_loudness_range_lu:.3f}:print_format=json"
+        f"loudnorm=I={settings.target_integrated_lufs:.3f}:TP={settings.max_true_peak_dbtp:.3f}:"
+        f"LRA={settings.target_loudness_range_lu:.3f}:print_format=json"
     )
     completed = _run(
         [

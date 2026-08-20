@@ -9,7 +9,9 @@
 
 The owner previously intended to publish Ampersand through ChatGPT Sites. On 2026-08-20 the owner chose to preserve the already deployed Google-hosted site instead.
 
-Do not execute the former Sites migration or Google retirement checklist. Use [Google Hosting Integration Plan](./GOOGLE_HOSTING_INTEGRATION_PLAN.md) when the owner connects the existing Google account/project.
+Do not execute the former Sites migration. Use the [Google V1 beta publish guide](./GOOGLE_V1_BETA_PUBLISH.md) for the
+fresh Cloud Run baseline and the [Google hosting plan](./GOOGLE_HOSTING_INTEGRATION_PLAN.md) for separately approved
+legacy-resource cleanup under ADR-0011.
 
 ## Portability requirements that remain relevant during the build
 

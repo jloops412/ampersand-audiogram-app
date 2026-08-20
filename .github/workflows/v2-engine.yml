@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/v2-engine.yml"
+      - ".dockerignore"
+      - "Dockerfile"
       - "apps/**"
       - "infra/**"
       - "lab/**"
@@ -11,11 +13,14 @@ on:
       - "services/**"
       - "scripts/check_v2_boundaries.py"
       - "pyproject.toml"
+      - "package.json"
       - "uv.lock"
   push:
     branches: [main]
     paths:
       - ".github/workflows/v2-engine.yml"
+      - ".dockerignore"
+      - "Dockerfile"
       - "apps/**"
       - "infra/**"
       - "lab/**"
@@ -23,6 +28,7 @@ on:
       - "services/**"
       - "scripts/check_v2_boundaries.py"
       - "pyproject.toml"
+      - "package.json"
       - "uv.lock"
 
 permissions:
@@ -35,7 +41,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Install native baseline
@@ -60,3 +66,18 @@ jobs:
         run: |
           .bootstrap/bin/uv run --package ampersand-media-worker ampersand-engine schemas --output packages/contracts/schema
           git diff --exit-code -- packages/contracts/schema
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Studio and control dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix apps/worker-control --no-audit --no-fund
+      - name: Test and build the private beta
+        run: |
+          npm run beta:test
+          npm run beta:check
+          npm run build
+      - name: Build the Cloud Run image
+        run: docker build --tag ampersand-private-beta:ci .

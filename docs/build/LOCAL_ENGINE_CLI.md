@@ -20,6 +20,37 @@ uv run --package ampersand-media-worker ampersand-engine process \
 
 The output path must not exist. The engine refuses to overwrite it and publishes no partial directory when a step fails.
 
+Use an explicit complete settings manifest for the controls admitted into the private beta:
+
+```json
+{
+  "schema_version": "1.0.0",
+  "mastering": {
+    "target_integrated_lufs": -18.0,
+    "max_true_peak_dbtp": -1.5,
+    "target_loudness_range_lu": 12.0
+  },
+  "export": {
+    "wav": true,
+    "mp3": true,
+    "mp3_bitrate_kbps": 192
+  }
+}
+```
+
+```bash
+uv run --package ampersand-media-worker ampersand-engine process \
+  /tmp/ampersand-fixture.wav \
+  --output /tmp/ampersand-production-custom \
+  --intent natural_voice \
+  --settings /absolute/path/to/settings.json \
+  --settings-source run_override
+```
+
+The engine validates the safe ranges, resolves a stable settings identity/hash, includes that snapshot in the run
+fingerprint, and writes `resolved-settings.json`. `--settings-source template` additionally requires an immutable
+`--template-version-id`.
+
 For controlled Leveler, protection, channel, degradation, and long-form inputs, generate the versioned corpus separately:
 
 ```bash
@@ -68,10 +99,11 @@ loudness stage and never changes `master.wav`; its `candidate.wav` must go throu
 13. Plan a deterministic Adaptive Leveler V0 shadow envelope from reliable, unprotected speech evidence.
 14. Emit versioned Leveler settings/statistics and a sample-time linear Gain Envelope, without rendering it.
 15. Keep short-term compression separate and every regional processor candidate shadow-only pending promotion gates.
-16. Run two-pass final loudness normalization.
-17. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
-18. Probe, measure, checksum, and validate outputs.
-19. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
+16. Resolve and persist the exact mastering/export settings attached to the run.
+17. Run two-pass final loudness normalization using those executable settings.
+18. Produce the selected metadata-stripped 24-bit WAV and/or configured-bitrate MP3 masters.
+19. Probe, measure, checksum, and validate outputs.
+20. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
 
 ## Reproducibility envelope
 
@@ -79,6 +111,7 @@ Stable IDs and canonical JSON derive from:
 
 - source SHA-256;
 - immutable recipe serialization;
+- complete resolved settings, intent, provenance, and immutable template-version identity when present;
 - engine build ID;
 - exact FFmpeg and ffprobe version strings.
 

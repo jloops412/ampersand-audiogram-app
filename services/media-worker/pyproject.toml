@@ -1,6 +1,6 @@
 [project]
 name = "ampersand-media-worker"
-version = "0.5.0"
+version = "0.6.0"
 description = "Independent deterministic media worker and local CLI for Ampersand"
 requires-python = ">=3.12"
 dependencies = [

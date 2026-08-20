@@ -26,6 +26,7 @@ from ampersand_contracts import (
     ProcessingRouterSettings,
     Production,
     ProductionRun,
+    ProductionSettings,
     RunStatus,
     SemanticMap,
     manifest_sha256,
@@ -53,6 +54,7 @@ from .router import build_processing_router
 from .semantic_adapters import normalize_loudness_frames, normalize_vad_frames
 from .semantic_debug import write_semantic_debug_report
 from .semantic_fusion import fuse_semantic_map
+from .settings import ProductionIntent, SettingsSource, resolve_production_settings
 from .waveform import generate_waveform_peaks
 
 ENGINE_BUILD_ID = f"ampersand-media-worker:{__version__}"
@@ -67,8 +69,8 @@ class PipelineResult:
     production_id: str
     run_id: str
     source_sha256: str
-    wav_sha256: str
-    mp3_sha256: str
+    wav_sha256: str | None
+    mp3_sha256: str | None
 
 
 def process_source(
@@ -77,6 +79,10 @@ def process_source(
     *,
     recipe_slug: str = "smart-spoken-word-v0",
     title: str | None = None,
+    settings: ProductionSettings | None = None,
+    intent: ProductionIntent = "podcast",
+    template_version_id: str | None = None,
+    settings_source: SettingsSource = "recipe",
     progress: ProgressCallback | None = None,
 ) -> PipelineResult:
     source_path = source.expanduser().resolve(strict=True)
@@ -93,10 +99,27 @@ def process_source(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tools = FFmpegTools.discover()
     recipe = load_recipe(recipe_slug)
+    resolved_settings = resolve_production_settings(
+        recipe,
+        settings=settings,
+        intent=intent,
+        template_version_id=template_version_id,
+        settings_source=settings_source,
+    )
     source_sha = sha256_file(source_path)
     recipe_sha = manifest_sha256(recipe)
+    resolved_settings_manifest_sha = manifest_sha256(resolved_settings)
     run_fingerprint = sha256_text(
-        "|".join((source_sha, recipe_sha, ENGINE_BUILD_ID, tools.ffmpeg_version, tools.ffprobe_version))
+        "|".join(
+            (
+                source_sha,
+                recipe_sha,
+                resolved_settings_manifest_sha,
+                ENGINE_BUILD_ID,
+                tools.ffmpeg_version,
+                tools.ffprobe_version,
+            )
+        )
     )
     production_id = stable_id("production", sha256_text(f"{source_sha}|{recipe.recipe_version_id}"))
     run_id = stable_id("run", run_fingerprint)
@@ -305,81 +328,105 @@ def process_source(
         write_manifest(stage / "analysis.json", analysis)
 
         write_manifest(stage / "recipe.json", recipe)
+        write_manifest(stage / "resolved-settings.json", resolved_settings)
 
         _notify(progress, "render deterministic WAV and MP3")
-        wav_path = artifacts / "master.wav"
+        export_settings = resolved_settings.settings.export
+        mastering_settings = resolved_settings.settings.mastering
+        wav_path = artifacts / "master.wav" if export_settings.wav else stage / "master-for-encode.wav"
         mp3_path = artifacts / "master.mp3"
         render_master_wav(
             analysis_input,
             wav_path,
             measurement=loudness_before,
-            recipe=recipe,
+            settings=mastering_settings,
             tools=tools,
         )
-        encode_master_mp3(wav_path, mp3_path, tools)
+        if export_settings.mp3:
+            encode_master_mp3(
+                wav_path,
+                mp3_path,
+                tools,
+                bitrate_kbps=export_settings.mp3_bitrate_kbps,
+            )
 
         _notify(progress, "validate outputs and report")
-        wav_sha = sha256_file(wav_path)
-        mp3_sha = sha256_file(mp3_path)
-        wav_asset_id = stable_id("asset", wav_sha)
-        mp3_asset_id = stable_id("asset", mp3_sha)
+        wav_sha = sha256_file(wav_path) if export_settings.wav else None
+        mp3_sha = sha256_file(mp3_path) if export_settings.mp3 else None
+        wav_asset_id = stable_id("asset", wav_sha) if wav_sha is not None else None
+        mp3_asset_id = stable_id("asset", mp3_sha) if mp3_sha is not None else None
         wav_probe = probe_media(
             wav_path,
-            source_asset_id=wav_asset_id,
-            probe_id=stable_id("probe", wav_sha),
+            source_asset_id=wav_asset_id or stable_id("asset", sha256_file(wav_path)),
+            probe_id=stable_id("probe", sha256_file(wav_path)),
             tools=tools,
         )
-        mp3_probe = probe_media(
-            mp3_path,
-            source_asset_id=mp3_asset_id,
-            probe_id=stable_id("probe", mp3_sha),
-            tools=tools,
+        mp3_probe = (
+            probe_media(
+                mp3_path,
+                source_asset_id=mp3_asset_id,
+                probe_id=stable_id("probe", mp3_sha),
+                tools=tools,
+            )
+            if mp3_asset_id is not None and mp3_sha is not None
+            else None
         )
         loudness_after = measure_loudness(wav_path, tools)
         write_manifest(stage / "loudness-after.json", loudness_after)
         validation_notes = _validate_outputs(
             source_duration_us=probe.duration_us,
             wav_duration_us=wav_probe.duration_us,
-            mp3_duration_us=mp3_probe.duration_us,
-            target_integrated_lufs=recipe.target_integrated_lufs,
-            max_true_peak_dbtp=recipe.max_true_peak_dbtp,
+            mp3_duration_us=mp3_probe.duration_us if mp3_probe is not None else None,
+            target_integrated_lufs=mastering_settings.target_integrated_lufs,
+            max_true_peak_dbtp=mastering_settings.max_true_peak_dbtp,
             loudness_after=loudness_after,
         )
 
-        wav_artifact = OutputArtifact(
-            artifact_id=wav_asset_id,
-            kind=AssetKind.MASTER_WAV,
-            relative_path="artifacts/master.wav",
-            sha256=wav_sha,
-            size_bytes=wav_path.stat().st_size,
-            mime_type="audio/wav",
-            duration_us=wav_probe.duration_us,
-            validation_status="valid",
-            validation_notes=tuple(validation_notes),
-        )
-        mp3_artifact = OutputArtifact(
-            artifact_id=mp3_asset_id,
-            kind=AssetKind.MASTER_MP3,
-            relative_path="artifacts/master.mp3",
-            sha256=mp3_sha,
-            size_bytes=mp3_path.stat().st_size,
-            mime_type="audio/mpeg",
-            duration_us=mp3_probe.duration_us,
-            validation_status="valid",
-            validation_notes=("Container, audio stream, duration, and checksum validated.",),
-        )
+        output_artifacts: list[OutputArtifact] = []
+        if wav_asset_id is not None and wav_sha is not None:
+            output_artifacts.append(
+                OutputArtifact(
+                    artifact_id=wav_asset_id,
+                    kind=AssetKind.MASTER_WAV,
+                    relative_path="artifacts/master.wav",
+                    sha256=wav_sha,
+                    size_bytes=wav_path.stat().st_size,
+                    mime_type="audio/wav",
+                    duration_us=wav_probe.duration_us,
+                    validation_status="valid",
+                    validation_notes=tuple(validation_notes),
+                )
+            )
+        if mp3_asset_id is not None and mp3_sha is not None and mp3_probe is not None:
+            output_artifacts.append(
+                OutputArtifact(
+                    artifact_id=mp3_asset_id,
+                    kind=AssetKind.MASTER_MP3,
+                    relative_path="artifacts/master.mp3",
+                    sha256=mp3_sha,
+                    size_bytes=mp3_path.stat().st_size,
+                    mime_type="audio/mpeg",
+                    duration_us=mp3_probe.duration_us,
+                    validation_status="valid",
+                    validation_notes=("Container, audio stream, duration, and checksum validated.",),
+                )
+            )
         output_manifest = OutputManifest(
             output_manifest_id=output_manifest_id,
             run_id=run_id,
             source_asset_id=source_asset_id,
             recipe_version_id=recipe.recipe_version_id,
-            artifacts=(wav_artifact, mp3_artifact),
+            resolved_settings_id=resolved_settings.resolved_settings_id,
+            resolved_settings_sha256=resolved_settings.settings_sha256,
+            artifacts=tuple(output_artifacts),
             loudness_after=loudness_after,
-            target_integrated_lufs=recipe.target_integrated_lufs,
-            max_true_peak_dbtp=recipe.max_true_peak_dbtp,
+            target_integrated_lufs=mastering_settings.target_integrated_lufs,
+            max_true_peak_dbtp=mastering_settings.max_true_peak_dbtp,
             validation_status="valid",
         )
         write_manifest(stage / "output-manifest.json", output_manifest)
+        if not export_settings.wav:
+            wav_path.unlink()
 
         steps = _build_steps(
             run_id=run_id,
@@ -416,6 +463,8 @@ def process_source(
             run_id=run_id,
             production_id=production_id,
             recipe_version_id=recipe.recipe_version_id,
+            resolved_settings_id=resolved_settings.resolved_settings_id,
+            resolved_settings_sha256=resolved_settings.settings_sha256,
             engine_build_id=ENGINE_BUILD_ID,
             idempotency_key=run_fingerprint,
             status=RunStatus.SUCCEEDED,
@@ -424,12 +473,39 @@ def process_source(
         write_manifest(stage / "production.json", production)
         write_manifest(stage / "production-run.json", production_run)
 
+        artifact_hashes = {
+            "source": source_sha,
+            "resolved_settings": resolved_settings_manifest_sha,
+            "semantic_map_v0": manifest_sha256(semantic_map),
+            "semantic_debug": sha256_file(stage / "semantic-map-debug.html"),
+            "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
+            "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
+            "loudness_before": manifest_sha256(loudness_before),
+            "router_settings": manifest_sha256(router_settings),
+            "processing_plan": manifest_sha256(processing_plan),
+            "processing_router_report": manifest_sha256(router_report),
+            "leveler_settings": manifest_sha256(leveler_settings),
+            "gain_envelope": manifest_sha256(gain_envelope),
+            "leveler_statistics": manifest_sha256(leveler_statistics),
+            "loudness_after": manifest_sha256(loudness_after),
+            "output_manifest": manifest_sha256(output_manifest),
+        }
+        if wav_sha is not None:
+            artifact_hashes["master_wav"] = wav_sha
+        if mp3_sha is not None:
+            artifact_hashes["master_mp3"] = mp3_sha
+        enabled_output_names = ", ".join(
+            format_name.upper() for format_name in recipe.output_formats if getattr(export_settings, format_name)
+        )
+
         report = ProcessingReport(
             processing_report_id=processing_report_id,
             production_id=production_id,
             run_id=run_id,
             source_asset_id=source_asset_id,
             recipe_version_id=recipe.recipe_version_id,
+            resolved_settings_id=resolved_settings.resolved_settings_id,
+            resolved_settings_sha256=resolved_settings.settings_sha256,
             engine_build_id=ENGINE_BUILD_ID,
             status=RunStatus.SUCCEEDED,
             loudness_before=loudness_before,
@@ -461,31 +537,22 @@ def process_source(
                 ),
                 "Did not render the shadow gain envelope; applied only the recipe's standards-based two-pass "
                 "final loudness master.",
+                (
+                    f"Resolved the {resolved_settings.intent} intent to "
+                    f"{mastering_settings.target_integrated_lufs:.1f} LUFS, "
+                    f"{mastering_settings.max_true_peak_dbtp:.1f} dBTP, and "
+                    f"{enabled_output_names} "
+                    "delivery outputs."
+                ),
             ),
-            artifact_sha256={
-                "source": source_sha,
-                "semantic_map_v0": manifest_sha256(semantic_map),
-                "semantic_debug": sha256_file(stage / "semantic-map-debug.html"),
-                "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
-                "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
-                "loudness_before": manifest_sha256(loudness_before),
-                "router_settings": manifest_sha256(router_settings),
-                "processing_plan": manifest_sha256(processing_plan),
-                "processing_router_report": manifest_sha256(router_report),
-                "leveler_settings": manifest_sha256(leveler_settings),
-                "gain_envelope": manifest_sha256(gain_envelope),
-                "leveler_statistics": manifest_sha256(leveler_statistics),
-                "master_wav": wav_sha,
-                "master_mp3": mp3_sha,
-                "loudness_after": manifest_sha256(loudness_after),
-                "output_manifest": manifest_sha256(output_manifest),
-            },
+            artifact_sha256=artifact_hashes,
             warnings=(
                 "Processing Router V0 and Adaptive Leveler V0 are shadow-only in this pipeline until admitted "
                 "processors, music/protected-content evidence, and human listening gates authorize rendering; "
                 "no denoise, regional cleanup, or Leveler gain is applied.",
                 "The bootstrap VAD is conservative; ASR, diarization, and music classification are not required "
                 "for mastering.",
+                *resolved_settings.warnings,
                 *router_report.warnings,
             ),
             external_api_cost_usd=0.0,
@@ -494,7 +561,8 @@ def process_source(
                 "or customer-media training path is used."
             ),
             reproducibility_summary=(
-                "IDs and JSON manifests derive from source, recipe, engine, and native-tool versions; "
+                "IDs and JSON manifests derive from source, resolved settings, recipe, engine, "
+                "and native-tool versions; "
                 "media metadata is stripped. "
                 "Exact binary hashes require the same admitted FFmpeg build and runtime architecture."
             ),
@@ -636,7 +704,7 @@ def _validate_outputs(
     *,
     source_duration_us: int,
     wav_duration_us: int,
-    mp3_duration_us: int,
+    mp3_duration_us: int | None,
     target_integrated_lufs: float,
     max_true_peak_dbtp: float,
     loudness_after: LoudnessMeasurement,
@@ -645,7 +713,7 @@ def _validate_outputs(
     true_peak_dbtp = loudness_after.true_peak_dbtp
     if abs(wav_duration_us - source_duration_us) > 10_000:
         raise OutputValidationError("The WAV master duration differs from the source by more than 10 ms.")
-    if abs(mp3_duration_us - source_duration_us) > 120_000:
+    if mp3_duration_us is not None and abs(mp3_duration_us - source_duration_us) > 120_000:
         raise OutputValidationError("The MP3 master duration differs from the source by more than 120 ms.")
     if abs(integrated_lufs - target_integrated_lufs) > 0.35:
         raise OutputValidationError(

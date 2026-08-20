@@ -37,6 +37,7 @@ from ampersand_engine.ffmpeg import (
     subprocess_environment,
 )
 from ampersand_engine.hashing import sha256_file
+from ampersand_engine.settings import default_production_settings
 
 from .diagnostics import decode_float32, full_reference_metrics, measure_pcm
 from .errors import ListeningLabError
@@ -126,7 +127,7 @@ def prepare_experiment(
                     listening_source,
                     output,
                     measurement=loudness_before,
-                    recipe=recipe,
+                    settings=default_production_settings(recipe).mastering,
                     tools=selected_tools,
                 )
                 loudness_after = measure_loudness(output, selected_tools)

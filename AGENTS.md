@@ -6,7 +6,7 @@ This file defines the default working rules for coding, research, review, and re
 
 **Build the actual Ampersand product.**
 
-The owner's existing Google-hosted deployment remains Ampersand's production web destination. Preserve it until the owner connects the relevant Google account/project at the integration stage; do not guess the Google product, mutate the live deployment, publish, wire secrets, or change DNS beforehand. The OpenAI Sites checkpoint is a non-production design/reference artifact, not the deployment target.
+The reviewed Cloud Run service built from this repository is Ampersand's new Google-hosted baseline. Older Google/OpenAI deployments are deprecated and must not constrain the new architecture. Do not delete legacy cloud resources as an incidental build action; inventory and remove them only in an explicit cleanup pass after the new service is verified. The OpenAI Sites checkpoint is a non-production reference artifact, not the deployment target.
 
 Build the Studio and independent engine together, but do not move FFmpeg, native DSP, GPU inference, durable long-running workflows, or authoritative rendering into the browser or lightweight web runtime. The four current intent choices are quick starts only: the real Studio must expose rich supported per-production settings and reusable, immutable-versioned templates. Every run stores the exact resolved settings used.
 
@@ -25,7 +25,7 @@ Read, in order:
 4. `docs/architecture/TARGET_ARCHITECTURE.md`
 5. `docs/architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md`
 6. the authority documents linked by the assigned GitHub issue
-7. relevant ADRs, especially ADR-0009 (which supersedes ADR-0008's hosting destination)
+7. relevant ADRs, especially ADR-0011 (fresh Cloud Run baseline) and ADR-0009's still-active settings/template direction
 
 For algorithm/model work, also read:
 
@@ -67,11 +67,11 @@ Agents should prioritize this sequence:
 7. #23 — Processing Router V0;
 8. #24 — durable singletrack engine;
 9. #25/#26/#31 — rich Studio, templates, A/B comparison, and report;
-10. #18 — adapt the existing Google web/control boundary after the owner connects it;
+10. #18 — harden the new Google web/control boundary after the Cloud Run beta is verified;
 11. #13 — one-hour end-to-end proof;
 12. #27 — deterministic audiogram renderer.
 
-Studio product work proceeds with the engine. Google publishing/management and domain/DNS work remain deferred until the owner connects the existing deployment at the integration stage.
+Studio product work proceeds with the engine. Publish reviewed checkpoints to the new Cloud Run baseline; custom-domain/DNS work remains deferred until release readiness.
 
 ## 5. Non-negotiable product boundaries
 
@@ -188,6 +188,6 @@ Stop and report rather than guessing when:
 - implementation would violate an accepted ADR;
 - a provider-specific schema would become the permanent product schema;
 - a feature would require global processing where the router should be regional/protective;
-- work mutates the Google deployment before the owner connects it, drifts into DNS cutover, recreates the heavy engine inside the web runtime, or treats a hosting shell as a substitute for the assigned product issue.
+- work deletes legacy cloud resources without an explicit cleanup scope, drifts into DNS cutover, recreates the heavy engine inside the web runtime, or treats a hosting shell as a substitute for the assigned product issue.
 
 Partial, well-documented working implementation is preferable to more speculative planning.
