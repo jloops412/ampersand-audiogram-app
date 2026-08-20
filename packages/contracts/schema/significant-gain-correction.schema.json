@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "correction_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Correction Id",
+      "type": "string"
+    },
+    "end_us": {
+      "minimum": 0,
+      "title": "End Us",
+      "type": "integer"
+    },
+    "peak_gain_db": {
+      "maximum": 24.0,
+      "minimum": -60.0,
+      "title": "Peak Gain Db",
+      "type": "number"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "start_us": {
+      "minimum": 0,
+      "title": "Start Us",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "correction_id",
+    "start_us",
+    "end_us",
+    "peak_gain_db",
+    "reason"
+  ],
+  "title": "SignificantGainCorrection",
+  "type": "object"
+}

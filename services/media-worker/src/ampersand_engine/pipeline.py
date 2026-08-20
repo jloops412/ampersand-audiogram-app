@@ -8,14 +8,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ampersand_contracts import (
+    AdaptiveLevelerSettings,
     AnalysisManifest,
     AssetKind,
     AssetManifest,
     EvidenceProvenance,
     GainEnvelope,
-    GainPoint,
     JobStatus,
     JobStep,
+    LevelerStatistics,
     LoudnessMeasurement,
     OutputArtifact,
     OutputManifest,
@@ -44,6 +45,7 @@ from .ffmpeg import (
     requires_canonical_audio,
 )
 from .hashing import sha256_file, sha256_text, stable_id
+from .leveler import build_adaptive_leveler, default_leveler_settings
 from .provider_artifacts import write_provider_artifact
 from .recipe_loader import load_recipe
 from .semantic_adapters import normalize_loudness_frames, normalize_vad_frames
@@ -101,7 +103,6 @@ def process_source(
     waveform_id = stable_id("waveform", run_fingerprint)
     semantic_map_id = stable_id("semantic-map", run_fingerprint)
     processing_plan_id = stable_id("processing-plan", run_fingerprint)
-    gain_envelope_id = stable_id("gain-envelope", run_fingerprint)
     analysis_manifest_id = stable_id("analysis", run_fingerprint)
     output_manifest_id = stable_id("output", run_fingerprint)
     processing_report_id = stable_id("report", run_fingerprint)
@@ -164,6 +165,7 @@ def process_source(
 
         _notify(progress, "measure, build waveform, and analyze semantics")
         loudness_before = measure_loudness(analysis_input, tools)
+        write_manifest(stage / "loudness-before.json", loudness_before)
         loudness_timeline = measure_loudness_timeline(
             analysis_input,
             duration_us=probe.duration_us,
@@ -258,6 +260,19 @@ def process_source(
         write_manifest(stage / "semantic-map-v0.json", semantic_map)
         write_semantic_debug_report(stage / "semantic-map-debug.html", semantic_map)
 
+        _notify(progress, "plan Adaptive Leveler shadow candidate")
+        leveler_settings = default_leveler_settings(activation_mode="shadow")
+        leveler_result = build_adaptive_leveler(
+            semantic_map,
+            run_id=run_id,
+            settings=leveler_settings,
+        )
+        gain_envelope = leveler_result.gain_envelope
+        leveler_statistics = leveler_result.statistics
+        write_manifest(stage / "leveler-settings.json", leveler_settings)
+        write_manifest(stage / "gain-envelope.json", gain_envelope)
+        write_manifest(stage / "leveler-statistics.json", leveler_statistics)
+
         analysis = AnalysisManifest(
             analysis_manifest_id=analysis_manifest_id,
             run_id=run_id,
@@ -267,6 +282,7 @@ def process_source(
             loudness_before=loudness_before,
             warnings=(
                 "Semantic Map V0 includes deterministic loudness/peak evidence and a conservative first-party VAD.",
+                "Adaptive Leveler V0 emits a deterministic shadow candidate that is not rendered into the master.",
                 "ASR, diarization, music classification, and advanced defect classification remain "
                 "optional/unavailable.",
             ),
@@ -282,8 +298,8 @@ def process_source(
             processor_id="processor:no-op-v0",
             confidence=1.0,
             reason=(
-                "Semantic analysis is available, but issue #23 routing and issue #6 Adaptive Leveler are not active; "
-                "preserve every region before final mastering."
+                "Semantic analysis and a Leveler shadow candidate are available, but issue #23 routing and "
+                "Leveler listening/promotion gates are not active; preserve every region before final mastering."
             ),
             parameters={"wet_mix": 0.0},
             transition_us=0,
@@ -296,21 +312,9 @@ def process_source(
             semantic_map_id=semantic_map_id,
             duration_us=probe.duration_us,
             regions=(processing_region,),
-            global_steps=("two-pass-loudness-master", "output-validation"),
+            global_steps=("adaptive-leveler-shadow", "two-pass-loudness-master", "output-validation"),
         )
         write_manifest(stage / "processing-plan.json", processing_plan)
-
-        gain_envelope = GainEnvelope(
-            gain_envelope_id=gain_envelope_id,
-            run_id=run_id,
-            duration_us=probe.duration_us,
-            points=(
-                GainPoint(at_us=0, gain_db=0.0),
-                GainPoint(at_us=probe.duration_us, gain_db=0.0),
-            ),
-            purpose="unity_baseline",
-        )
-        write_manifest(stage / "gain-envelope.json", gain_envelope)
         write_manifest(stage / "recipe.json", recipe)
 
         _notify(progress, "render deterministic WAV and MP3")
@@ -343,6 +347,7 @@ def process_source(
             tools=tools,
         )
         loudness_after = measure_loudness(wav_path, tools)
+        write_manifest(stage / "loudness-after.json", loudness_after)
         validation_notes = _validate_outputs(
             source_duration_us=probe.duration_us,
             wav_duration_us=wav_probe.duration_us,
@@ -398,6 +403,8 @@ def process_source(
             analysis=analysis,
             semantic_map=semantic_map,
             processing_plan=processing_plan,
+            leveler_settings=leveler_settings,
+            leveler_statistics=leveler_statistics,
             gain_envelope=gain_envelope,
             output_manifest=output_manifest,
         )
@@ -435,6 +442,8 @@ def process_source(
             status=RunStatus.SUCCEEDED,
             loudness_before=loudness_before,
             loudness_after=loudness_after,
+            gain_envelope_id=gain_envelope.gain_envelope_id,
+            leveler_statistics_id=leveler_statistics.leveler_statistics_id,
             step_ids=tuple(step.step_id for step in steps),
             decisions=(
                 "Preserved the source bytes and recorded their SHA-256 before processing.",
@@ -446,8 +455,13 @@ def process_source(
                     f"{len(semantic_map.observations)} normalized observations, and "
                     f"{len(semantic_map.conflicts)} explicit conflicts."
                 ),
-                "Protected regional processing until the versioned Router and Adaptive Leveler consume this evidence.",
-                "Applied only the recipe's standards-based two-pass final loudness master.",
+                (
+                    f"Planned Adaptive Leveler V0 in shadow mode: {leveler_statistics.eligible_region_count} "
+                    f"eligible regions, {leveler_statistics.changed_region_count} proposed changes, and "
+                    f"{leveler_statistics.gain_min_db:.2f} to {leveler_statistics.gain_max_db:.2f} dB gain."
+                ),
+                "Did not render the shadow gain envelope; applied only the recipe's standards-based two-pass "
+                "final loudness master.",
             ),
             artifact_sha256={
                 "source": source_sha,
@@ -455,13 +469,18 @@ def process_source(
                 "semantic_debug": sha256_file(stage / "semantic-map-debug.html"),
                 "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
                 "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
+                "loudness_before": manifest_sha256(loudness_before),
+                "leveler_settings": manifest_sha256(leveler_settings),
+                "gain_envelope": manifest_sha256(gain_envelope),
+                "leveler_statistics": manifest_sha256(leveler_statistics),
                 "master_wav": wav_sha,
                 "master_mp3": mp3_sha,
+                "loudness_after": manifest_sha256(loudness_after),
                 "output_manifest": manifest_sha256(output_manifest),
             },
             warnings=(
-                "Semantic analysis is active, but this issue-22 build is not the Adaptive Leveler and performs "
-                "no denoise.",
+                "Adaptive Leveler V0 is shadow-only in this pipeline until music/protected-content evidence and "
+                "human listening gates authorize rendering; no denoise is performed.",
                 "The bootstrap VAD is conservative; ASR, diarization, and music classification are not required "
                 "for mastering.",
             ),
@@ -503,6 +522,8 @@ def _build_steps(
     analysis: AnalysisManifest,
     semantic_map: SemanticMap,
     processing_plan: ProcessingPlan,
+    leveler_settings: AdaptiveLevelerSettings,
+    leveler_statistics: LevelerStatistics,
     gain_envelope: GainEnvelope,
     output_manifest: OutputManifest,
 ) -> tuple[JobStep, ...]:
@@ -511,6 +532,8 @@ def _build_steps(
     analysis_hash = manifest_sha256(analysis)
     semantic_hash = manifest_sha256(semantic_map)
     plan_hash = manifest_sha256(processing_plan)
+    leveler_settings_hash = manifest_sha256(leveler_settings)
+    leveler_statistics_hash = manifest_sha256(leveler_statistics)
     gain_hash = manifest_sha256(gain_envelope)
     output_hash = manifest_sha256(output_manifest)
     definitions: tuple[StepDefinition, ...] = (
@@ -549,10 +572,25 @@ def _build_steps(
             (processing_plan.processing_plan_id,),
             {},
         ),
-        ("unity-gain-envelope", plan_hash, JobStatus.SUCCEEDED, (gain_envelope.gain_envelope_id,), {}),
+        (
+            "adaptive-leveler-shadow",
+            sha256_text(f"{semantic_hash}|{leveler_settings_hash}"),
+            JobStatus.SUCCEEDED,
+            (gain_envelope.gain_envelope_id, leveler_statistics.leveler_statistics_id),
+            {
+                "activation_mode": leveler_statistics.activation_mode,
+                "eligible_region_count": leveler_statistics.eligible_region_count,
+                "changed_region_count": leveler_statistics.changed_region_count,
+                "gain_min_db": leveler_statistics.gain_min_db,
+                "gain_max_db": leveler_statistics.gain_max_db,
+                "gain_envelope_hash": gain_hash,
+                "statistics_hash": leveler_statistics_hash,
+                "applied_to_audio": False,
+            },
+        ),
         (
             "two-pass-loudness-master",
-            sha256_text(f"{analysis_hash}|{plan_hash}|{gain_hash}"),
+            sha256_text(f"{analysis_hash}|{plan_hash}|shadow-unity-render"),
             JobStatus.SUCCEEDED,
             (),
             {},

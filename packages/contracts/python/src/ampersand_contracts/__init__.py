@@ -1,4 +1,5 @@
 from .models import (
+    AdaptiveLevelerSettings,
     AnalysisManifest,
     AssetKind,
     AssetManifest,
@@ -8,6 +9,7 @@ from .models import (
     GainPoint,
     JobStatus,
     JobStep,
+    LevelerStatistics,
     LoudnessMeasurement,
     ManifestAdmissionState,
     MediaProbe,
@@ -29,6 +31,8 @@ from .models import (
     SemanticMap,
     SemanticObservation,
     SemanticRegion,
+    SignificantGainCorrection,
+    SpeakerLevelStatistics,
     WaveformLevel,
     WaveformPeaks,
 )
@@ -42,6 +46,7 @@ from .serialization import (
 )
 
 __all__ = [
+    "AdaptiveLevelerSettings",
     "AnalysisManifest",
     "AssetKind",
     "AssetManifest",
@@ -51,6 +56,7 @@ __all__ = [
     "GainPoint",
     "JobStatus",
     "JobStep",
+    "LevelerStatistics",
     "LoudnessMeasurement",
     "ManifestAdmissionState",
     "MediaProbe",
@@ -72,6 +78,8 @@ __all__ = [
     "SemanticMap",
     "SemanticObservation",
     "SemanticRegion",
+    "SignificantGainCorrection",
+    "SpeakerLevelStatistics",
     "WaveformLevel",
     "WaveformPeaks",
     "canonical_json_bytes",

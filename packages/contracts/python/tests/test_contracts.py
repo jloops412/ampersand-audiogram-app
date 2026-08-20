@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from ampersand_contracts import (
+    AdaptiveLevelerSettings,
     AnalysisManifest,
     AssetKind,
     AssetManifest,
@@ -12,6 +13,7 @@ from ampersand_contracts import (
     GainPoint,
     JobStatus,
     JobStep,
+    LevelerStatistics,
     LoudnessMeasurement,
     ManifestAdmissionState,
     MediaProbe,
@@ -27,6 +29,8 @@ from ampersand_contracts import (
     RunStatus,
     SemanticMap,
     SemanticRegion,
+    SignificantGainCorrection,
+    SpeakerLevelStatistics,
     WaveformLevel,
     WaveformPeaks,
     canonical_json_bytes,
@@ -46,6 +50,10 @@ def test_every_required_contract_round_trips_with_a_version() -> None:
         ProductionRun,
         JobStep,
         RecipeVersion,
+        AdaptiveLevelerSettings,
+        SpeakerLevelStatistics,
+        SignificantGainCorrection,
+        LevelerStatistics,
         SemanticMap,
         SemanticRegion,
         ProcessingPlan,
@@ -86,6 +94,16 @@ def test_gain_envelope_requires_exact_timeline_span() -> None:
             duration_us=1_000_000,
             purpose="unity_baseline",
             points=(GainPoint(at_us=10, gain_db=0), GainPoint(at_us=1_000_000, gain_db=0)),
+        )
+
+
+def test_leveler_settings_reject_reversed_target_range() -> None:
+    with pytest.raises(ValidationError, match="cannot exceed"):
+        AdaptiveLevelerSettings(
+            settings_id="leveler-settings:test",
+            algorithm_version="0.1.0",
+            target_speech_min_lufs=-18,
+            target_speech_max_lufs=-30,
         )
 
 
@@ -211,6 +229,52 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         purpose="unity_baseline",
         points=(GainPoint(at_us=0, gain_db=0), GainPoint(at_us=1_000_000, gain_db=0)),
     )
+    leveler_settings = AdaptiveLevelerSettings(
+        settings_id="leveler-settings:test",
+        algorithm_version="0.1.0",
+    )
+    speaker_statistics = SpeakerLevelStatistics(
+        speaker_label="speaker:test",
+        observation_count=1,
+        eligible_duration_us=1_000_000,
+        robust_speech_level_lufs=-24,
+        relative_offset_db=2,
+        used_global_fallback=False,
+    )
+    significant_correction = SignificantGainCorrection(
+        correction_id="gain-correction:test",
+        start_us=0,
+        end_us=1_000_000,
+        peak_gain_db=2,
+        reason="Raised reliable test speech below the comfort band.",
+    )
+    leveler_statistics = LevelerStatistics(
+        leveler_statistics_id="leveler-statistics:test",
+        run_id=run.run_id,
+        semantic_map_id=semantic_map.semantic_map_id,
+        settings_id=leveler_settings.settings_id,
+        settings_sha256=SHA,
+        algorithm_version="0.1.0",
+        activation_mode="shadow",
+        target_speech_level_lufs=-22,
+        comfort_band_low_lufs=-24,
+        comfort_band_high_lufs=-20,
+        total_duration_us=1_000_000,
+        eligible_duration_us=1_000_000,
+        changed_duration_us=1_000_000,
+        eligible_region_count=1,
+        protected_region_count=0,
+        changed_region_count=1,
+        gain_min_db=2,
+        gain_mean_db=2,
+        gain_max_db=2,
+        maximum_gain_slope_db_per_second=0,
+        maximum_gain_acceleration_db_per_second2=0,
+        peak_limited_region_count=0,
+        speaker_statistics=(speaker_statistics,),
+        significant_corrections=(significant_correction,),
+        reasoning=("Contract fixture.",),
+    )
     waveform = WaveformPeaks(
         waveform_id="waveform:test",
         source_asset_id=source.asset_id,
@@ -258,6 +322,8 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         status=RunStatus.SUCCEEDED,
         loudness_before=loudness,
         loudness_after=loudness,
+        gain_envelope_id=envelope.gain_envelope_id,
+        leveler_statistics_id=leveler_statistics.leveler_statistics_id,
         step_ids=(step.step_id,),
         decisions=("No-op protected baseline.",),
         artifact_sha256={"master_wav": SHA},
@@ -298,6 +364,10 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         processing_region,
         plan,
         envelope,
+        leveler_settings,
+        speaker_statistics,
+        significant_correction,
+        leveler_statistics,
         loudness,
         waveform,
         analysis,

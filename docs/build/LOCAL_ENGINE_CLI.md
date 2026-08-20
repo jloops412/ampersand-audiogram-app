@@ -1,6 +1,6 @@
 # Local Engine CLI
 
-**Status:** Issues #21 and #22 deterministic foundation + Semantic Audio Map V0
+**Status:** Issues #21/#22 foundation + Adaptive Leveler V0 shadow planning
 **Runtime:** local CPU, FFmpeg/ffprobe, Python 3.12
 **External API cost:** $0
 
@@ -32,11 +32,13 @@ The output path must not exist. The engine refuses to overwrite it and publishes
 8. Preserve checksummed provider-native frames separately and normalize them through provider-neutral adapters.
 9. Fuse a full-coverage Semantic Map V0 with soft probabilities, provenance, optional-provider failures, and explicit conflicts.
 10. Emit a local debug HTML report while protecting uncertain or unsupported content.
-11. Emit a Processing Plan and unity Gain Envelope; regional processing stays protected until the Leveler/Router activate.
-12. Run two-pass final loudness normalization.
-13. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
-14. Probe, measure, checksum, and validate outputs.
-15. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
+11. Plan a deterministic Adaptive Leveler V0 shadow envelope from reliable, unprotected speech evidence.
+12. Emit versioned Leveler settings/statistics and a sample-time linear Gain Envelope, without rendering it.
+13. Keep short-term compression separate and regional processing protected pending promotion and Router gates.
+14. Run two-pass final loudness normalization.
+15. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
+16. Probe, measure, checksum, and validate outputs.
+17. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
 
 ## Reproducibility envelope
 
@@ -73,7 +75,9 @@ These are technical gates, not a human audio-quality promotion. Listening eviden
 
 ## Current limitation
 
-The local graph now implements Semantic Map V0 and a conservative first-party VAD. It does not yet implement checkpoint-backed VAD, ASR, diarization, reliable music classification, advanced defect detection, denoise, the Adaptive Leveler, speaker-aware EQ, the Processing Router, or audiogram rendering. The VAD cannot reliably separate music from speech, so unsupported/uncertain content remains protected and only standards-based final loudness mastering affects audio. Those limits are repeated in the emitted report.
+The local graph now implements Adaptive Leveler V0 **planning in shadow mode**. It proposes and explains a bounded gain envelope, but the pipeline deliberately does not render that envelope into the master. The bootstrap VAD cannot reliably separate music from speech, so active mode fails closed when music/protected-content evidence is unavailable. Only standards-based final loudness mastering currently affects audio.
+
+Checkpoint-backed VAD, ASR, diarization, reliable music classification, advanced defect detection, denoise, the active sample-accurate gain renderer, short-term compression, speaker-aware EQ, the Processing Router, and audiogram rendering remain open. Human listening and no-click render evidence are mandatory before active Leveler promotion.
 
 ## Dependency and license impact
 
@@ -88,4 +92,4 @@ No model or checkpoint is downloaded or admitted. The VAD is first-party determi
 
 The V2 packages are additive and do not import the legacy runtime. Semantic Map `1.0.0` placeholders upgrade explicitly through `read_semantic_map()`; unsupported versions fail closed. Rollback can disable the V0 analysis stage and keep the protected placeholder without touching source or master media. Generated production directories can be deleted without touching their original source.
 
-See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for contract, fusion, safety, storage, and provider-adapter details.
+See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for evidence/fusion details and [Adaptive Leveler V0](../architecture/ADAPTIVE_LEVELER_V0.md) for the control law, artifacts, safety gates, and promotion boundary.
