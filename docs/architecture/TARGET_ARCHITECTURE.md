@@ -167,7 +167,46 @@ Contains:
 - user-exposed controls;
 - known limitations.
 
-A mutable preset points to an immutable recipe version.
+A mutable template identity points to immutable template versions. The four intent shortcuts select recommended built-in template versions; they are not the only configuration surface.
+
+### ControlDefinition
+
+Immutable recipe-owned metadata for one user-exposed setting:
+
+- stable control and contract-path IDs;
+- stage/outcome group;
+- value type, units, allowed values/range, and default;
+- Basic/Advanced presentation metadata;
+- availability, capability requirements, contraindications, and risk/cost/privacy warnings;
+- whether the value affects run/step cache identity.
+
+No Studio control exists without a matching definition and engine field.
+
+### StudioTemplate and StudioTemplateVersion
+
+`StudioTemplate` is the mutable workspace catalog identity (name, description, current version, default/archive state). `StudioTemplateVersion` is immutable and records:
+
+- template and version IDs;
+- base `recipe_version_id`;
+- validated analysis, cleanup, leveler, mastering, transcript/caption, render, and export choices;
+- schema version and content hash;
+- creator, creation time, and change summary.
+
+Editing creates a new version. Built-in templates are copied before workspace customization. Archive preserves historical references.
+
+### ResolvedProductionSettings
+
+Fully expanded immutable run input created from recipe defaults, an optional template version, and explicit per-production overrides.
+
+It records:
+
+- schema, recipe, and optional template-version identity;
+- every resolved value, including unchanged defaults;
+- per-value provenance (recipe, template, or run override);
+- validation normalizations, warnings, unavailable capabilities, and fallbacks;
+- deterministic content hash.
+
+The resolved hash participates in idempotency and cache keys. UI state never substitutes for this artifact, and later default/template edits cannot change an old run.
 
 ### ProductionRun
 
@@ -178,6 +217,8 @@ Key fields:
 - `id`
 - `production_id`
 - `recipe_version_id`
+- `resolved_settings_id`
+- `resolved_settings_sha256`
 - `engine_build_id`
 - `status`
 - `idempotency_key`

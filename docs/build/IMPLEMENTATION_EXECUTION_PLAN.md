@@ -8,7 +8,9 @@
 
 Build the actual Ampersand engine and Studio now.
 
-OpenAI Sites is now the active web/Studio and lightweight control-plane destination. Sites work and engine work proceed together behind versioned contracts; neither may become an excuse to postpone the other. FFmpeg, native DSP, GPU inference, long-running durable workflows, large temporary processing, and authoritative rendering remain externally deployable. Custom-domain/DNS cutover remains deferred until the product is strong.
+The owner's existing Google deployment remains the active web/Studio destination. Do not select or mutate a Google service until the owner connects the relevant account/project at the integration stage. The OpenAI Sites checkpoint is a non-production reference artifact. Studio and engine work proceed together behind versioned contracts; neither may become an excuse to postpone the other. FFmpeg, native DSP, GPU inference, long-running durable workflows, large temporary processing, and authoritative rendering remain externally deployable. Publishing, operations wiring, and custom-domain/DNS work remain deferred until the product is strong.
+
+The current four intents are quick-start defaults only. The production flow must expose rich supported settings and reusable immutable-versioned templates, with a complete resolved-settings snapshot attached to every run.
 
 ## Product target for the first working release
 
@@ -119,6 +121,11 @@ Agents may work in parallel only where contracts are already stable. Every issue
 - `ProductionRun`
 - `JobStep`
 - `RecipeVersion`
+- `ControlDefinition`
+- `StudioTemplate`
+- `StudioTemplateVersion`
+- `ProductionSettingsOverride`
+- `ResolvedProductionSettings`
 - `SemanticMap`
 - `SemanticRegion`
 - `ProcessingPlan`
@@ -359,13 +366,14 @@ Put the real engine into an approachable customer workflow.
 #### New Production
 
 - large upload/drop area;
-- preset-first recipe selection;
-- concise controls:
-  - level voices;
-  - clean noise;
-  - normalize loudness;
-  - transcribe;
-- advanced settings hidden by default.
+- intent shortcuts for recommended starting points, never the only choices;
+- built-in or workspace template selection;
+- concise Basic controls for common outcomes;
+- rich stage-grouped settings for analysis, cleanup, leveling, mastering, transcript/captions, audiogram/render, and export;
+- Advanced/Expert view over the same contract fields;
+- per-production overrides with reset-to-template and reset-to-recipe;
+- clear resolved-settings review before running;
+- explicit “run once” versus “save as reusable template” actions.
 
 #### Processing
 
@@ -384,11 +392,20 @@ Put the real engine into an approachable customer workflow.
 - regional bypass/strength controls;
 - output downloads.
 
+#### Templates
+
+- create from built-in/template/current production settings;
+- name, duplicate, update as a new version, set default, archive, and restore;
+- immutable version history and referenced-run visibility;
+- import/export through provider-neutral validated contracts;
+- no destructive change to settings used by historical runs.
+
 ### Issues
 
 - #11 — waveform and edit-core contracts;
 - #25 — Studio MVP;
 - #26 — A/B comparison and processing report.
+- #31 — Google-hosting direction and rich settings/template architecture.
 
 ---
 
@@ -427,31 +444,31 @@ This follows the working mastering Studio. It does not precede the engine.
 Agents should begin these in parallel where dependencies permit:
 
 1. **#3** V2 workspace/refoundation;
-2. **#17** Sites product/control-plane foundation;
-3. **#18** durable D1/R2/external-worker boundary;
-4. **#12** dependency/model manifest gate;
-5. **#21** core engine contracts and local CLI;
-6. **#22** Semantic Audio Map V0 schema/fusion;
-7. **#6** deterministic mastering and Leveler V0 using fixture inputs;
-8. **#4/#5** minimum fixture corpus and listening/regression harness.
+2. **#12** dependency/model manifest gate;
+3. **#21** core engine contracts and local CLI;
+4. **#22** Semantic Audio Map V0 schema/fusion;
+5. **#6** deterministic mastering and Leveler V0 using fixture inputs;
+6. **#4/#5** minimum fixture corpus and listening/regression harness;
+7. **#31** settings/template contracts while preserving the Google deployment decision.
 
 ## Next integration wave
 
-7. **#7** enhancement candidate adapters and tests;
-8. **#8** ASR/diarization candidate normalization;
-9. **#23** Processing Router V0;
-10. **#9/#10** durable workflow and storage lifecycle;
-11. **#24** durable singletrack engine vertical slice;
-12. **#25/#26** Studio MVP, A/B, and report;
-13. **#13** one-hour end-to-end product proof.
+8. **#7** enhancement candidate adapters and tests;
+9. **#8** ASR/diarization candidate normalization;
+10. **#23** Processing Router V0;
+11. **#9/#10** durable workflow and storage lifecycle;
+12. **#24** durable singletrack engine vertical slice;
+13. **#25/#26** rich Studio/templates, A/B, and report;
+14. **#17/#18** adapt the existing Google-hosted control/upload boundary after owner connection;
+15. **#13** one-hour end-to-end product proof.
 
 ## After the real product works
 
-14. **#27** deterministic audiogram migration;
-15. transcript-driven edits and automatic cut suggestions;
-16. publishing automation;
-17. custom-domain connection and retirement of the legacy Google-hosted surface;
-18. multitrack and advanced restoration research.
+16. **#27** deterministic audiogram migration;
+17. transcript-driven edits and automatic cut suggestions;
+18. Google publishing/operations automation against the inspected existing deployment;
+19. custom-domain connection after release readiness;
+20. multitrack and advanced restoration research.
 
 ---
 
@@ -473,8 +490,10 @@ The build is ready for user testing when all are true:
 - failure and retry are understandable;
 - one-hour fixture completes successfully;
 - clean-input preservation passes;
-- no legacy Auphonic dependency is involved.
+- no legacy Auphonic dependency is involved;
+- rich settings resolve to an immutable run snapshot;
+- a reusable template version can launch a run without changing historical runs.
 
 ## Deployment note
 
-The Sites product/control plane is established during implementation. Connect the domain and retire the legacy Google-hosted surface only after the release-readiness criteria above are satisfied.
+Preserve the existing Google deployment during implementation. After the owner connects the relevant Google account/project, inspect it read-only, establish a reviewed staging/publish/rollback workflow, and integrate the contract-driven Studio. Connect the custom domain only after the release-readiness criteria above are satisfied. The OpenAI Sites checkpoint remains reference-only.

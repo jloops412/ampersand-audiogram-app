@@ -1,16 +1,17 @@
 # Ampersand V2 Planning and Build Authority
 
-**Status:** Active build baseline  
-**Last verified:** 2026-08-18  
-**Branch:** `docs/ampersand-v2-research-plan-2026-08`
+**Status:** Active build baseline
+
+**Last verified:** 2026-08-20
+**Branch:** `main` plus reviewed issue branches
 
 This directory is the durable authority for rebuilding Ampersand from an audiogram prototype into an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform.
 
 ## Current directive
 
-**Build the actual Ampersand engine and Sites-hosted Studio together.**
+**Build the actual Ampersand engine and Google-hosted Studio together.**
 
-OpenAI Sites now owns the web/Studio and lightweight control plane while the independent engine owns heavy audio work. Custom-domain/DNS cutover remains a later release task. ADR-0008 supersedes ADR-0007's hosting deferral without weakening the engine-first quality boundaries.
+The owner's existing Google deployment remains the production web destination while the independent engine owns heavy audio work. Its exact Google service/project must be inspected only after the owner connects it at the integration stage. The OpenAI Sites checkpoint is reference-only. Rich per-production settings and immutable-versioned reusable templates are required; four intent shortcuts are not a complete Studio. ADR-0009 supersedes ADR-0008's hosting destination without weakening the engine-first quality boundaries.
 
 ## Start here
 
@@ -30,6 +31,7 @@ OpenAI Sites now owns the web/Studio and lightweight control plane while the ind
 14. [Source Register](./research/SOURCE_REGISTER.md)
 15. [Local Engine CLI](./build/LOCAL_ENGINE_CLI.md)
 16. [Semantic Audio Map V0](./architecture/SEMANTIC_AUDIO_MAP_V0.md)
+17. [Studio Settings and Templates](./architecture/STUDIO_SETTINGS_AND_TEMPLATES.md)
 
 ## Architecture decision records
 
@@ -41,10 +43,11 @@ OpenAI Sites now owns the web/Studio and lightweight control plane while the ind
 - [ADR-0006: Historical hosting-boundary note](./decisions/ADR-0006-CHATGPT-SITES-WEB-CONTROL-PLANE.md)
 - [ADR-0007: Build the product first; defer hosting migration work](./decisions/ADR-0007-BUILD-FIRST-HOSTING-DEFERRED.md)
 - [ADR-0008: Establish Sites now without collapsing the engine boundary](./decisions/ADR-0008-SITES-CONTROL-PLANE-NOW.md)
+- [ADR-0009: Keep Google hosting and make Studio settings/template-driven](./decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 
 ## Governing rules
 
-1. **One product, two runtime responsibilities.** Sites implements the Studio/control plane now; external workers implement high-quality media processing. Neither is a substitute for the other.
+1. **One product, two runtime responsibilities.** The Google-hosted web/control surface implements the Studio; external workers implement high-quality media processing. Neither is a substitute for the other, and the boundary remains provider-neutral.
 2. **Auphonic research becomes independent architecture.** Public findings inform capability and structure; Auphonic services/outputs/derived learnings are not used to benchmark, tune, evaluate, or design Ampersand without written permission.
 3. **Ampersand owns the intelligence layer.** Semantic Map, Router, Adaptive Leveler, recipes, quality policy, and Studio explanations remain Ampersand-controlled.
 4. **Human listening is the final quality gate.** Objective metrics are diagnostic evidence, not automatic truth.
@@ -62,8 +65,6 @@ OpenAI Sites now owns the web/Studio and lightweight control plane while the ind
 ### Immediate build wave
 
 - #3 — V2 workspace/refoundation
-- #17 — Sites product/control-plane foundation
-- #18 — durable Sites/storage/external-worker boundary
 - #12 — dependency/model manifests
 - #21 — core contracts and local CLI
 - #22 — Semantic Audio Map V0
@@ -77,16 +78,18 @@ OpenAI Sites now owns the web/Studio and lightweight control plane while the ind
 - #23 — Processing Router V0
 - #9/#10 — durable workflow and storage lifecycle
 - #24 — durable singletrack vertical slice
+- #18 — Google-hosted control/upload/worker integration after owner connection
 
 ### Product wave
 
 - #11 — waveform/edit contracts
 - #25 — Studio MVP
+- #31 — rich settings, reusable templates, and Google-hosting direction
 - #26 — Original/Master comparison and processing report
 - #13 — one-hour end-to-end proof
 - #27 — deterministic audiogram renderer
 
-Issues #17, #18, and #20 were reopened by the owner on 2026-08-20. #16 remains unnecessary; #19 remains the later domain/legacy-host cutover task.
+Issue #31 records the owner's 2026-08-20 direction. #17, #18, #19, #20, and #25 must be read with ADR-0009: Google remains the production host, Sites is reference-only, and live deployment work waits for the owner connection.
 
 ## Decision status legend
 

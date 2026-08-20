@@ -1,6 +1,7 @@
 # ADR-0008: Establish OpenAI Sites Now Without Collapsing the Engine Boundary
 
-- **Status:** Accepted; supersedes ADR-0007's hosting deferral
+- **Status:** Superseded by ADR-0009 on 2026-08-20
+- **Superseded by:** [ADR-0009: Keep Google Hosting and Make Studio Settings/Template-Driven](./ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 - **Date:** 2026-08-20
 - **Decision owners:** Ampersand product and engineering
 
@@ -47,3 +48,5 @@ Sites and engine implementation proceed together behind Ampersand-owned contract
 ## Supersession
 
 ADR-0007 remains historically useful for its warning against hosting-driven drift. This ADR supersedes only its decision to defer Sites implementation.
+
+The owner subsequently chose to keep the existing Google-hosted deployment. ADR-0009 therefore supersedes this ADR's production-host selection while preserving its useful lightweight-web/independent-worker boundary and the Sites checkpoint as a reference artifact.

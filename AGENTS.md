@@ -6,7 +6,9 @@ This file defines the default working rules for coding, research, review, and re
 
 **Build the actual Ampersand product.**
 
-OpenAI Sites is now the active home for Ampersand's web/Studio and lightweight control plane. Build that product surface alongside the independent engine; do not move FFmpeg, native DSP, GPU inference, durable long-running workflows, or authoritative rendering into the browser or Sites runtime. DNS/custom-domain cutover remains deferred until the product is strong.
+The owner's existing Google-hosted deployment remains Ampersand's production web destination. Preserve it until the owner connects the relevant Google account/project at the integration stage; do not guess the Google product, mutate the live deployment, publish, wire secrets, or change DNS beforehand. The OpenAI Sites checkpoint is a non-production design/reference artifact, not the deployment target.
+
+Build the Studio and independent engine together, but do not move FFmpeg, native DSP, GPU inference, durable long-running workflows, or authoritative rendering into the browser or lightweight web runtime. The four current intent choices are quick starts only: the real Studio must expose rich supported per-production settings and reusable, immutable-versioned templates. Every run stores the exact resolved settings used.
 
 The active execution authority is:
 
@@ -23,7 +25,7 @@ Read, in order:
 4. `docs/architecture/TARGET_ARCHITECTURE.md`
 5. `docs/architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md`
 6. the authority documents linked by the assigned GitHub issue
-7. relevant ADRs, especially ADR-0008 (which supersedes ADR-0007's hosting deferral)
+7. relevant ADRs, especially ADR-0009 (which supersedes ADR-0008's hosting destination)
 
 For algorithm/model work, also read:
 
@@ -56,20 +58,20 @@ issue-<number>/<short-purpose>
 
 Agents should prioritize this sequence:
 
-1. #3 — V2 workspace/refoundation and #17 — Sites product/control-plane foundation;
-2. #18 — durable Sites/storage/worker boundary and #12 — dependency/model admission manifests;
-3. #21 — core contracts and runnable local processing CLI;
-4. #22 — Semantic Audio Map V0;
-5. #6 — deterministic mastering and Adaptive Leveler V0;
-6. #4/#5 — rights-cleared fixtures and minimal quality harness;
-7. #7/#8 — enhancement and speech-understanding providers;
-8. #23 — Processing Router V0;
-9. #24 — durable singletrack engine;
-10. #25/#26 — Studio MVP, A/B comparison, and report;
+1. #3 — V2 workspace/refoundation and #12 — dependency/model admission manifests;
+2. #21 — core contracts and runnable local processing CLI;
+3. #22 — Semantic Audio Map V0;
+4. #6 — deterministic mastering and Adaptive Leveler V0;
+5. #4/#5 — rights-cleared fixtures and minimal quality harness;
+6. #7/#8 — enhancement and speech-understanding providers;
+7. #23 — Processing Router V0;
+8. #24 — durable singletrack engine;
+9. #25/#26/#31 — rich Studio, templates, A/B comparison, and report;
+10. #17/#18 — adapt the existing Google web/control boundary after the owner connects it;
 11. #13 — one-hour end-to-end proof;
 12. #27 — deterministic audiogram renderer.
 
-Sites product work proceeds with the engine. Domain/DNS cutover remains deferred.
+Studio product work proceeds with the engine. Google publishing/management and domain/DNS work remain deferred until the owner connects the existing deployment at the integration stage.
 
 ## 5. Non-negotiable product boundaries
 
@@ -83,6 +85,9 @@ Sites product work proceeds with the engine. Domain/DNS cutover remains deferred
 - No model or dependency is production-approved because its repository merely says “open source.”
 - No Auphonic output/service/derived learning may be used to benchmark, tune, evaluate, or design Ampersand without written permission covering that exact activity.
 - No fake UI control may exist without a corresponding recipe/engine field.
+- Four intent cards may choose defaults, but must never be the only configuration surface.
+- Per-production overrides resolve to a complete immutable settings snapshot before a run starts.
+- Reusable template edits create new versions; old runs and template versions remain reproducible.
 - Clean, protected, uncertain, and unsupported content must be allowed to remain no-op/bypassed.
 
 ## 6. What Ampersand owns
@@ -183,6 +188,6 @@ Stop and report rather than guessing when:
 - implementation would violate an accepted ADR;
 - a provider-specific schema would become the permanent product schema;
 - a feature would require global processing where the router should be regional/protective;
-- work drifts into DNS cutover, recreates the heavy engine inside Sites, or treats a hosting shell as a substitute for the assigned product issue.
+- work mutates the Google deployment before the owner connects it, drifts into DNS cutover, recreates the heavy engine inside the web runtime, or treats a hosting shell as a substitute for the assigned product issue.
 
 Partial, well-documented working implementation is preferable to more speculative planning.

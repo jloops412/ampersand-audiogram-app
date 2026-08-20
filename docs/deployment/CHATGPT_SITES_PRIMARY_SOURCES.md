@@ -1,4 +1,6 @@
-# ChatGPT Sites Primary-Source Notes
+# Historical ChatGPT Sites Primary-Source Notes
+
+**Status:** Reference-only after [ADR-0009](../decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md); not an active deployment destination.
 
 **Status:** Active deployment-source register  
 **Last verified:** 2026-08-18  
