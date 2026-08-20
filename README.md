@@ -27,6 +27,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - an Ampersand-owned, zero-model-cost energy/spectral VAD baseline;
 - provider-normalization adapters, deduplicated provenance, raw audit artifacts, and explicit conflicts;
 - a local Semantic Map visual debug report and safe protect/no-op/eligible decisions;
+- a deterministic Processing Router V0 shadow plan with explicit protection, bypass, DSP/denoise candidates, safe
+  overrides, fallbacks, and Studio-ready reason codes;
 - a deterministic Adaptive Leveler V0 shadow envelope with bounded speaker/content-aware gain and Studio-ready reasoning;
 - a sample-accurate, channel-linked, evaluation-only Leveler renderer that leaves production masters unchanged;
 - deterministic two-pass WAV/MP3 loudness mastering;
@@ -36,7 +38,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - output validation, provenance, step manifests, and an understandable report;
 - tests that reproduce manifests and media hashes across repeated runs.
 
-This is the content-aware deterministic engine foundation, not a claim that the Adaptive Leveler, neural cleanup, checkpoint-backed VAD, ASR, or audiogram renderer is finished.
+This is the content-aware deterministic engine foundation, not a claim that the Adaptive Leveler, active Router,
+neural cleanup, checkpoint-backed VAD, ASR, or audiogram renderer is finished.
 
 ## Run the independent engine
 
@@ -80,7 +83,9 @@ semantic-map-v0.json
 semantic-map-debug.html
 provider-native/*.json
 provider-native/*.manifest.json
+router-settings.json
 processing-plan.json
+processing-router-report.json
 leveler-settings.json
 gain-envelope.json
 leveler-statistics.json
@@ -106,6 +111,7 @@ uv run pytest
 
 See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md),
 [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md),
+[Processing Router V0](./docs/architecture/PROCESSING_ROUTER_V0.md),
 [Adaptive Leveler V0](./docs/architecture/ADAPTIVE_LEVELER_V0.md),
 [Leveler Gain Renderer V0](./docs/architecture/LEVELER_GAIN_RENDERER_V0.md),
 [Synthetic Fixture Corpus V0](./docs/research/SYNTHETIC_FIXTURE_CORPUS_V0.md), and
@@ -150,7 +156,7 @@ Original media is immutable. Expensive work is checkpointable. Provider-native r
 4. #22 — Semantic Audio Map V0;
 5. #6 — deterministic DSP and Ampersand Adaptive Leveler V0;
 6. #4/#5 — rights-cleared fixtures and listening/regression harness;
-7. #7/#8/#23 — enhancement, speech understanding, and Processing Router;
+7. #7/#8/#23 — enhancement, speech understanding, and active Processing Router promotion;
 8. #24/#25/#26 — durable engine, Studio integration, A/B, and report;
 9. #13 — one-hour recovery proof;
 10. #27 — deterministic professional audiogram renderer.

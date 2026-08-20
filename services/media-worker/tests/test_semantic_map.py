@@ -125,6 +125,44 @@ def test_optional_transcript_and_speaker_adapters_share_timeline_without_becomin
     assert all(region.protected for region in without_optional.regions)
 
 
+def test_normalized_defect_probabilities_are_available_to_the_router() -> None:
+    provenance = _provenance("provider:defect-fixture")
+    kinds_and_values = (
+        (ObservationKind.CLIPPING_PROBABILITY, 0.11),
+        (ObservationKind.RUMBLE_PROBABILITY, 0.72),
+        (ObservationKind.HUM_PROBABILITY, 0.83),
+        (ObservationKind.REVERB_PROBABILITY, 0.44),
+        (ObservationKind.BANDWIDTH_LIMIT_PROBABILITY, 0.35),
+    )
+    observations = tuple(
+        SemanticObservation(
+            observation_id=f"observation:defect:{kind.value}",
+            kind=kind,
+            start_us=0,
+            end_us=100_000,
+            confidence=0.9,
+            value=value,
+            unit=ObservationUnit.PROBABILITY,
+            provenance_ref=provenance.provenance_id,
+        )
+        for kind, value in kinds_and_values
+    )
+    semantic_map = fuse_semantic_map(
+        semantic_map_id="semantic-map:defect-routing",
+        source_asset_id="asset:defect-routing",
+        duration_us=100_000,
+        observations=observations,
+        provenance_sources=(provenance,),
+    )
+
+    region = semantic_map.regions[0]
+    assert region.clipping_probability == 0.11
+    assert region.rumble_probability == 0.72
+    assert region.hum_probability == 0.83
+    assert region.reverb_probability == 0.44
+    assert region.bandwidth_limit_probability == 0.35
+
+
 def test_property_style_random_intervals_always_produce_ordered_half_open_full_coverage() -> None:
     generator = random.Random(22)
     provenance = _provenance("provider:property")

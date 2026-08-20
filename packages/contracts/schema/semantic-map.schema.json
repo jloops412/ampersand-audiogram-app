@@ -331,6 +331,34 @@
           "default": null,
           "title": "Ambience Probability"
         },
+        "bandwidth_limit_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bandwidth Limit Probability"
+        },
+        "clipping_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clipping Probability"
+        },
         "confidence": {
           "maximum": 1.0,
           "minimum": 0.0,
@@ -363,6 +391,20 @@
           "minimum": 0,
           "title": "End Us",
           "type": "integer"
+        },
+        "hum_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hum Probability"
         },
         "music_probability": {
           "anyOf": [
@@ -460,6 +502,34 @@
           "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
           "title": "Region Id",
           "type": "string"
+        },
+        "reverb_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reverb Probability"
+        },
+        "rumble_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rumble Probability"
         },
         "schema_version": {
           "const": "1.1.0",

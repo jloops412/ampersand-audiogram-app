@@ -15,6 +15,8 @@ Identifier = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9._:-]{1,
 Microseconds = Annotated[int, Field(ge=0)]
 Probability = Annotated[float, Field(ge=0.0, le=1.0)]
 JsonScalar = str | int | float | bool | None
+ProcessingAction = Literal["bypass", "protect", "deterministic_filter", "denoise", "level", "final_master"]
+ProcessingSource = Literal["recipe", "automatic", "user_override"]
 
 
 class ContractModel(BaseModel):
@@ -494,6 +496,11 @@ class SemanticRegion(SemanticContractModel):
     ambience_probability: Probability | None = None
     noise_probability: Probability | None = None
     overlap_probability: Probability | None = None
+    clipping_probability: Probability | None = None
+    rumble_probability: Probability | None = None
+    hum_probability: Probability | None = None
+    reverb_probability: Probability | None = None
+    bandwidth_limit_probability: Probability | None = None
     active_speaker: str | None = Field(default=None, min_length=1, max_length=128)
     active_speaker_confidence: Probability | None = None
     protected: bool = True
@@ -596,13 +603,17 @@ class ProcessingRegion(ContractModel):
     processing_region_id: Identifier
     start_us: Microseconds
     end_us: Microseconds
-    action: Literal["bypass", "protect", "deterministic_filter", "level", "final_master"]
+    action: ProcessingAction
     processor_id: Identifier
     confidence: Probability
+    reason_code: Identifier = "router:unspecified"
     reason: str = Field(min_length=1, max_length=512)
     parameters: dict[str, JsonScalar] = Field(default_factory=dict)
+    fallback_processor_id: Identifier | None = None
+    warning_codes: tuple[Identifier, ...] = ()
     transition_us: Microseconds = 0
-    source: Literal["recipe", "automatic", "user_override"] = "automatic"
+    source: ProcessingSource = "automatic"
+    planning_only: bool = False
 
     @model_validator(mode="after")
     def half_open_interval(self) -> Self:
@@ -627,9 +638,132 @@ class ProcessingPlan(ContractModel):
     def regions_fit_timeline(self) -> Self:
         if self.duration_us <= 0:
             raise ValueError("duration_us must be positive")
+        if not self.regions:
+            raise ValueError("processing plans require at least one full-coverage region")
+        expected_start = 0
+        region_ids: set[str] = set()
         for region in self.regions:
+            if region.processing_region_id in region_ids:
+                raise ValueError("processing-region IDs must be unique")
+            region_ids.add(region.processing_region_id)
             if region.end_us > self.duration_us:
                 raise ValueError(f"region {region.processing_region_id} exceeds the plan duration")
+            if region.start_us != expected_start:
+                raise ValueError("processing regions must be ordered, contiguous, and cover from zero")
+            expected_start = region.end_us
+        if expected_start != self.duration_us:
+            raise ValueError("processing regions must cover the full plan duration")
+        return self
+
+
+class ProcessingRouteOverride(ContractModel):
+    override_id: Identifier
+    start_us: Microseconds
+    end_us: Microseconds
+    action: Literal["protect", "bypass"]
+    reason: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def half_open_interval(self) -> Self:
+        if self.end_us <= self.start_us:
+            raise ValueError("processing-route overrides use non-empty half-open [start_us, end_us) intervals")
+        return self
+
+
+class ProcessingRouterSettings(ContractModel):
+    settings_id: Identifier
+    algorithm_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    planning_mode: Literal["shadow"] = "shadow"
+    minimum_region_confidence: Probability = 0.60
+    minimum_speech_probability: Probability = 0.62
+    maximum_silence_probability: Probability = 0.40
+    maximum_music_probability: Probability = 0.35
+    maximum_ambience_probability: Probability = 0.55
+    maximum_overlap_probability: Probability = 0.35
+    maximum_clipping_probability: Probability = 0.20
+    maximum_reverb_probability: Probability = 0.70
+    maximum_bandwidth_limit_probability: Probability = 0.80
+    minimum_noise_probability_for_denoise: Probability = 0.65
+    minimum_rumble_probability_for_filter: Probability = 0.75
+    minimum_hum_probability_for_filter: Probability = 0.80
+    transition_us: int = Field(default=25_000, ge=0, le=5_000_000)
+    deterministic_filters_enabled: bool = True
+    speech_denoise_enabled: bool = False
+    admitted_speech_denoise_processor_id: Identifier | None = None
+    admitted_speech_denoise_model_manifest_id: Identifier | None = None
+    denoise_strength: float = Field(default=0.25, ge=0.0, le=0.5)
+    high_pass_cutoff_hz: int = Field(default=70, ge=40, le=100)
+    high_pass_slope_db_per_octave: Literal[12] = 12
+    require_music_evidence_for_processing: Literal[True] = True
+
+    @model_validator(mode="after")
+    def valid_processor_admission(self) -> Self:
+        admission_ids = (
+            self.admitted_speech_denoise_processor_id,
+            self.admitted_speech_denoise_model_manifest_id,
+        )
+        if self.speech_denoise_enabled and any(identifier is None for identifier in admission_ids):
+            raise ValueError("speech denoise cannot be enabled without admitted processor and model-manifest IDs")
+        return self
+
+
+class ProcessingRouteDecision(ContractModel):
+    decision_id: Identifier
+    processing_region_id: Identifier
+    semantic_region_ids: tuple[Identifier, ...] = Field(min_length=1)
+    action: ProcessingAction
+    processor_id: Identifier
+    fallback_processor_id: Identifier | None = None
+    reason_code: Identifier
+    reason: str = Field(min_length=1, max_length=512)
+    confidence: Probability
+    parameters: dict[str, JsonScalar] = Field(default_factory=dict)
+    warning_codes: tuple[Identifier, ...] = ()
+    planning_only: Literal[True] = True
+
+
+class ProcessingRouterReport(ContractModel):
+    processing_router_report_id: Identifier
+    run_id: Identifier
+    semantic_map_id: Identifier
+    recipe_version_id: Identifier
+    settings_id: Identifier
+    settings_sha256: Sha256
+    algorithm_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    processing_plan_id: Identifier
+    processing_plan_sha256: Sha256
+    decisions: tuple[ProcessingRouteDecision, ...] = Field(min_length=1)
+    override_ids: tuple[Identifier, ...] = ()
+    protected_region_count: int = Field(ge=0)
+    bypassed_region_count: int = Field(ge=0)
+    deterministic_filter_region_count: int = Field(ge=0)
+    denoise_region_count: int = Field(ge=0)
+    leveler_region_count: int = Field(ge=0)
+    warnings: tuple[str, ...] = ()
+    planning_only: Literal[True] = True
+    production_audio_changed: Literal[False] = False
+    external_api_cost_usd: Literal[0] = 0
+
+    @model_validator(mode="after")
+    def valid_decision_counts(self) -> Self:
+        expected_counts = {
+            "protect": self.protected_region_count,
+            "bypass": self.bypassed_region_count,
+            "deterministic_filter": self.deterministic_filter_region_count,
+            "denoise": self.denoise_region_count,
+            "level": self.leveler_region_count,
+        }
+        observed_counts = {
+            action: sum(decision.action == action for decision in self.decisions) for action in expected_counts
+        }
+        if observed_counts != expected_counts or sum(expected_counts.values()) != len(self.decisions):
+            raise ValueError("processing-router action counts must cover every decision")
+        if len({decision.decision_id for decision in self.decisions}) != len(self.decisions):
+            raise ValueError("processing-router decision IDs must be unique")
+        if len({decision.processing_region_id for decision in self.decisions}) != len(self.decisions):
+            raise ValueError("processing-router decisions must reference unique processing regions")
+        if len(set(self.override_ids)) != len(self.override_ids):
+            raise ValueError("processing-router override IDs must be unique")
         return self
 
 

@@ -32,6 +32,10 @@ from ampersand_contracts import (
     ProcessingPlan,
     ProcessingRegion,
     ProcessingReport,
+    ProcessingRouteDecision,
+    ProcessingRouteOverride,
+    ProcessingRouterReport,
+    ProcessingRouterSettings,
     Production,
     ProductionRun,
     RecipeVersion,
@@ -43,6 +47,7 @@ from ampersand_contracts import (
     WaveformLevel,
     WaveformPeaks,
     canonical_json_bytes,
+    manifest_sha256,
 )
 from ampersand_contracts.schema_export import EXPORTED_MODELS, export_json_schemas
 from pydantic import BaseModel, ValidationError
@@ -71,6 +76,10 @@ def test_every_required_contract_round_trips_with_a_version() -> None:
         SemanticRegion,
         ProcessingPlan,
         ProcessingRegion,
+        ProcessingRouterSettings,
+        ProcessingRouteOverride,
+        ProcessingRouteDecision,
+        ProcessingRouterReport,
         GainEnvelope,
         ProcessingReport,
         OutputManifest,
@@ -97,6 +106,29 @@ def test_timeline_contracts_enforce_half_open_nonempty_intervals() -> None:
     payload["end_us"] = payload["start_us"]
     with pytest.raises(ValidationError, match="half-open"):
         SemanticRegion.model_validate(payload)
+
+
+def test_processing_plans_require_ordered_contiguous_full_coverage() -> None:
+    with pytest.raises(ValidationError, match="ordered, contiguous"):
+        ProcessingPlan(
+            processing_plan_id="processing-plan:gapped",
+            run_id="run:gapped",
+            recipe_version_id="recipe:gapped:1.0.0",
+            semantic_map_id="semantic-map:gapped",
+            duration_us=1_000_000,
+            regions=(
+                ProcessingRegion(
+                    processing_region_id="processing-region:gapped",
+                    start_us=100_000,
+                    end_us=1_000_000,
+                    action="protect",
+                    processor_id="processor:no-op-v0",
+                    confidence=1,
+                    reason="A deliberately gapped contract fixture.",
+                ),
+            ),
+            global_steps=("final-master",),
+        )
 
 
 def test_gain_envelope_requires_exact_timeline_span() -> None:
@@ -291,6 +323,45 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         regions=(processing_region,),
         global_steps=("final-master",),
     )
+    router_settings = ProcessingRouterSettings(
+        settings_id="router-settings:test",
+        algorithm_version="0.1.0",
+    )
+    route_override = ProcessingRouteOverride(
+        override_id="route-override:test",
+        start_us=0,
+        end_us=1_000_000,
+        action="protect",
+        reason="The test operator preserves this synthetic interval.",
+    )
+    route_decision = ProcessingRouteDecision(
+        decision_id="route-decision:test",
+        processing_region_id=processing_region.processing_region_id,
+        semantic_region_ids=(region.region_id,),
+        action=processing_region.action,
+        processor_id=processing_region.processor_id,
+        reason_code="router:protect-test",
+        reason=processing_region.reason,
+        confidence=processing_region.confidence,
+    )
+    router_report = ProcessingRouterReport(
+        processing_router_report_id="router-report:test",
+        run_id=run.run_id,
+        semantic_map_id=semantic_map.semantic_map_id,
+        recipe_version_id=recipe.recipe_version_id,
+        settings_id=router_settings.settings_id,
+        settings_sha256=manifest_sha256(router_settings),
+        algorithm_version="0.1.0",
+        processing_plan_id=plan.processing_plan_id,
+        processing_plan_sha256=manifest_sha256(plan),
+        decisions=(route_decision,),
+        override_ids=(route_override.override_id,),
+        protected_region_count=1,
+        bypassed_region_count=0,
+        deterministic_filter_region_count=0,
+        denoise_region_count=0,
+        leveler_region_count=0,
+    )
     envelope = GainEnvelope(
         gain_envelope_id="gain-envelope:test",
         run_id=run.run_id,
@@ -436,6 +507,10 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         semantic_map,
         processing_region,
         plan,
+        router_settings,
+        route_override,
+        route_decision,
+        router_report,
         envelope,
         leveler_settings,
         speaker_statistics,

@@ -56,6 +56,14 @@ The Studio groups controls by outcome rather than exposing an unstructured wall 
 
 The examples are not permission to create unsupported toggles. The selected recipe's `ControlDefinition` list is the source of truth. Unavailable controls remain visible only when an explanation materially helps; otherwise they are omitted.
 
+### Implemented engine checkpoint
+
+Processing Router V0 now writes a strict `ProcessingRouterSettings` snapshot for every local run. Its cleanup,
+protection, confidence, transition, conservative-filter, and exact admitted-denoiser fields are the first executable
+subset of the rich settings model. The router hashes the complete snapshot into plan identity and records reasons and
+fallbacks suitable for Studio display. This does not yet implement template catalog/version CRUD or the complete
+`ResolvedProductionSettings` contract; those remain #25/#31 work.
+
 ## UX requirements
 
 - Show the selected template and whether the current production differs from it.

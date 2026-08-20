@@ -312,6 +312,13 @@ unsupported content
 - #7 — enhancement adapters and first admitted denoise path;
 - #23 — Processing Router V0.
 
+### Implemented checkpoint
+
+Processing Router V0 now emits strict, deterministic, full-coverage shadow plans with explicit protect/bypass,
+deterministic-filter, admitted-denoise, and Leveler candidate decisions. Safe user overrides split the timeline without
+mutating Semantic Map evidence. Production regional execution remains disabled pending #7 admission and listening
+evidence; see [Processing Router V0](../architecture/PROCESSING_ROUTER_V0.md).
+
 ---
 
 ## Lane 6 — Durable singletrack engine

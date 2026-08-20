@@ -35,6 +35,7 @@ The owner's existing Google deployment remains the production web destination wh
 18. [Synthetic Fixture Corpus V0](./research/SYNTHETIC_FIXTURE_CORPUS_V0.md)
 19. [Blinded Listening and Regression Harness V0](./research/BLINDED_LISTENING_HARNESS_V0.md)
 20. [Leveler Gain Renderer V0](./architecture/LEVELER_GAIN_RENDERER_V0.md)
+21. [Processing Router V0](./architecture/PROCESSING_ROUTER_V0.md)
 
 ## Architecture decision records
 
