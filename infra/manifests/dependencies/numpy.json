@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "dependency_manifest_id": "dependency:numpy",
+  "dependency_name": "numpy",
+  "dependency_version": "2.5.2",
+  "source_url": "https://github.com/numpy/numpy/tree/v2.5.2",
+  "artifact_sha256": null,
+  "code_license": "BSD-3-Clause",
+  "admission_state": "lab_candidate",
+  "scope": "runtime",
+  "transitive_native_review": "Exact package version is locked; platform wheel hashes, bundled native-library inventory, SBOM, and vulnerability gates remain issue #12 work.",
+  "commercial_hosted_use_reviewed": false,
+  "approval_reference": "issue #21 local waveform baseline only"
+}

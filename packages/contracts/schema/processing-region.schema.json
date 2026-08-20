@@ -1,0 +1,104 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "bypass",
+        "protect",
+        "deterministic_filter",
+        "level",
+        "final_master"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "end_us": {
+      "minimum": 0,
+      "title": "End Us",
+      "type": "integer"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "processing_region_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Processing Region Id",
+      "type": "string"
+    },
+    "processor_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Processor Id",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source": {
+      "default": "automatic",
+      "enum": [
+        "recipe",
+        "automatic",
+        "user_override"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "start_us": {
+      "minimum": 0,
+      "title": "Start Us",
+      "type": "integer"
+    },
+    "transition_us": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Transition Us",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "processing_region_id",
+    "start_us",
+    "end_us",
+    "action",
+    "processor_id",
+    "confidence",
+    "reason"
+  ],
+  "title": "ProcessingRegion",
+  "type": "object"
+}

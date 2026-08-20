@@ -1,0 +1,62 @@
+name: V2 engine
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/v2-engine.yml"
+      - "apps/**"
+      - "infra/**"
+      - "lab/**"
+      - "packages/**"
+      - "services/**"
+      - "scripts/check_v2_boundaries.py"
+      - "pyproject.toml"
+      - "uv.lock"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/v2-engine.yml"
+      - "apps/**"
+      - "infra/**"
+      - "lab/**"
+      - "packages/**"
+      - "services/**"
+      - "scripts/check_v2_boundaries.py"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native baseline
+        run: sudo apt-get update && sudo apt-get install --yes ffmpeg
+      - name: Bootstrap pinned uv
+        run: |
+          python3 -m venv .bootstrap
+          .bootstrap/bin/pip install uv==0.11.33
+      - name: Install locked workspace
+        run: .bootstrap/bin/uv sync --all-packages --dev --locked
+      - name: Enforce V2 quarantine
+        run: .bootstrap/bin/uv run python scripts/check_v2_boundaries.py
+      - name: Lint and format-check
+        run: |
+          .bootstrap/bin/uv run ruff check packages services scripts
+          .bootstrap/bin/uv run ruff format --check packages services scripts
+      - name: Type-check
+        run: .bootstrap/bin/uv run mypy
+      - name: Test contracts and engine
+        run: .bootstrap/bin/uv run pytest
+      - name: Verify exported contracts
+        run: |
+          .bootstrap/bin/uv run --package ampersand-media-worker ampersand-engine schemas --output packages/contracts/schema
+          git diff --exit-code -- packages/contracts/schema

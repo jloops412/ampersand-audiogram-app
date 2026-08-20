@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "dependency_manifest_id": "dependency:pydantic",
+  "dependency_name": "pydantic",
+  "dependency_version": "2.13.4",
+  "source_url": "https://github.com/pydantic/pydantic/tree/v2.13.4",
+  "artifact_sha256": null,
+  "code_license": "MIT",
+  "admission_state": "lab_candidate",
+  "scope": "runtime",
+  "transitive_native_review": "pydantic-core and exact transitive versions are locked in uv.lock; SBOM, vulnerability, and release-artifact hash gates remain issue #12 work.",
+  "commercial_hosted_use_reviewed": false,
+  "approval_reference": "issue #21 local deterministic baseline only"
+}

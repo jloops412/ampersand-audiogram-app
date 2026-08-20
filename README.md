@@ -1,148 +1,126 @@
 # Ampersand
 
-**Status:** V2 engine and Studio implementation planning  
-**Current implementation:** legacy audiogram prototype  
-**Immediate objective:** build the actual independent audio-processing product  
-**Later release destination:** ChatGPT Sites and the owner's custom domain  
-**Last planning update:** 2026-08-18
+**Status:** V2 implementation is active
 
-Ampersand is being refounded as an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform.
+**Studio/control plane:** OpenAI Sites
 
-The intended product combines:
+**Heavy processing:** independent media and render workers
+**Legacy prototype:** retained for history; not the V2 foundation
 
-- conservative automatic spoken-word cleanup;
-- content- and speaker-aware leveling;
-- standards-based loudness and true-peak mastering;
-- transcripts, speakers, and a semantic audio timeline;
-- understandable Original/Master comparison and regional overrides;
-- deterministic outputs and provenance;
-- later transcript-driven editing, captions, audiograms, social clips, automation, and multitrack processing.
+Ampersand is an independent spoken-word audio intelligence, mastering, editing, and content-repurposing platform. The product goal is one-click automatic mastering when that is enough, plus an understandable visual Studio when a user needs to inspect, compare, or override a decision.
 
-## Start here
+The first OpenAI Sites Studio checkpoint is live for its owner at:
 
-- [Implementation Execution Plan](./docs/build/IMPLEMENTATION_EXECUTION_PLAN.md)
-- [Ampersand V2 documentation index](./docs/README.md)
-- [Master Plan](./docs/MASTER_PLAN.md)
-- [Target Architecture](./docs/architecture/TARGET_ARCHITECTURE.md)
-- [Technology and Algorithm Direction](./docs/architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md)
-- [Auphonic Public Reconstruction Matrix](./docs/research/AUPHONIC_PUBLIC_RECONSTRUCTION_MATRIX.md)
-- [Audio Quality Evaluation Plan](./docs/research/AUDIO_QUALITY_EVALUATION_PLAN.md)
-- [Dependency and License Matrix](./docs/research/OSS_DEPENDENCY_AND_LICENSE_MATRIX.md)
+https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 
-## Current owner directive
+## What works now
 
-**Build the product now.**
+- an OpenAI Sites Studio/control-plane foundation with private durable source uploads;
+- strict provider-neutral V2 contracts and exported JSON Schemas;
+- a local, no-credential media-engine CLI;
+- immutable source hashing and normalized media probing;
+- canonical 48 kHz float working audio only when needed;
+- multiresolution waveform peaks;
+- standards-based loudness and true-peak measurement;
+- a conservative protected baseline Semantic Map and Processing Plan;
+- deterministic two-pass WAV/MP3 loudness mastering;
+- output validation, provenance, step manifests, and an understandable report;
+- tests that reproduce manifests and media hashes across repeated runs.
 
-Do not spend the current development phase proving hosting compatibility, auditing Google hosting, planning DNS, or connecting the domain. ChatGPT Sites remains the intended later publication target, but it is not a prerequisite or workstream for the engine and Studio.
+This is the deterministic engine foundation, not a claim that the Adaptive Leveler, neural cleanup, VAD, ASR, or audiogram renderer is finished.
 
-The active build is:
+## Run the independent engine
 
-```text
-source
-  ↓
-probe / waveform / loudness / VAD / optional ASR and speakers
-  ↓
-Semantic Audio Map
-  ↓
-Processing Router
-  ├── protect / no-op
-  ├── deterministic filters
-  ├── admitted speech enhancement
-  └── regional processing
-  ↓
-Ampersand Adaptive Leveler
-  ↓
-conservative speaker-aware EQ / filtering
-  ↓
-final loudness + true-peak master
-  ↓
-WAV / MP3 / report / later audiogram outputs
+Prerequisites: Python 3.12+, [uv](https://docs.astral.sh/uv/), FFmpeg, and ffprobe.
+
+```bash
+uv sync --all-packages --dev
+uv run ampersand-generate-fixture /tmp/ampersand-fixture.wav
+uv run --package ampersand-media-worker ampersand-engine process \
+  /tmp/ampersand-fixture.wav \
+  --output /tmp/ampersand-production
 ```
 
-## Important governance boundary
+The output directory contains:
 
-Ampersand is not planned as a reverse-engineered implementation of Auphonic.
+```text
+source-manifest.json
+probe.json
+canonical-manifest.json       # only when canonicalization was needed
+analysis.json
+waveform-peaks.json
+semantic-map.json
+processing-plan.json
+gain-envelope.json
+recipe.json
+production.json
+production-run.json
+steps/*.json
+artifacts/master.wav
+artifacts/master.mp3
+output-manifest.json
+processing-report.json
+```
 
-Auphonic's current Terms of Service restrict using its services, outputs, derivatives, evaluations, insights, or learnings to develop, train, evaluate, benchmark, or improve a competing system, and restrict using outputs as reference material, ground truth, design input, or a quality target without a tailored arrangement.
+Run all V2 gates:
 
-Accordingly, Ampersand's Audio Lab uses independent rights-cleared references, synthetic degradations, human listening, standards-based measurements, and legally admissible open baselines. Auphonic services and outputs are excluded from Ampersand research unless written permission specifically authorizes the activity.
+```bash
+uv run python scripts/check_v2_boundaries.py
+uv run ruff check packages services scripts
+uv run ruff format --check packages services scripts
+uv run mypy
+uv run pytest
+```
 
-See the [research boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md).
+See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md) for the reproducibility, privacy, cost, validation, and rollback contract.
 
-## What is in the repository today
+## Repository responsibilities
 
-The current source is an early React/Vite audiogram prototype with:
+| Path | Responsibility |
+|---|---|
+| `apps/web` | OpenAI Sites Studio integration notes and future shared client adapters |
+| `apps/worker-control` | lightweight provider-neutral job/control API boundary |
+| `packages/contracts` | canonical Pydantic contracts and runtime-neutral JSON Schemas |
+| `packages/test-fixtures` | deterministic rights-clear synthetic fixture generation |
+| `services/media-worker` | independent CPU media graph and local CLI |
+| `services/render-worker` | future authoritative audio/video render boundary |
+| `lab` | segregated rights-cleared evaluation work |
+| `infra` | admission manifests, deployment, migration, SBOM, and container authority |
+| `src`, `backend` | legacy prototype only; never imported by V2 code |
 
-- several waveform visualization styles;
-- background image and text controls;
-- basic SRT/VTT transcript import;
-- a browser canvas preview;
-- browser real-time WebM rendering;
-- a legacy Express proxy to Auphonic.
+## Product architecture
 
-This implementation is useful as history and concept validation, but it is **not the V2 architecture** and should not be treated as production-ready.
+```text
+OpenAI Sites Studio + lightweight control plane
+                  ↓ versioned Ampersand contracts
+immutable objects + durable job records
+                  ↓
+independent media workers
+  probe · peaks · semantics · cleanup · level · master
+                  ↓
+independent deterministic render workers
+  WAV · MP3 · report · captions · audiograms
+```
 
-See [Legacy Salvage Matrix](./docs/research/LEGACY_SALVAGE_MATRIX.md).
+Original media is immutable. Expensive work is checkpointable. Provider-native results must be normalized before product logic consumes them. Unknown, clean, uncertain, musical, or unsupported content may remain protected/no-op.
 
-## Active build order
+## Current build order
 
-### Immediate wave
+1. #3 — finish V2 refoundation and permanent legacy tag;
+2. #12 — enforce dependency/model admission manifests, SBOM, and notices;
+3. #21 — core contracts and runnable local CLI;
+4. #22 — Semantic Audio Map V0;
+5. #6 — deterministic DSP and Ampersand Adaptive Leveler V0;
+6. #4/#5 — rights-cleared fixtures and listening/regression harness;
+7. #7/#8/#23 — enhancement, speech understanding, and Processing Router;
+8. #24/#25/#26 — durable engine, Studio integration, A/B, and report;
+9. #13 — one-hour recovery proof;
+10. #27 — deterministic professional audiogram renderer.
 
-1. #3 — V2 workspace/refoundation
-2. #12 — dependency/model admission manifests
-3. #21 — core contracts and local processing CLI
-4. #22 — Semantic Audio Map V0
-5. #6 — deterministic DSP and Adaptive Leveler V0
-6. #4/#5 — rights-cleared fixtures and minimal quality harness
+Domain/DNS cutover remains deferred until those pieces produce a strong product.
 
-### Integration wave
+## Governance boundary
 
-7. #7 — enhancement candidates
-8. #8 — ASR/alignment/diarization providers
-9. #23 — Processing Router V0
-10. #9/#10 — durable workflow and storage lifecycle
-11. #24 — durable singletrack engine
+Ampersand is not a reverse-engineered Auphonic implementation. Current Auphonic terms restrict using its services, outputs, derivatives, evaluations, insights, or learnings to develop or benchmark a competing system without a tailored arrangement. Ampersand therefore uses independent rights-cleared references, synthetic degradations, standards-based measurements, admitted open components, and human listening.
 
-### Product wave
-
-12. #11 — waveform/edit contracts
-13. #25 — Studio MVP
-14. #26 — Original/Master A/B and report
-15. #13 — one-hour product proof
-16. #27 — deterministic audiogram rendering
-
-After these produce a working product, publish the compatible web application to ChatGPT Sites and connect the domain as a release task.
-
-## Contribution rules
-
-Before adding a dependency or model:
-
-- verify exact code and checkpoint licenses;
-- record provenance and hashes;
-- review training-data/gated-access terms;
-- run applicable quality and clean-preservation tests;
-- document runtime, privacy, contraindications, and rollback;
-- link an approving issue/PR or ADR.
-
-Before changing architecture:
-
-- update or supersede the relevant ADR;
-- keep provider-specific state out of core domain schemas;
-- preserve immutable source and reproducible manifests;
-- avoid production dependencies on unapproved Lab-only components;
-- preserve no-op/protected paths;
-- implement the issue's working acceptance criteria rather than expanding speculative planning.
-
-## Legacy execution
-
-The legacy prototype should be preserved with a permanent tag before structural refactoring. Its old Auphonic integration must not be used in the Ampersand Audio Lab or as a product-quality benchmark.
-
-## Current planning branch
-
-`docs/ampersand-v2-research-plan-2026-08`
-
-## Governing epic
-
-- #14 — Ampersand V2 engine, Studio, and singletrack foundation
-
-Issues #16–#20 were closed because they over-prioritized hosting proof before product implementation.
+Read the [Implementation Execution Plan](./docs/build/IMPLEMENTATION_EXECUTION_PLAN.md), [documentation index](./docs/README.md), and [research boundary](./docs/research/AUPHONIC_CAPABILITY_AND_RESEARCH_BOUNDARY.md) before contributing.

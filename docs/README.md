@@ -28,6 +28,7 @@ OpenAI Sites now owns the web/Studio and lightweight control plane while the ind
 12. [Legacy Salvage Matrix](./research/LEGACY_SALVAGE_MATRIX.md)
 13. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
 14. [Source Register](./research/SOURCE_REGISTER.md)
+15. [Local Engine CLI](./build/LOCAL_ENGINE_CLI.md)
 
 ## Architecture decision records
 

@@ -1,0 +1,127 @@
+{
+  "$defs": {
+    "ManifestAdmissionState": {
+      "enum": [
+        "unreviewed",
+        "lab_candidate",
+        "production_candidate",
+        "approved",
+        "deprecated",
+        "revoked"
+      ],
+      "title": "ManifestAdmissionState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "admission_state": {
+      "$ref": "#/$defs/ManifestAdmissionState"
+    },
+    "approval_reference": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approval Reference"
+    },
+    "approved_runtime_profiles": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Approved Runtime Profiles",
+      "type": "array"
+    },
+    "artifact_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Artifact Sha256",
+      "type": "string"
+    },
+    "checkpoint_license": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Checkpoint License",
+      "type": "string"
+    },
+    "code_license": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Code License",
+      "type": "string"
+    },
+    "commercial_hosted_use_reviewed": {
+      "default": false,
+      "title": "Commercial Hosted Use Reviewed",
+      "type": "boolean"
+    },
+    "known_limitations": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Known Limitations",
+      "type": "array"
+    },
+    "model_manifest_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Model Manifest Id",
+      "type": "string"
+    },
+    "model_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Model Name",
+      "type": "string"
+    },
+    "model_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Model Version",
+      "type": "string"
+    },
+    "no_runtime_download": {
+      "const": true,
+      "default": true,
+      "title": "No Runtime Download",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_url": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Source Url",
+      "type": "string"
+    },
+    "training_data_terms": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Training Data Terms",
+      "type": "string"
+    }
+  },
+  "required": [
+    "model_manifest_id",
+    "model_name",
+    "model_version",
+    "source_url",
+    "artifact_sha256",
+    "code_license",
+    "checkpoint_license",
+    "training_data_terms",
+    "admission_state"
+  ],
+  "title": "ModelManifest",
+  "type": "object"
+}
