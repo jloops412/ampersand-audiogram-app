@@ -6,7 +6,7 @@ This file defines the default working rules for coding, research, review, and re
 
 **Build the actual Ampersand product.**
 
-Do not spend current engineering effort proving ChatGPT Sites, auditing Google hosting, changing DNS, or planning custom-domain cutover. ChatGPT Sites remains the intended later publishing destination, but it is not a build gate.
+OpenAI Sites is now the active home for Ampersand's web/Studio and lightweight control plane. Build that product surface alongside the independent engine; do not move FFmpeg, native DSP, GPU inference, durable long-running workflows, or authoritative rendering into the browser or Sites runtime. DNS/custom-domain cutover remains deferred until the product is strong.
 
 The active execution authority is:
 
@@ -23,7 +23,7 @@ Read, in order:
 4. `docs/architecture/TARGET_ARCHITECTURE.md`
 5. `docs/architecture/TECHNOLOGY_AND_ALGORITHM_DIRECTION.md`
 6. the authority documents linked by the assigned GitHub issue
-7. relevant ADRs, especially ADR-0007
+7. relevant ADRs, especially ADR-0008 (which supersedes ADR-0007's hosting deferral)
 
 For algorithm/model work, also read:
 
@@ -56,8 +56,8 @@ issue-<number>/<short-purpose>
 
 Agents should prioritize this sequence:
 
-1. #3 — V2 workspace/refoundation;
-2. #12 — dependency/model admission manifests;
+1. #3 — V2 workspace/refoundation and #17 — Sites product/control-plane foundation;
+2. #18 — durable Sites/storage/worker boundary and #12 — dependency/model admission manifests;
 3. #21 — core contracts and runnable local processing CLI;
 4. #22 — Semantic Audio Map V0;
 5. #6 — deterministic mastering and Adaptive Leveler V0;
@@ -69,7 +69,7 @@ Agents should prioritize this sequence:
 11. #13 — one-hour end-to-end proof;
 12. #27 — deterministic audiogram renderer.
 
-Hosting work is deferred until these produce a usable product.
+Sites product work proceeds with the engine. Domain/DNS cutover remains deferred.
 
 ## 5. Non-negotiable product boundaries
 
@@ -183,6 +183,6 @@ Stop and report rather than guessing when:
 - implementation would violate an accepted ADR;
 - a provider-specific schema would become the permanent product schema;
 - a feature would require global processing where the router should be regional/protective;
-- work drifts into hosting/DNS proof instead of the assigned product issue.
+- work drifts into DNS cutover, recreates the heavy engine inside Sites, or treats a hosting shell as a substitute for the assigned product issue.
 
 Partial, well-documented working implementation is preferable to more speculative planning.

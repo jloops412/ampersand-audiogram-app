@@ -8,9 +8,9 @@ This directory is the durable authority for rebuilding Ampersand from an audiogr
 
 ## Current directive
 
-**Build the actual Ampersand engine and Studio first.**
+**Build the actual Ampersand engine and Sites-hosted Studio together.**
 
-ChatGPT Sites and the owner's domain remain the intended later publishing destination, but hosting migration, DNS, and compatibility proof are not current workstreams or build gates. ADR-0007 supersedes ADR-0006 as the execution priority.
+OpenAI Sites now owns the web/Studio and lightweight control plane while the independent engine owns heavy audio work. Custom-domain/DNS cutover remains a later release task. ADR-0008 supersedes ADR-0007's hosting deferral without weakening the engine-first quality boundaries.
 
 ## Start here
 
@@ -38,10 +38,11 @@ ChatGPT Sites and the owner's domain remain the intended later publishing destin
 - [ADR-0005: Provisional technology and algorithm direction](./decisions/ADR-0005-TECHNOLOGY-DIRECTION-PROVISIONAL.md)
 - [ADR-0006: Historical hosting-boundary note](./decisions/ADR-0006-CHATGPT-SITES-WEB-CONTROL-PLANE.md)
 - [ADR-0007: Build the product first; defer hosting migration work](./decisions/ADR-0007-BUILD-FIRST-HOSTING-DEFERRED.md)
+- [ADR-0008: Establish Sites now without collapsing the engine boundary](./decisions/ADR-0008-SITES-CONTROL-PLANE-NOW.md)
 
 ## Governing rules
 
-1. **Working product over additional hosting proof.** Agents implement the engine, Studio, reports, and outputs before release-host migration work.
+1. **One product, two runtime responsibilities.** Sites implements the Studio/control plane now; external workers implement high-quality media processing. Neither is a substitute for the other.
 2. **Auphonic research becomes independent architecture.** Public findings inform capability and structure; Auphonic services/outputs/derived learnings are not used to benchmark, tune, evaluate, or design Ampersand without written permission.
 3. **Ampersand owns the intelligence layer.** Semantic Map, Router, Adaptive Leveler, recipes, quality policy, and Studio explanations remain Ampersand-controlled.
 4. **Human listening is the final quality gate.** Objective metrics are diagnostic evidence, not automatic truth.
@@ -59,6 +60,8 @@ ChatGPT Sites and the owner's domain remain the intended later publishing destin
 ### Immediate build wave
 
 - #3 — V2 workspace/refoundation
+- #17 — Sites product/control-plane foundation
+- #18 — durable Sites/storage/external-worker boundary
 - #12 — dependency/model manifests
 - #21 — core contracts and local CLI
 - #22 — Semantic Audio Map V0
@@ -81,7 +84,7 @@ ChatGPT Sites and the owner's domain remain the intended later publishing destin
 - #13 — one-hour end-to-end proof
 - #27 — deterministic audiogram renderer
 
-Issues #16–#20 are closed because they over-prioritized hosting proof before product implementation.
+Issues #17, #18, and #20 were reopened by the owner on 2026-08-20. #16 remains unnecessary; #19 remains the later domain/legacy-host cutover task.
 
 ## Decision status legend
 
