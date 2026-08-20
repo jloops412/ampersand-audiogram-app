@@ -90,6 +90,32 @@
       "title": "External Api Cost Usd",
       "type": "number"
     },
+    "gain_envelope_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Gain Envelope Id"
+    },
+    "leveler_statistics_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Leveler Statistics Id"
+    },
     "loudness_after": {
       "$ref": "#/$defs/LoudnessMeasurement"
     },

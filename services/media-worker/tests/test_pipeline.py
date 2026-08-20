@@ -5,6 +5,10 @@ from pathlib import Path
 
 import pytest
 from ampersand_contracts import (
+    AdaptiveLevelerSettings,
+    GainEnvelope,
+    JobStep,
+    LevelerStatistics,
     OutputManifest,
     ProcessingReport,
     ProviderNativeArtifactManifest,
@@ -48,10 +52,16 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     output = read_manifest(first.output_directory / "output-manifest.json", OutputManifest)
     report = read_manifest(first.output_directory / "processing-report.json", ProcessingReport)
     semantic_map = read_semantic_map(first.output_directory / "semantic-map-v0.json")
+    leveler_settings = read_manifest(first.output_directory / "leveler-settings.json", AdaptiveLevelerSettings)
+    gain_envelope = read_manifest(first.output_directory / "gain-envelope.json", GainEnvelope)
+    leveler_statistics = read_manifest(first.output_directory / "leveler-statistics.json", LevelerStatistics)
+    leveler_step = read_manifest(first.output_directory / "steps/adaptive-leveler-shadow.json", JobStep)
     assert output.validation_status == "valid"
     assert abs(output.loudness_after.integrated_lufs - output.target_integrated_lufs) <= 0.35
     assert output.loudness_after.true_peak_dbtp <= output.max_true_peak_dbtp + 0.20
     assert report.external_api_cost_usd == 0
+    assert report.gain_envelope_id == gain_envelope.gain_envelope_id
+    assert report.leveler_statistics_id == leveler_statistics.leveler_statistics_id
     assert "no network" in report.privacy_summary.lower()
     assert {artifact.kind.value for artifact in output.artifacts} == {"master_wav", "master_mp3"}
     assert semantic_map.schema_version == "1.1.0"
@@ -61,6 +71,20 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
         observation.kind.value for observation in semantic_map.observations
     }
     assert semantic_map.provider_native_artifact_ids
+    assert leveler_settings.activation_mode == "shadow"
+    assert leveler_statistics.activation_mode == "shadow"
+    assert leveler_statistics.settings_sha256 == report.artifact_sha256["leveler_settings"]
+    assert leveler_statistics.eligible_region_count > 0
+    assert leveler_statistics.changed_region_count > 0
+    assert leveler_statistics.maximum_gain_slope_db_per_second <= leveler_settings.max_gain_slope_db_per_second
+    assert (
+        leveler_statistics.maximum_gain_acceleration_db_per_second2
+        <= leveler_settings.max_gain_acceleration_db_per_second2
+    )
+    assert leveler_step.step_key == "adaptive-leveler-shadow"
+    assert leveler_step.metrics["applied_to_audio"] is False
+    assert (first.output_directory / "loudness-before.json").is_file()
+    assert (first.output_directory / "loudness-after.json").is_file()
     assert {provenance.provider_id for provenance in semantic_map.provenance_sources} == {
         "provider:ampersand-energy-vad",
         "provider:ffmpeg-ebur128",
@@ -103,7 +127,8 @@ def test_report_makes_baseline_limitations_explicit(tmp_path: Path, synthetic_so
     result = process_source(synthetic_source, tmp_path / "reported")
     payload = json.loads((result.output_directory / "processing-report.json").read_text(encoding="utf-8"))
     warning = " ".join(payload["warnings"]).lower()
-    assert "not the adaptive leveler" in warning
+    assert "shadow-only" in warning
+    assert "human listening" in warning
     assert "denoise" in warning
 
 

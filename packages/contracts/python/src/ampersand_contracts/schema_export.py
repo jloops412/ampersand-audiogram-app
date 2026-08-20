@@ -6,12 +6,14 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from .models import (
+    AdaptiveLevelerSettings,
     AnalysisManifest,
     AssetManifest,
     DependencyManifest,
     EvidenceProvenance,
     GainEnvelope,
     JobStep,
+    LevelerStatistics,
     MediaProbe,
     ModelManifest,
     OutputManifest,
@@ -26,6 +28,8 @@ from .models import (
     SemanticMap,
     SemanticObservation,
     SemanticRegion,
+    SignificantGainCorrection,
+    SpeakerLevelStatistics,
     WaveformPeaks,
 )
 
@@ -37,6 +41,10 @@ EXPORTED_MODELS: tuple[type[BaseModel], ...] = (
     ProductionRun,
     JobStep,
     RecipeVersion,
+    AdaptiveLevelerSettings,
+    SpeakerLevelStatistics,
+    SignificantGainCorrection,
+    LevelerStatistics,
     EvidenceProvenance,
     SemanticObservation,
     SemanticConflict,

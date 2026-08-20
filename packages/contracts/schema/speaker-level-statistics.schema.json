@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "eligible_duration_us": {
+      "minimum": 0,
+      "title": "Eligible Duration Us",
+      "type": "integer"
+    },
+    "observation_count": {
+      "exclusiveMinimum": 0,
+      "title": "Observation Count",
+      "type": "integer"
+    },
+    "relative_offset_db": {
+      "title": "Relative Offset Db",
+      "type": "number"
+    },
+    "robust_speech_level_lufs": {
+      "title": "Robust Speech Level Lufs",
+      "type": "number"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "speaker_label": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Speaker Label",
+      "type": "string"
+    },
+    "used_global_fallback": {
+      "title": "Used Global Fallback",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "speaker_label",
+    "observation_count",
+    "eligible_duration_us",
+    "robust_speech_level_lufs",
+    "relative_offset_db",
+    "used_global_fallback"
+  ],
+  "title": "SpeakerLevelStatistics",
+  "type": "object"
+}

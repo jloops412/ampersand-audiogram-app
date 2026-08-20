@@ -16,7 +16,7 @@ members = [
 
 [[package]]
 name = "ampersand-contracts"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "packages/contracts/python" }
 dependencies = [
     { name = "pydantic" },
@@ -27,7 +27,7 @@ requires-dist = [{ name = "pydantic", specifier = ">=2.11,<3" }]
 
 [[package]]
 name = "ampersand-media-worker"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "services/media-worker" }
 dependencies = [
     { name = "ampersand-contracts" },

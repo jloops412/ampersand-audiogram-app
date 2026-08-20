@@ -1,0 +1,168 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activation_mode": {
+      "default": "shadow",
+      "enum": [
+        "shadow",
+        "active"
+      ],
+      "title": "Activation Mode",
+      "type": "string"
+    },
+    "algorithm_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "boundary_taper_ms": {
+      "default": 300,
+      "maximum": 5000,
+      "minimum": 0,
+      "title": "Boundary Taper Ms",
+      "type": "integer"
+    },
+    "comfort_band_lu": {
+      "default": 4.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 12.0,
+      "title": "Comfort Band Lu",
+      "type": "number"
+    },
+    "max_boost_db": {
+      "default": 6.0,
+      "maximum": 12.0,
+      "minimum": 0.0,
+      "title": "Max Boost Db",
+      "type": "number"
+    },
+    "max_clipping_probability": {
+      "default": 0.2,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Max Clipping Probability",
+      "type": "number"
+    },
+    "max_cut_db": {
+      "default": 9.0,
+      "maximum": 18.0,
+      "minimum": 0.0,
+      "title": "Max Cut Db",
+      "type": "number"
+    },
+    "max_gain_acceleration_db_per_second2": {
+      "default": 12.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 96.0,
+      "title": "Max Gain Acceleration Db Per Second2",
+      "type": "number"
+    },
+    "max_gain_slope_db_per_second": {
+      "default": 3.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 24.0,
+      "title": "Max Gain Slope Db Per Second",
+      "type": "number"
+    },
+    "max_overlap_probability": {
+      "default": 0.35,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Max Overlap Probability",
+      "type": "number"
+    },
+    "max_silence_probability": {
+      "default": 0.4,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Max Silence Probability",
+      "type": "number"
+    },
+    "max_speaker_offset_db": {
+      "default": 6.0,
+      "maximum": 12.0,
+      "minimum": 0.0,
+      "title": "Max Speaker Offset Db",
+      "type": "number"
+    },
+    "min_region_confidence": {
+      "default": 0.6,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Min Region Confidence",
+      "type": "number"
+    },
+    "min_speech_probability": {
+      "default": 0.62,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Min Speech Probability",
+      "type": "number"
+    },
+    "minimum_speaker_duration_us": {
+      "default": 1000000,
+      "minimum": 0,
+      "title": "Minimum Speaker Duration Us",
+      "type": "integer"
+    },
+    "pre_master_peak_ceiling_dbfs": {
+      "default": -2.0,
+      "maximum": 0.0,
+      "minimum": -18.0,
+      "title": "Pre Master Peak Ceiling Dbfs",
+      "type": "number"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "settings_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Settings Id",
+      "type": "string"
+    },
+    "short_term_loudness_weight": {
+      "default": 0.35,
+      "maximum": 0.75,
+      "minimum": 0.0,
+      "title": "Short Term Loudness Weight",
+      "type": "number"
+    },
+    "significant_correction_db": {
+      "default": 2.0,
+      "exclusiveMinimum": 0.0,
+      "maximum": 12.0,
+      "title": "Significant Correction Db",
+      "type": "number"
+    },
+    "smoothing_time_ms": {
+      "default": 500,
+      "maximum": 5000,
+      "minimum": 50,
+      "title": "Smoothing Time Ms",
+      "type": "integer"
+    },
+    "target_speech_max_lufs": {
+      "default": -18.0,
+      "maximum": -12.0,
+      "minimum": -45.0,
+      "title": "Target Speech Max Lufs",
+      "type": "number"
+    },
+    "target_speech_min_lufs": {
+      "default": -30.0,
+      "maximum": -12.0,
+      "minimum": -45.0,
+      "title": "Target Speech Min Lufs",
+      "type": "number"
+    }
+  },
+  "required": [
+    "settings_id",
+    "algorithm_version"
+  ],
+  "title": "AdaptiveLevelerSettings",
+  "type": "object"
+}

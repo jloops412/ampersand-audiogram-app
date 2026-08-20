@@ -485,6 +485,115 @@ class GainEnvelope(ContractModel):
         return self
 
 
+class AdaptiveLevelerSettings(ContractModel):
+    settings_id: Identifier
+    algorithm_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    activation_mode: Literal["shadow", "active"] = "shadow"
+    comfort_band_lu: float = Field(default=4.0, gt=0.0, le=12.0)
+    target_speech_min_lufs: float = Field(default=-30.0, ge=-45.0, le=-12.0)
+    target_speech_max_lufs: float = Field(default=-18.0, ge=-45.0, le=-12.0)
+    max_boost_db: float = Field(default=6.0, ge=0.0, le=12.0)
+    max_cut_db: float = Field(default=9.0, ge=0.0, le=18.0)
+    max_speaker_offset_db: float = Field(default=6.0, ge=0.0, le=12.0)
+    max_gain_slope_db_per_second: float = Field(default=3.0, gt=0.0, le=24.0)
+    max_gain_acceleration_db_per_second2: float = Field(default=12.0, gt=0.0, le=96.0)
+    smoothing_time_ms: int = Field(default=500, ge=50, le=5_000)
+    boundary_taper_ms: int = Field(default=300, ge=0, le=5_000)
+    short_term_loudness_weight: float = Field(default=0.35, ge=0.0, le=0.75)
+    min_speech_probability: Probability = 0.62
+    max_silence_probability: Probability = 0.40
+    min_region_confidence: Probability = 0.60
+    max_overlap_probability: Probability = 0.35
+    max_clipping_probability: Probability = 0.20
+    pre_master_peak_ceiling_dbfs: float = Field(default=-2.0, ge=-18.0, le=0.0)
+    significant_correction_db: float = Field(default=2.0, gt=0.0, le=12.0)
+    minimum_speaker_duration_us: Microseconds = 1_000_000
+
+    @model_validator(mode="after")
+    def ordered_target_range(self) -> Self:
+        if self.target_speech_min_lufs > self.target_speech_max_lufs:
+            raise ValueError("target_speech_min_lufs cannot exceed target_speech_max_lufs")
+        return self
+
+
+class SpeakerLevelStatistics(ContractModel):
+    speaker_label: str = Field(min_length=1, max_length=128)
+    observation_count: int = Field(gt=0)
+    eligible_duration_us: Microseconds
+    robust_speech_level_lufs: float
+    relative_offset_db: float
+    used_global_fallback: bool
+
+
+class SignificantGainCorrection(ContractModel):
+    correction_id: Identifier
+    start_us: Microseconds
+    end_us: Microseconds
+    peak_gain_db: float = Field(ge=-60.0, le=24.0)
+    reason: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def half_open_interval(self) -> Self:
+        if self.end_us <= self.start_us:
+            raise ValueError("gain corrections use non-empty half-open [start_us, end_us) intervals")
+        return self
+
+
+class LevelerStatistics(ContractModel):
+    leveler_statistics_id: Identifier
+    run_id: Identifier
+    semantic_map_id: Identifier
+    settings_id: Identifier
+    settings_sha256: Sha256
+    algorithm_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    activation_mode: Literal["shadow", "active"]
+    target_speech_level_lufs: float | None
+    comfort_band_low_lufs: float | None
+    comfort_band_high_lufs: float | None
+    total_duration_us: Microseconds
+    eligible_duration_us: Microseconds
+    changed_duration_us: Microseconds
+    eligible_region_count: int = Field(ge=0)
+    protected_region_count: int = Field(ge=0)
+    changed_region_count: int = Field(ge=0)
+    gain_min_db: float = Field(ge=-60.0, le=24.0)
+    gain_mean_db: float = Field(ge=-60.0, le=24.0)
+    gain_max_db: float = Field(ge=-60.0, le=24.0)
+    maximum_gain_slope_db_per_second: float = Field(ge=0.0)
+    maximum_gain_acceleration_db_per_second2: float = Field(ge=0.0)
+    peak_limited_region_count: int = Field(ge=0)
+    speaker_statistics: tuple[SpeakerLevelStatistics, ...] = ()
+    significant_corrections: tuple[SignificantGainCorrection, ...] = ()
+    reasoning: tuple[str, ...]
+    warnings: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def valid_statistics(self) -> Self:
+        if self.total_duration_us <= 0:
+            raise ValueError("total_duration_us must be positive")
+        if self.eligible_duration_us > self.total_duration_us:
+            raise ValueError("eligible duration cannot exceed total duration")
+        if self.changed_duration_us > self.eligible_duration_us:
+            raise ValueError("changed duration cannot exceed eligible duration")
+        if not self.gain_min_db <= self.gain_mean_db <= self.gain_max_db:
+            raise ValueError("gain statistics must satisfy min <= mean <= max")
+        comfort_values = (
+            self.target_speech_level_lufs,
+            self.comfort_band_low_lufs,
+            self.comfort_band_high_lufs,
+        )
+        if any(value is None for value in comfort_values) and not all(value is None for value in comfort_values):
+            raise ValueError("target and comfort-band values must be present or absent together")
+        if (
+            self.target_speech_level_lufs is not None
+            and self.comfort_band_low_lufs is not None
+            and self.comfort_band_high_lufs is not None
+            and not self.comfort_band_low_lufs <= self.target_speech_level_lufs <= self.comfort_band_high_lufs
+        ):
+            raise ValueError("target speech level must sit inside the comfort band")
+        return self
+
+
 class LoudnessMeasurement(ContractModel):
     integrated_lufs: float
     true_peak_dbtp: float
@@ -570,6 +679,8 @@ class ProcessingReport(ContractModel):
     status: RunStatus
     loudness_before: LoudnessMeasurement
     loudness_after: LoudnessMeasurement
+    gain_envelope_id: Identifier | None = None
+    leveler_statistics_id: Identifier | None = None
     step_ids: tuple[Identifier, ...]
     decisions: tuple[str, ...]
     artifact_sha256: dict[str, Sha256]
