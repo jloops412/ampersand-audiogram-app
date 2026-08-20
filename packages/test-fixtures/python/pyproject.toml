@@ -1,0 +1,16 @@
+[project]
+name = "ampersand-test-fixtures"
+version = "0.1.0"
+description = "Rights-clear synthetic fixtures for Ampersand engine tests"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+ampersand-generate-fixture = "ampersand_test_fixtures.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ampersand_test_fixtures"]

@@ -1,0 +1,107 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "bit_rate_bps": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Bit Rate Bps"
+    },
+    "channel_layout": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Channel Layout"
+    },
+    "channels": {
+      "exclusiveMinimum": 0,
+      "maximum": 64,
+      "title": "Channels",
+      "type": "integer"
+    },
+    "codec_name": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Codec Name",
+      "type": "string"
+    },
+    "duration_us": {
+      "minimum": 0,
+      "title": "Duration Us",
+      "type": "integer"
+    },
+    "ffprobe_version": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Ffprobe Version",
+      "type": "string"
+    },
+    "format_name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Format Name",
+      "type": "string"
+    },
+    "probe_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Probe Id",
+      "type": "string"
+    },
+    "sample_format": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sample Format"
+    },
+    "sample_rate_hz": {
+      "exclusiveMinimum": 0,
+      "maximum": 768000,
+      "title": "Sample Rate Hz",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_asset_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Source Asset Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "probe_id",
+    "source_asset_id",
+    "format_name",
+    "codec_name",
+    "duration_us",
+    "sample_rate_hz",
+    "channels",
+    "ffprobe_version"
+  ],
+  "title": "MediaProbe",
+  "type": "object"
+}

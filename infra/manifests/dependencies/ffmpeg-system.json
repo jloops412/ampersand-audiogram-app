@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "dependency_manifest_id": "dependency:ffmpeg-system",
+  "dependency_name": "FFmpeg system development baseline",
+  "dependency_version": "6.1.1-3ubuntu5",
+  "source_url": "https://ffmpeg.org/releases/ffmpeg-6.1.1.tar.xz",
+  "artifact_sha256": null,
+  "code_license": "GPL-2.0-or-later for the observed Ubuntu build configuration",
+  "admission_state": "lab_candidate",
+  "scope": "system",
+  "transitive_native_review": "The local Ubuntu build includes optional GPL/native codecs. A controlled production build, source/archive hashes, notices, distribution review, and SBOM remain issue #12 work. Every run records the actual ffmpeg/ffprobe version strings.",
+  "commercial_hosted_use_reviewed": false,
+  "approval_reference": "issue #21 local subprocess baseline only"
+}

@@ -1,12 +1,17 @@
 {
-  "name": "audiogram-waveform-generator",
+  "name": "ampersand-legacy-audiogram",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "legacy:dev": "vite",
+    "legacy:build": "tsc && vite build",
+    "v2:sync": "uv sync --all-packages --dev",
+    "v2:check": "uv run python scripts/check_v2_boundaries.py && uv run ruff check packages services scripts && uv run ruff format --check packages services scripts && uv run mypy && uv run pytest",
+    "v2:process": "uv run --package ampersand-media-worker ampersand-engine process"
   },
   "dependencies": {
     "react": "^18.2.0",

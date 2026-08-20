@@ -1,0 +1,110 @@
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections.abc import Sequence
+from pathlib import Path
+
+from ampersand_contracts import canonical_json_bytes
+from ampersand_contracts.schema_export import EXPORTED_MODELS, export_json_schemas
+from pydantic import ValidationError
+
+from .errors import EngineError
+from .ffmpeg import FFmpegTools, probe_media
+from .hashing import sha256_file, stable_id
+from .pipeline import process_source
+from .recipe_loader import BUILT_IN_RECIPES
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = _parser()
+    args = parser.parse_args(argv)
+    try:
+        if args.command == "process":
+            result = process_source(
+                args.source,
+                args.output,
+                recipe_slug=args.recipe,
+                title=args.title,
+                progress=lambda message: print(f"ampersand: {message}", file=sys.stderr),
+            )
+            print(
+                json.dumps(
+                    {
+                        "output_directory": str(result.output_directory),
+                        "production_id": result.production_id,
+                        "run_id": result.run_id,
+                        "source_sha256": result.source_sha256,
+                        "wav_sha256": result.wav_sha256,
+                        "mp3_sha256": result.mp3_sha256,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.command == "probe":
+            source = args.source.expanduser().resolve(strict=True)
+            source_sha = sha256_file(source)
+            source_asset_id = stable_id("asset", source_sha)
+            probe = probe_media(
+                source,
+                source_asset_id=source_asset_id,
+                probe_id=stable_id("probe", source_sha),
+                tools=FFmpegTools.discover(),
+            )
+            sys.stdout.buffer.write(canonical_json_bytes(probe) + b"\n")
+            return 0
+        if args.command == "schemas":
+            written = export_json_schemas(args.output)
+            print(json.dumps({"count": len(written), "output": str(args.output)}, sort_keys=True))
+            return 0
+        if args.command == "validate-manifest":
+            model_types = {model_type.__name__: model_type for model_type in EXPORTED_MODELS}
+            model_type = model_types[args.contract]
+            model_type.model_validate_json(args.manifest.read_bytes())
+            print(json.dumps({"contract": args.contract, "status": "valid"}, sort_keys=True))
+            return 0
+        if args.command == "list-recipes":
+            print("\n".join(sorted(BUILT_IN_RECIPES)))
+            return 0
+    except (EngineError, FileNotFoundError, OSError, ValidationError, ValueError) as error:
+        print(f"ampersand: error: {error}", file=sys.stderr)
+        return 2
+    parser.error("a command is required")
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="ampersand-engine",
+        description="Independent, local-only Ampersand V2 media-engine baseline.",
+    )
+    subcommands = parser.add_subparsers(dest="command", required=True)
+
+    process = subcommands.add_parser("process", help="Run the deterministic baseline graph for one local source.")
+    process.add_argument("source", type=Path, help="Local rights-cleared audio source.")
+    process.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="New directory for derived artifacts and manifests.",
+    )
+    process.add_argument("--recipe", default="smart-spoken-word-v0", choices=sorted(BUILT_IN_RECIPES))
+    process.add_argument("--title", default=None, help="Optional production title (does not affect source identity).")
+
+    probe = subcommands.add_parser("probe", help="Validate and print normalized media metadata as canonical JSON.")
+    probe.add_argument("source", type=Path)
+
+    schemas = subcommands.add_parser("schemas", help="Export provider-neutral JSON Schemas for other runtimes.")
+    schemas.add_argument("--output", type=Path, required=True)
+
+    validate = subcommands.add_parser("validate-manifest", help="Validate one JSON manifest against a contract.")
+    validate.add_argument("contract", choices=sorted(model_type.__name__ for model_type in EXPORTED_MODELS))
+    validate.add_argument("manifest", type=Path)
+
+    subcommands.add_parser("list-recipes", help="List immutable built-in recipe slugs.")
+    return parser
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

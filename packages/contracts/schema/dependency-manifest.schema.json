@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "ManifestAdmissionState": {
+      "enum": [
+        "unreviewed",
+        "lab_candidate",
+        "production_candidate",
+        "approved",
+        "deprecated",
+        "revoked"
+      ],
+      "title": "ManifestAdmissionState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "admission_state": {
+      "$ref": "#/$defs/ManifestAdmissionState"
+    },
+    "approval_reference": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approval Reference"
+    },
+    "artifact_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Artifact Sha256"
+    },
+    "code_license": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Code License",
+      "type": "string"
+    },
+    "commercial_hosted_use_reviewed": {
+      "default": false,
+      "title": "Commercial Hosted Use Reviewed",
+      "type": "boolean"
+    },
+    "dependency_manifest_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Dependency Manifest Id",
+      "type": "string"
+    },
+    "dependency_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Dependency Name",
+      "type": "string"
+    },
+    "dependency_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Dependency Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "runtime",
+        "development",
+        "system"
+      ],
+      "title": "Scope",
+      "type": "string"
+    },
+    "source_url": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Source Url",
+      "type": "string"
+    },
+    "transitive_native_review": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Transitive Native Review",
+      "type": "string"
+    }
+  },
+  "required": [
+    "dependency_manifest_id",
+    "dependency_name",
+    "dependency_version",
+    "source_url",
+    "code_license",
+    "admission_state",
+    "scope",
+    "transitive_native_review"
+  ],
+  "title": "DependencyManifest",
+  "type": "object"
+}

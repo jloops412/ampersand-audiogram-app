@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "recipe_version_id": "recipe:smart-spoken-word:0.1.0",
+  "slug": "smart-spoken-word-v0",
+  "recipe_version": "0.1.0",
+  "display_name": "Smart Spoken Word Baseline",
+  "description": "Deterministic no-neural baseline: preserve source, inspect, build peaks and a protected semantic map, then apply final loudness mastering.",
+  "analysis_steps": [
+    "validate-probe",
+    "canonicalize-if-needed",
+    "waveform-peaks",
+    "loudness-before",
+    "semantic-map-baseline"
+  ],
+  "processing_steps": [
+    "regional-protect-baseline",
+    "unity-gain-envelope",
+    "two-pass-loudness-master",
+    "output-validation"
+  ],
+  "target_integrated_lufs": -16.0,
+  "max_true_peak_dbtp": -1.0,
+  "target_loudness_range_lu": 11.0,
+  "output_formats": ["wav", "mp3"],
+  "dependency_manifest_ids": [
+    "dependency:ffmpeg-system",
+    "dependency:numpy",
+    "dependency:pydantic"
+  ],
+  "model_manifest_ids": [],
+  "allows_neural_processing": false,
+  "preserves_source": true
+}

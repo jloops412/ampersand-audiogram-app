@@ -11,6 +11,18 @@ node_modules
 dist
 dist-ssr
 *.local
+.venv
+.bootstrap
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+
+# Generated local media and production artifacts
+*.wav
+*.mp3
+ampersand-production*/
 
 # Editor directories and files
 .vscode/*

@@ -1,0 +1,127 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "allows_neural_processing": {
+      "default": false,
+      "title": "Allows Neural Processing",
+      "type": "boolean"
+    },
+    "analysis_steps": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Analysis Steps",
+      "type": "array"
+    },
+    "dependency_manifest_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Dependency Manifest Ids",
+      "type": "array"
+    },
+    "description": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "max_true_peak_dbtp": {
+      "maximum": 0.0,
+      "minimum": -12.0,
+      "title": "Max True Peak Dbtp",
+      "type": "number"
+    },
+    "model_manifest_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Model Manifest Ids",
+      "type": "array"
+    },
+    "output_formats": {
+      "items": {
+        "enum": [
+          "wav",
+          "mp3"
+        ],
+        "type": "string"
+      },
+      "title": "Output Formats",
+      "type": "array"
+    },
+    "preserves_source": {
+      "const": true,
+      "default": true,
+      "title": "Preserves Source",
+      "type": "boolean"
+    },
+    "processing_steps": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Processing Steps",
+      "type": "array"
+    },
+    "recipe_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Recipe Version",
+      "type": "string"
+    },
+    "recipe_version_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Recipe Version Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "slug": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Slug",
+      "type": "string"
+    },
+    "target_integrated_lufs": {
+      "maximum": -5.0,
+      "minimum": -70.0,
+      "title": "Target Integrated Lufs",
+      "type": "number"
+    },
+    "target_loudness_range_lu": {
+      "maximum": 30.0,
+      "minimum": 1.0,
+      "title": "Target Loudness Range Lu",
+      "type": "number"
+    }
+  },
+  "required": [
+    "recipe_version_id",
+    "slug",
+    "recipe_version",
+    "display_name",
+    "description",
+    "analysis_steps",
+    "processing_steps",
+    "target_integrated_lufs",
+    "max_true_peak_dbtp",
+    "target_loudness_range_lu",
+    "output_formats"
+  ],
+  "title": "RecipeVersion",
+  "type": "object"
+}
