@@ -1,13 +1,350 @@
 {
   "$defs": {
-    "SemanticRegion": {
+    "EvidenceProvenance": {
       "additionalProperties": false,
       "properties": {
+        "adapter_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Adapter Id",
+          "type": "string"
+        },
+        "adapter_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Adapter Version",
+          "type": "string"
+        },
+        "deterministic": {
+          "title": "Deterministic",
+          "type": "boolean"
+        },
+        "model_manifest_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Manifest Id"
+        },
+        "native_artifact_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Artifact Id"
+        },
+        "provenance_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Provenance Id",
+          "type": "string"
+        },
+        "provider_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "provider_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.1.0",
+          "default": "1.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provenance_id",
+        "provider_id",
+        "provider_version",
+        "adapter_id",
+        "adapter_version",
+        "deterministic"
+      ],
+      "title": "EvidenceProvenance",
+      "type": "object"
+    },
+    "ObservationKind": {
+      "enum": [
+        "speech_probability",
+        "silence_probability",
+        "music_probability",
+        "ambience_probability",
+        "noise_probability",
+        "overlap_probability",
+        "active_speaker",
+        "transcript_word",
+        "transcript_segment",
+        "momentary_loudness",
+        "short_term_loudness",
+        "sample_peak",
+        "true_peak",
+        "clipping_probability",
+        "rumble_probability",
+        "hum_probability",
+        "reverb_probability",
+        "bandwidth_limit_probability",
+        "acoustic_event"
+      ],
+      "title": "ObservationKind",
+      "type": "string"
+    },
+    "ObservationUnit": {
+      "enum": [
+        "probability",
+        "LUFS",
+        "dBTP",
+        "dBFS",
+        "label",
+        "text"
+      ],
+      "title": "ObservationUnit",
+      "type": "string"
+    },
+    "ProcessingEligibility": {
+      "enum": [
+        "eligible",
+        "protect",
+        "no_op"
+      ],
+      "title": "ProcessingEligibility",
+      "type": "string"
+    },
+    "SemanticConflict": {
+      "additionalProperties": false,
+      "properties": {
+        "conflict_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Conflict Id",
+          "type": "string"
+        },
+        "end_us": {
+          "minimum": 0,
+          "title": "End Us",
+          "type": "integer"
+        },
+        "kinds": {
+          "items": {
+            "$ref": "#/$defs/ObservationKind"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "observation_ids": {
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Observation Ids",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.1.0",
+          "default": "1.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "severity": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Severity",
+          "type": "number"
+        },
+        "start_us": {
+          "minimum": 0,
+          "title": "Start Us",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "conflict_id",
+        "start_us",
+        "end_us",
+        "kinds",
+        "observation_ids",
+        "severity",
+        "reason"
+      ],
+      "title": "SemanticConflict",
+      "type": "object"
+    },
+    "SemanticObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Attributes",
+          "type": "object"
+        },
         "confidence": {
           "maximum": 1.0,
           "minimum": 0.0,
           "title": "Confidence",
           "type": "number"
+        },
+        "end_us": {
+          "minimum": 0,
+          "title": "End Us",
+          "type": "integer"
+        },
+        "kind": {
+          "$ref": "#/$defs/ObservationKind"
+        },
+        "observation_id": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Observation Id",
+          "type": "string"
+        },
+        "provenance_ref": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Provenance Ref",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.1.0",
+          "default": "1.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "start_us": {
+          "minimum": 0,
+          "title": "Start Us",
+          "type": "integer"
+        },
+        "unit": {
+          "$ref": "#/$defs/ObservationUnit"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "observation_id",
+        "kind",
+        "start_us",
+        "end_us",
+        "confidence",
+        "value",
+        "unit",
+        "provenance_ref"
+      ],
+      "title": "SemanticObservation",
+      "type": "object"
+    },
+    "SemanticRegion": {
+      "additionalProperties": false,
+      "properties": {
+        "active_speaker": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Active Speaker"
+        },
+        "active_speaker_confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Active Speaker Confidence"
+        },
+        "ambience_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ambience Probability"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "conflict_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Conflict Ids",
+          "type": "array"
         },
         "content_label": {
           "enum": [
@@ -41,6 +378,29 @@
           "default": null,
           "title": "Music Probability"
         },
+        "noise_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Noise Probability"
+        },
+        "observation_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+            "type": "string"
+          },
+          "title": "Observation Ids",
+          "type": "array"
+        },
         "observations": {
           "additionalProperties": {
             "anyOf": [
@@ -64,6 +424,24 @@
           "title": "Observations",
           "type": "object"
         },
+        "overlap_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Overlap Probability"
+        },
+        "processing_eligibility": {
+          "$ref": "#/$defs/ProcessingEligibility",
+          "default": "protect"
+        },
         "protected": {
           "default": true,
           "title": "Protected",
@@ -72,6 +450,7 @@
         "provider_refs": {
           "default": [],
           "items": {
+            "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
             "type": "string"
           },
           "title": "Provider Refs",
@@ -83,8 +462,8 @@
           "type": "string"
         },
         "schema_version": {
-          "const": "1.0.0",
-          "default": "1.0.0",
+          "const": "1.1.0",
+          "default": "1.1.0",
           "title": "Schema Version",
           "type": "string"
         },
@@ -135,10 +514,45 @@
   },
   "additionalProperties": false,
   "properties": {
+    "analysis_hop_us": {
+      "minimum": 0,
+      "title": "Analysis Hop Us",
+      "type": "integer"
+    },
+    "conflicts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SemanticConflict"
+      },
+      "title": "Conflicts",
+      "type": "array"
+    },
+    "coverage": {
+      "const": "full",
+      "default": "full",
+      "title": "Coverage",
+      "type": "string"
+    },
     "duration_us": {
       "minimum": 0,
       "title": "Duration Us",
       "type": "integer"
+    },
+    "observations": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SemanticObservation"
+      },
+      "title": "Observations",
+      "type": "array"
+    },
+    "provenance_sources": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EvidenceProvenance"
+      },
+      "title": "Provenance Sources",
+      "type": "array"
     },
     "provider_native_artifact_ids": {
       "default": [],
@@ -157,8 +571,8 @@
       "type": "array"
     },
     "schema_version": {
-      "const": "1.0.0",
-      "default": "1.0.0",
+      "const": "1.1.0",
+      "default": "1.1.0",
       "title": "Schema Version",
       "type": "string"
     },
@@ -167,10 +581,25 @@
       "title": "Semantic Map Id",
       "type": "string"
     },
+    "semantic_map_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Semantic Map Version",
+      "type": "string"
+    },
     "source_asset_id": {
       "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
       "title": "Source Asset Id",
       "type": "string"
+    },
+    "unavailable_adapters": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Unavailable Adapters",
+      "type": "array"
     },
     "warnings": {
       "default": [],
@@ -185,6 +614,7 @@
     "semantic_map_id",
     "source_asset_id",
     "duration_us",
+    "analysis_hop_us",
     "regions"
   ],
   "title": "SemanticMap",

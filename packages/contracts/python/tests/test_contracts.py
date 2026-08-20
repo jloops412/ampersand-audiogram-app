@@ -60,7 +60,8 @@ def test_every_required_contract_round_trips_with_a_version() -> None:
     for model in fixtures:
         restored = type(model).model_validate_json(canonical_json_bytes(model))
         assert restored == model
-        assert restored.schema_version == "1.0.0"
+        expected_version = "1.1.0" if isinstance(restored, (SemanticMap, SemanticRegion)) else "1.0.0"
+        assert restored.schema_version == expected_version
 
 
 def test_contracts_reject_provider_native_extra_fields() -> None:
@@ -191,6 +192,7 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         semantic_map_id="semantic-map:test",
         source_asset_id=source.asset_id,
         duration_us=1_000_000,
+        analysis_hop_us=1_000_000,
         regions=(region,),
     )
     plan = ProcessingPlan(

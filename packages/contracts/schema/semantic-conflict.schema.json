@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "ObservationKind": {
+      "enum": [
+        "speech_probability",
+        "silence_probability",
+        "music_probability",
+        "ambience_probability",
+        "noise_probability",
+        "overlap_probability",
+        "active_speaker",
+        "transcript_word",
+        "transcript_segment",
+        "momentary_loudness",
+        "short_term_loudness",
+        "sample_peak",
+        "true_peak",
+        "clipping_probability",
+        "rumble_probability",
+        "hum_probability",
+        "reverb_probability",
+        "bandwidth_limit_probability",
+        "acoustic_event"
+      ],
+      "title": "ObservationKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conflict_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Conflict Id",
+      "type": "string"
+    },
+    "end_us": {
+      "minimum": 0,
+      "title": "End Us",
+      "type": "integer"
+    },
+    "kinds": {
+      "items": {
+        "$ref": "#/$defs/ObservationKind"
+      },
+      "title": "Kinds",
+      "type": "array"
+    },
+    "observation_ids": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Observation Ids",
+      "type": "array"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.1.0",
+      "default": "1.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "severity": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Severity",
+      "type": "number"
+    },
+    "start_us": {
+      "minimum": 0,
+      "title": "Start Us",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "conflict_id",
+    "start_us",
+    "end_us",
+    "kinds",
+    "observation_ids",
+    "severity",
+    "reason"
+  ],
+  "title": "SemanticConflict",
+  "type": "object"
+}

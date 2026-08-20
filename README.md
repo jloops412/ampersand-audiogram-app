@@ -22,12 +22,16 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - canonical 48 kHz float working audio only when needed;
 - multiresolution waveform peaks;
 - standards-based loudness and true-peak measurement;
-- a conservative protected baseline Semantic Map and Processing Plan;
+- a versioned, full-coverage Semantic Audio Map with soft speech/silence probabilities;
+- deterministic 100 ms momentary/short-term loudness, sample-peak, and true-peak evidence;
+- an Ampersand-owned, zero-model-cost energy/spectral VAD baseline;
+- provider-normalization adapters, deduplicated provenance, raw audit artifacts, and explicit conflicts;
+- a local Semantic Map visual debug report and safe protect/no-op/eligible decisions;
 - deterministic two-pass WAV/MP3 loudness mastering;
 - output validation, provenance, step manifests, and an understandable report;
 - tests that reproduce manifests and media hashes across repeated runs.
 
-This is the deterministic engine foundation, not a claim that the Adaptive Leveler, neural cleanup, VAD, ASR, or audiogram renderer is finished.
+This is the content-aware deterministic engine foundation, not a claim that the Adaptive Leveler, neural cleanup, checkpoint-backed VAD, ASR, or audiogram renderer is finished.
 
 ## Run the independent engine
 
@@ -49,7 +53,10 @@ probe.json
 canonical-manifest.json       # only when canonicalization was needed
 analysis.json
 waveform-peaks.json
-semantic-map.json
+semantic-map-v0.json
+semantic-map-debug.html
+provider-native/*.json
+provider-native/*.manifest.json
 processing-plan.json
 gain-envelope.json
 recipe.json
@@ -72,7 +79,7 @@ uv run mypy
 uv run pytest
 ```
 
-See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md) for the reproducibility, privacy, cost, validation, and rollback contract.
+See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md) and [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md) for the reproducibility, privacy, cost, validation, fusion, and rollback contracts.
 
 ## Repository responsibilities
 

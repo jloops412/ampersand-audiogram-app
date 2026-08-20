@@ -29,6 +29,7 @@ OpenAI Sites now owns the web/Studio and lightweight control plane while the ind
 13. [Security, Privacy, and Data Governance](./SECURITY_PRIVACY_AND_DATA_GOVERNANCE.md)
 14. [Source Register](./research/SOURCE_REGISTER.md)
 15. [Local Engine CLI](./build/LOCAL_ENGINE_CLI.md)
+16. [Semantic Audio Map V0](./architecture/SEMANTIC_AUDIO_MAP_V0.md)
 
 ## Architecture decision records
 

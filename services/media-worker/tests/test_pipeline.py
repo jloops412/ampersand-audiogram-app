@@ -4,7 +4,13 @@ import json
 from pathlib import Path
 
 import pytest
-from ampersand_contracts import OutputManifest, ProcessingReport, read_manifest
+from ampersand_contracts import (
+    OutputManifest,
+    ProcessingReport,
+    ProviderNativeArtifactManifest,
+    read_manifest,
+    read_semantic_map,
+)
 from ampersand_engine.errors import EngineError, InvalidMedia
 from ampersand_engine.hashing import sha256_file
 from ampersand_engine.pipeline import process_source
@@ -35,15 +41,43 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     assert first_json.keys() == second_json.keys()
     for relative_path in first_json:
         assert first_json[relative_path] == second_json[relative_path], relative_path
+    assert (first.output_directory / "semantic-map-debug.html").read_bytes() == (
+        second.output_directory / "semantic-map-debug.html"
+    ).read_bytes()
 
     output = read_manifest(first.output_directory / "output-manifest.json", OutputManifest)
     report = read_manifest(first.output_directory / "processing-report.json", ProcessingReport)
+    semantic_map = read_semantic_map(first.output_directory / "semantic-map-v0.json")
     assert output.validation_status == "valid"
     assert abs(output.loudness_after.integrated_lufs - output.target_integrated_lufs) <= 0.35
     assert output.loudness_after.true_peak_dbtp <= output.max_true_peak_dbtp + 0.20
     assert report.external_api_cost_usd == 0
     assert "no network" in report.privacy_summary.lower()
     assert {artifact.kind.value for artifact in output.artifacts} == {"master_wav", "master_mp3"}
+    assert semantic_map.schema_version == "1.1.0"
+    assert semantic_map.regions[0].start_us == 0
+    assert semantic_map.regions[-1].end_us == semantic_map.duration_us
+    assert {"speech_probability", "silence_probability", "momentary_loudness", "true_peak"} <= {
+        observation.kind.value for observation in semantic_map.observations
+    }
+    assert semantic_map.provider_native_artifact_ids
+    assert {provenance.provider_id for provenance in semantic_map.provenance_sources} == {
+        "provider:ampersand-energy-vad",
+        "provider:ffmpeg-ebur128",
+    }
+    assert (first.output_directory / "provider-native/ffmpeg-ebur128.json").is_file()
+    assert (first.output_directory / "provider-native/ampersand-energy-vad-v0.json").is_file()
+    provider_payloads = "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted((first.output_directory / "provider-native").glob("*.json"))
+    )
+    assert str(synthetic_source) not in provider_payloads
+    assert "authorization" not in provider_payloads.lower()
+    for manifest_name in ("ffmpeg-ebur128.manifest.json", "ampersand-energy-vad-v0.manifest.json"):
+        provider_manifest = read_manifest(
+            first.output_directory / "provider-native" / manifest_name,
+            ProviderNativeArtifactManifest,
+        )
+        assert sha256_file(first.output_directory / provider_manifest.relative_path) == provider_manifest.sha256
 
 
 def test_pipeline_refuses_to_overwrite_existing_output(

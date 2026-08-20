@@ -1,0 +1,137 @@
+{
+  "$defs": {
+    "ObservationKind": {
+      "enum": [
+        "speech_probability",
+        "silence_probability",
+        "music_probability",
+        "ambience_probability",
+        "noise_probability",
+        "overlap_probability",
+        "active_speaker",
+        "transcript_word",
+        "transcript_segment",
+        "momentary_loudness",
+        "short_term_loudness",
+        "sample_peak",
+        "true_peak",
+        "clipping_probability",
+        "rumble_probability",
+        "hum_probability",
+        "reverb_probability",
+        "bandwidth_limit_probability",
+        "acoustic_event"
+      ],
+      "title": "ObservationKind",
+      "type": "string"
+    },
+    "ObservationUnit": {
+      "enum": [
+        "probability",
+        "LUFS",
+        "dBTP",
+        "dBFS",
+        "label",
+        "text"
+      ],
+      "title": "ObservationUnit",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attributes": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Attributes",
+      "type": "object"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "end_us": {
+      "minimum": 0,
+      "title": "End Us",
+      "type": "integer"
+    },
+    "kind": {
+      "$ref": "#/$defs/ObservationKind"
+    },
+    "observation_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "provenance_ref": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Provenance Ref",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.1.0",
+      "default": "1.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "start_us": {
+      "minimum": 0,
+      "title": "Start Us",
+      "type": "integer"
+    },
+    "unit": {
+      "$ref": "#/$defs/ObservationUnit"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Value"
+    }
+  },
+  "required": [
+    "observation_id",
+    "kind",
+    "start_us",
+    "end_us",
+    "confidence",
+    "value",
+    "unit",
+    "provenance_ref"
+  ],
+  "title": "SemanticObservation",
+  "type": "object"
+}

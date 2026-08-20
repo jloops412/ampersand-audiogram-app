@@ -1,6 +1,6 @@
 # Local Engine CLI
 
-**Status:** Issue #21 deterministic foundation
+**Status:** Issues #21 and #22 deterministic foundation + Semantic Audio Map V0
 **Runtime:** local CPU, FFmpeg/ffprobe, Python 3.12
 **External API cost:** $0
 
@@ -27,12 +27,16 @@ The output path must not exist. The engine refuses to overwrite it and publishes
 3. Canonicalize once to 48 kHz float PCM only when necessary.
 4. Measure program loudness and true peak.
 5. Stream decoded PCM into a custom multiresolution min/max peak pyramid.
-6. Emit a baseline Semantic Map whose unknown region is explicitly protected.
-7. Emit a Processing Plan and unity Gain Envelope.
-8. Run two-pass final loudness normalization.
-9. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
-10. Probe, measure, checksum, and validate outputs.
-11. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
+6. Measure 100 ms momentary/short-term loudness and frame true peak with FFmpeg `ebur128`.
+7. Run Ampersand's first-party, confidence-bounded energy/spectral VAD on a 16 kHz analysis stream.
+8. Preserve checksummed provider-native frames separately and normalize them through provider-neutral adapters.
+9. Fuse a full-coverage Semantic Map V0 with soft probabilities, provenance, optional-provider failures, and explicit conflicts.
+10. Emit a local debug HTML report while protecting uncertain or unsupported content.
+11. Emit a Processing Plan and unity Gain Envelope; regional processing stays protected until the Leveler/Router activate.
+12. Run two-pass final loudness normalization.
+13. Produce metadata-stripped 24-bit WAV and 192 kb/s MP3 masters.
+14. Probe, measure, checksum, and validate outputs.
+15. Emit Production, ProductionRun, JobStep, OutputManifest, and ProcessingReport records.
 
 ## Reproducibility envelope
 
@@ -69,7 +73,7 @@ These are technical gates, not a human audio-quality promotion. Listening eviden
 
 ## Current limitation
 
-This baseline does not yet implement VAD, ASR, diarization, defect detection, denoise, the Adaptive Leveler, speaker-aware EQ, or audiogram rendering. It protects unknown content and applies only standards-based final loudness mastering. Those limitations are repeated in the emitted processing report so the control plane cannot mistake this baseline for the finished engine.
+The local graph now implements Semantic Map V0 and a conservative first-party VAD. It does not yet implement checkpoint-backed VAD, ASR, diarization, reliable music classification, advanced defect detection, denoise, the Adaptive Leveler, speaker-aware EQ, the Processing Router, or audiogram rendering. The VAD cannot reliably separate music from speech, so unsupported/uncertain content remains protected and only standards-based final loudness mastering affects audio. Those limits are repeated in the emitted report.
 
 ## Dependency and license impact
 
@@ -78,8 +82,10 @@ This baseline does not yet implement VAD, ASR, diarization, defect detection, de
 - FFmpeg: system/native dependency whose exact build and distribution obligations require the admission process in issue #12;
 - pytest, Ruff, and mypy: development-only gates.
 
-No model or checkpoint is downloaded or admitted by this change.
+No model or checkpoint is downloaded or admitted. The VAD is first-party deterministic DSP using the already admitted NumPy execution path.
 
 ## Migration and rollback
 
-The V2 packages are additive and do not import the legacy runtime. Rollback is removal of the V2 workspace and CI workflow; the legacy history remains recoverable. Generated production directories can be deleted without touching their original source. Contract changes after `1.0.0` must introduce a new schema version and an explicit migration rather than silently altering stored manifests.
+The V2 packages are additive and do not import the legacy runtime. Semantic Map `1.0.0` placeholders upgrade explicitly through `read_semantic_map()`; unsupported versions fail closed. Rollback can disable the V0 analysis stage and keep the protected placeholder without touching source or master media. Generated production directories can be deleted without touching their original source.
+
+See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for contract, fusion, safety, storage, and provider-adapter details.
