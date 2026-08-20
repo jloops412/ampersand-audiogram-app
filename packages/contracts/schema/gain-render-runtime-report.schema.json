@@ -1,0 +1,76 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "audio_seconds": {
+      "exclusiveMinimum": 0.0,
+      "title": "Audio Seconds",
+      "type": "number"
+    },
+    "device_summary": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Device Summary",
+      "type": "string"
+    },
+    "diagnostic_only": {
+      "const": true,
+      "default": true,
+      "title": "Diagnostic Only",
+      "type": "boolean"
+    },
+    "external_api_cost_usd": {
+      "const": 0,
+      "default": 0,
+      "title": "External Api Cost Usd",
+      "type": "integer"
+    },
+    "gain_render_manifest_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Gain Render Manifest Id",
+      "type": "string"
+    },
+    "gain_render_runtime_report_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Gain Render Runtime Report Id",
+      "type": "string"
+    },
+    "peak_working_buffer_mb": {
+      "minimum": 0.0,
+      "title": "Peak Working Buffer Mb",
+      "type": "number"
+    },
+    "real_time_factor": {
+      "minimum": 0.0,
+      "title": "Real Time Factor",
+      "type": "number"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "wall_seconds": {
+      "exclusiveMinimum": 0.0,
+      "title": "Wall Seconds",
+      "type": "number"
+    },
+    "working_block_frames": {
+      "exclusiveMinimum": 0,
+      "title": "Working Block Frames",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "gain_render_runtime_report_id",
+    "gain_render_manifest_id",
+    "wall_seconds",
+    "audio_seconds",
+    "real_time_factor",
+    "working_block_frames",
+    "peak_working_buffer_mb",
+    "device_summary"
+  ],
+  "title": "GainRenderRuntimeReport",
+  "type": "object"
+}

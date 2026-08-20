@@ -1,6 +1,6 @@
 # Local Engine CLI
 
-**Status:** Issues #21/#22 foundation + Adaptive Leveler V0 shadow planning
+**Status:** Issues #21/#22 foundation + Adaptive Leveler V0 shadow planning and evaluation rendering
 **Runtime:** local CPU, FFmpeg/ffprobe, Python 3.12
 **External API cost:** $0
 
@@ -37,6 +37,19 @@ uv run ampersand-listening serve /tmp/listening-session
 
 See [Blinded Listening and Regression Harness V0](../research/BLINDED_LISTENING_HARNESS_V0.md). The harness accepts
 immutable candidate masters and never activates the shadow Leveler inside the production graph.
+
+Make one shadow envelope audible as a separately labeled evaluation artifact:
+
+```bash
+uv run --package ampersand-media-worker ampersand-engine render-leveler-candidate \
+  /absolute/path/to/exact-analysis-source.wav \
+  /tmp/ampersand-production/gain-envelope.json \
+  --output /tmp/ampersand-leveler-candidate
+```
+
+Use the pipeline's `artifacts/canonical.wav` as the exact analysis source when it exists. The command applies no final
+loudness stage and never changes `master.wav`; its `candidate.wav` must go through blinded loudness matching. See
+[Leveler Gain Renderer V0](../architecture/LEVELER_GAIN_RENDERER_V0.md).
 
 ## Deterministic graph
 
@@ -93,9 +106,15 @@ These are technical gates, not a human audio-quality promotion. Listening eviden
 
 ## Current limitation
 
-The local graph now implements Adaptive Leveler V0 **planning in shadow mode**. It proposes and explains a bounded gain envelope, but the pipeline deliberately does not render that envelope into the master. The bootstrap VAD cannot reliably separate music from speech, so active mode fails closed when music/protected-content evidence is unavailable. Only standards-based final loudness mastering currently affects audio.
+The local graph implements Adaptive Leveler V0 **planning in shadow mode**. A standalone evaluation command can render
+that envelope for blind testing, but the pipeline deliberately does not render it into the master. The bootstrap VAD
+cannot reliably separate music from speech, so active mode fails closed when music/protected-content evidence is
+unavailable. Only standards-based final loudness mastering currently affects production output.
 
-Checkpoint-backed VAD, ASR, diarization, reliable music classification, advanced defect detection, denoise, the active sample-accurate gain renderer, short-term compression, speaker-aware EQ, the Processing Router, and audiogram rendering remain open. Human listening and no-click render evidence are mandatory before active Leveler promotion.
+Checkpoint-backed VAD, ASR, diarization, reliable music classification, advanced defect detection, denoise, production
+activation of the sample-accurate gain renderer, short-term compression, speaker-aware EQ, the Processing Router, and
+audiogram rendering remain open. Human listening and no-click render evidence are mandatory before active Leveler
+promotion.
 
 ## Dependency and license impact
 
@@ -112,4 +131,5 @@ The V2 packages are additive and do not import the legacy runtime. Semantic Map 
 
 See [Semantic Audio Map V0](../architecture/SEMANTIC_AUDIO_MAP_V0.md) for evidence/fusion details,
 [Adaptive Leveler V0](../architecture/ADAPTIVE_LEVELER_V0.md) for the control law and promotion boundary, and
+[Leveler Gain Renderer V0](../architecture/LEVELER_GAIN_RENDERER_V0.md) plus
 [Blinded Listening and Regression Harness V0](../research/BLINDED_LISTENING_HARNESS_V0.md) for local evaluation.

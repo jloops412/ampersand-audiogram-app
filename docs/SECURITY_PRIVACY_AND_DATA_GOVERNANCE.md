@@ -100,6 +100,11 @@ The V0 listening harness adds these local-only controls:
 These controls make synthetic/local pilot work safer; they do not authorize restricted real recordings without the
 rights, access, encryption, retention, and deletion controls required elsewhere in this document.
 
+The evaluation-only Leveler renderer uses the same local boundary. It hashes the immutable source before/after,
+restricts FFmpeg decode protocols to local file/pipe, writes decoded float PCM only inside a temporary build directory,
+deletes that temporary before atomic publication, refuses overwrite, and sends nothing externally. Its candidate and
+runtime report inherit the source's privacy/retention class and remain outside Git.
+
 ## Identity and access control
 
 Requirements:

@@ -6,7 +6,7 @@
 
 **Algorithm version:** `0.1.0`
 
-**Contract package:** `0.5.0`
+**Contract package:** `0.6.0`
 
 **Runtime/cost:** local CPU, linear memory, $0 external API cost
 
@@ -73,6 +73,10 @@ processing-report.json
 
 Envelope identity derives from Semantic Map hash, complete Leveler settings hash, run ID, and algorithm version. Repeated runs with identical inputs serialize byte-identical artifacts.
 
+[Leveler Gain Renderer V0](./LEVELER_GAIN_RENDERER_V0.md) can now apply that envelope sample by sample to a separate
+evaluation-only PCM24 candidate. It preserves channel relationships, refuses clipping/duration drift/step-like gain,
+and leaves the production master path unchanged.
+
 For `n` Semantic Map regions and a small number of speakers, V0 uses O(n) timeline memory and bounded deterministic projection passes. The automated fixture includes a one-hour/3,600-region timeline so long-form indexing, bounds, and determinism run in CI without recorded media or an external service.
 
 ## Current verification
@@ -95,7 +99,7 @@ Automated coverage includes:
 V0 must not become active merely because its unit tests pass. Issue #6 remains open until the applicable evidence exists:
 
 - rights-cleared stepped, whisper, multi-speaker, HVAC, speech-over-music, laughter/applause, transient, clean-master, and long-form audio fixtures;
-- sample-accurate offline gain rendering with stereo preservation and measured click-free transitions;
+- rights-cleared evaluation renders with stereo preservation and measured/listened click-free transitions;
 - loudness-matched human listening against original/no-op and prior admitted baselines;
 - clean-input preservation and emotional-pause/music protection;
 - checkpoint-backed or otherwise admitted music/protected-content evidence;

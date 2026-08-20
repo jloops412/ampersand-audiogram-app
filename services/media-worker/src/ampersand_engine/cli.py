@@ -6,12 +6,13 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from ampersand_contracts import canonical_json_bytes
+from ampersand_contracts import GainEnvelope, canonical_json_bytes, read_manifest
 from ampersand_contracts.schema_export import EXPORTED_MODELS, export_json_schemas
 from pydantic import ValidationError
 
 from .errors import EngineError
 from .ffmpeg import FFmpegTools, probe_media
+from .gain_renderer import render_leveler_candidate
 from .hashing import sha256_file, stable_id
 from .pipeline import process_source
 from .recipe_loader import BUILT_IN_RECIPES
@@ -55,6 +56,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             sys.stdout.buffer.write(canonical_json_bytes(probe) + b"\n")
             return 0
+        if args.command == "render-leveler-candidate":
+            envelope = read_manifest(args.envelope, GainEnvelope)
+            render_result = render_leveler_candidate(args.source, envelope, args.output)
+            print(
+                json.dumps(
+                    {
+                        "candidate_path": str(render_result.candidate_path),
+                        "candidate_sha256": render_result.manifest.candidate_sha256,
+                        "gain_render_manifest_id": render_result.manifest.gain_render_manifest_id,
+                        "real_time_factor": render_result.runtime.real_time_factor,
+                        "status": "evaluation_only",
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
         if args.command == "schemas":
             written = export_json_schemas(args.output)
             print(json.dumps({"count": len(written), "output": str(args.output)}, sort_keys=True))
@@ -94,6 +111,14 @@ def _parser() -> argparse.ArgumentParser:
 
     probe = subcommands.add_parser("probe", help="Validate and print normalized media metadata as canonical JSON.")
     probe.add_argument("source", type=Path)
+
+    render = subcommands.add_parser(
+        "render-leveler-candidate",
+        help="Apply a gain envelope to a new evaluation-only WAV; the production master remains unchanged.",
+    )
+    render.add_argument("source", type=Path, help="Local rights-cleared source used to build the envelope.")
+    render.add_argument("envelope", type=Path, help="Validated GainEnvelope JSON manifest.")
+    render.add_argument("--output", type=Path, required=True, help="New evaluation output directory.")
 
     schemas = subcommands.add_parser("schemas", help="Export provider-neutral JSON Schemas for other runtimes.")
     schemas.add_argument("--output", type=Path, required=True)

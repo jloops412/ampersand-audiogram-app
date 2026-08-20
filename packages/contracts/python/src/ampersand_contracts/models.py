@@ -660,6 +660,71 @@ class GainEnvelope(ContractModel):
         return self
 
 
+class GainRenderManifest(ContractModel):
+    gain_render_manifest_id: Identifier
+    run_id: Identifier
+    source_sha256: Sha256
+    gain_envelope_id: Identifier
+    gain_envelope_sha256: Sha256
+    renderer_build_id: Identifier
+    renderer_algorithm_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    ffmpeg_version: str = Field(min_length=1, max_length=256)
+    candidate_relative_path: str = Field(min_length=1, max_length=512)
+    candidate_sha256: Sha256
+    candidate_size_bytes: int = Field(gt=0)
+    candidate_pcm_encoding: Literal["pcm_s24le"] = "pcm_s24le"
+    sample_rate_hz: Literal[48_000] = 48_000
+    channels: int = Field(gt=0, le=8)
+    source_duration_us: Microseconds
+    candidate_duration_us: Microseconds
+    expected_frame_count: int = Field(gt=0)
+    rendered_frame_count: int = Field(gt=0)
+    frame_count_delta: int = Field(ge=-2, le=2)
+    input_sample_peak_dbfs: float = Field(ge=-200.0, le=0.0)
+    output_sample_peak_dbfs: float = Field(ge=-200.0, le=0.0)
+    clipping_sample_count: Literal[0] = 0
+    gain_min_db: float = Field(ge=-60.0, le=24.0)
+    gain_max_db: float = Field(ge=-60.0, le=24.0)
+    maximum_adjacent_gain_delta_db: float = Field(ge=0.0, le=0.001)
+    interpolation: Literal["linear_db"] = "linear_db"
+    channel_linked: Literal[True] = True
+    sample_accurate: Literal[True] = True
+    final_loudness_applied: Literal[False] = False
+    listening_loudness_match_required: Literal[True] = True
+    archived_source_immutable: Literal[True] = True
+    evaluation_only: Literal[True] = True
+    production_approved: Literal[False] = False
+    external_api_cost_usd: Literal[0] = 0
+
+    @model_validator(mode="after")
+    def valid_gain_render(self) -> Self:
+        path = PurePosixPath(self.candidate_relative_path)
+        if path.is_absolute() or ".." in path.parts or path.suffix.lower() != ".wav":
+            raise ValueError("gain-render candidates require a portable relative WAV path")
+        if self.source_duration_us <= 0 or self.candidate_duration_us <= 0:
+            raise ValueError("gain-render durations must be positive")
+        if self.rendered_frame_count - self.expected_frame_count != self.frame_count_delta:
+            raise ValueError("gain-render frame_count_delta must match rendered minus expected frames")
+        if abs(self.candidate_duration_us - self.source_duration_us) > 50:
+            raise ValueError("gain-render candidate duration must remain within 50 microseconds of the source")
+        if self.gain_min_db > self.gain_max_db:
+            raise ValueError("gain-render gain bounds are reversed")
+        return self
+
+
+class GainRenderRuntimeReport(ContractModel):
+    gain_render_runtime_report_id: Identifier
+    gain_render_manifest_id: Identifier
+    wall_seconds: float = Field(gt=0.0)
+    audio_seconds: float = Field(gt=0.0)
+    real_time_factor: float = Field(ge=0.0)
+    working_block_frames: int = Field(gt=0)
+    peak_working_buffer_mb: float = Field(ge=0.0)
+    device_summary: str = Field(min_length=1, max_length=256)
+    external_api_cost_usd: Literal[0] = 0
+    diagnostic_only: Literal[True] = True
+
+
 class AdaptiveLevelerSettings(ContractModel):
     settings_id: Identifier
     algorithm_version: str = Field(pattern=r"^\d+\.\d+\.\d+$")

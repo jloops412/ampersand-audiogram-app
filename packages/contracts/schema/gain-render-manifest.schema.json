@@ -1,0 +1,228 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "archived_source_immutable": {
+      "const": true,
+      "default": true,
+      "title": "Archived Source Immutable",
+      "type": "boolean"
+    },
+    "candidate_duration_us": {
+      "minimum": 0,
+      "title": "Candidate Duration Us",
+      "type": "integer"
+    },
+    "candidate_pcm_encoding": {
+      "const": "pcm_s24le",
+      "default": "pcm_s24le",
+      "title": "Candidate Pcm Encoding",
+      "type": "string"
+    },
+    "candidate_relative_path": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Candidate Relative Path",
+      "type": "string"
+    },
+    "candidate_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Candidate Sha256",
+      "type": "string"
+    },
+    "candidate_size_bytes": {
+      "exclusiveMinimum": 0,
+      "title": "Candidate Size Bytes",
+      "type": "integer"
+    },
+    "channel_linked": {
+      "const": true,
+      "default": true,
+      "title": "Channel Linked",
+      "type": "boolean"
+    },
+    "channels": {
+      "exclusiveMinimum": 0,
+      "maximum": 8,
+      "title": "Channels",
+      "type": "integer"
+    },
+    "clipping_sample_count": {
+      "const": 0,
+      "default": 0,
+      "title": "Clipping Sample Count",
+      "type": "integer"
+    },
+    "evaluation_only": {
+      "const": true,
+      "default": true,
+      "title": "Evaluation Only",
+      "type": "boolean"
+    },
+    "expected_frame_count": {
+      "exclusiveMinimum": 0,
+      "title": "Expected Frame Count",
+      "type": "integer"
+    },
+    "external_api_cost_usd": {
+      "const": 0,
+      "default": 0,
+      "title": "External Api Cost Usd",
+      "type": "integer"
+    },
+    "ffmpeg_version": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Ffmpeg Version",
+      "type": "string"
+    },
+    "final_loudness_applied": {
+      "const": false,
+      "default": false,
+      "title": "Final Loudness Applied",
+      "type": "boolean"
+    },
+    "frame_count_delta": {
+      "maximum": 2,
+      "minimum": -2,
+      "title": "Frame Count Delta",
+      "type": "integer"
+    },
+    "gain_envelope_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Gain Envelope Id",
+      "type": "string"
+    },
+    "gain_envelope_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Gain Envelope Sha256",
+      "type": "string"
+    },
+    "gain_max_db": {
+      "maximum": 24.0,
+      "minimum": -60.0,
+      "title": "Gain Max Db",
+      "type": "number"
+    },
+    "gain_min_db": {
+      "maximum": 24.0,
+      "minimum": -60.0,
+      "title": "Gain Min Db",
+      "type": "number"
+    },
+    "gain_render_manifest_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Gain Render Manifest Id",
+      "type": "string"
+    },
+    "input_sample_peak_dbfs": {
+      "maximum": 0.0,
+      "minimum": -200.0,
+      "title": "Input Sample Peak Dbfs",
+      "type": "number"
+    },
+    "interpolation": {
+      "const": "linear_db",
+      "default": "linear_db",
+      "title": "Interpolation",
+      "type": "string"
+    },
+    "listening_loudness_match_required": {
+      "const": true,
+      "default": true,
+      "title": "Listening Loudness Match Required",
+      "type": "boolean"
+    },
+    "maximum_adjacent_gain_delta_db": {
+      "maximum": 0.001,
+      "minimum": 0.0,
+      "title": "Maximum Adjacent Gain Delta Db",
+      "type": "number"
+    },
+    "output_sample_peak_dbfs": {
+      "maximum": 0.0,
+      "minimum": -200.0,
+      "title": "Output Sample Peak Dbfs",
+      "type": "number"
+    },
+    "production_approved": {
+      "const": false,
+      "default": false,
+      "title": "Production Approved",
+      "type": "boolean"
+    },
+    "rendered_frame_count": {
+      "exclusiveMinimum": 0,
+      "title": "Rendered Frame Count",
+      "type": "integer"
+    },
+    "renderer_algorithm_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Renderer Algorithm Version",
+      "type": "string"
+    },
+    "renderer_build_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Renderer Build Id",
+      "type": "string"
+    },
+    "run_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "sample_accurate": {
+      "const": true,
+      "default": true,
+      "title": "Sample Accurate",
+      "type": "boolean"
+    },
+    "sample_rate_hz": {
+      "const": 48000,
+      "default": 48000,
+      "title": "Sample Rate Hz",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_duration_us": {
+      "minimum": 0,
+      "title": "Source Duration Us",
+      "type": "integer"
+    },
+    "source_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "gain_render_manifest_id",
+    "run_id",
+    "source_sha256",
+    "gain_envelope_id",
+    "gain_envelope_sha256",
+    "renderer_build_id",
+    "renderer_algorithm_version",
+    "ffmpeg_version",
+    "candidate_relative_path",
+    "candidate_sha256",
+    "candidate_size_bytes",
+    "channels",
+    "source_duration_us",
+    "candidate_duration_us",
+    "expected_frame_count",
+    "rendered_frame_count",
+    "frame_count_delta",
+    "input_sample_peak_dbfs",
+    "output_sample_peak_dbfs",
+    "gain_min_db",
+    "gain_max_db",
+    "maximum_adjacent_gain_delta_db"
+  ],
+  "title": "GainRenderManifest",
+  "type": "object"
+}
