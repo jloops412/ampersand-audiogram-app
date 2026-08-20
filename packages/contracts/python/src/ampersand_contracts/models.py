@@ -350,6 +350,8 @@ class ProductionRun(ContractModel):
     run_id: Identifier
     production_id: Identifier
     recipe_version_id: Identifier
+    resolved_settings_id: Identifier
+    resolved_settings_sha256: Sha256
     engine_build_id: Identifier
     idempotency_key: Sha256
     status: RunStatus
@@ -387,6 +389,94 @@ class RecipeVersion(ContractModel):
     model_manifest_ids: tuple[Identifier, ...] = ()
     allows_neural_processing: bool = False
     preserves_source: Literal[True] = True
+
+
+class MasteringSettings(ContractModel):
+    """Safe, executable mastering controls exposed by the private beta."""
+
+    target_integrated_lufs: float = Field(ge=-24.0, le=-14.0)
+    max_true_peak_dbtp: float = Field(ge=-3.0, le=-1.0)
+    target_loudness_range_lu: float = Field(ge=5.0, le=30.0)
+
+
+class ExportSettings(ContractModel):
+    """Delivery choices that map directly to admitted encoder paths."""
+
+    wav: bool = True
+    mp3: bool = True
+    mp3_bitrate_kbps: Literal[128, 160, 192, 256, 320] = 192
+
+    @model_validator(mode="after")
+    def at_least_one_output(self) -> Self:
+        if not self.wav and not self.mp3:
+            raise ValueError("at least one output format must be enabled")
+        return self
+
+
+class ProductionSettings(ContractModel):
+    """Complete executable settings for one beta production."""
+
+    mastering: MasteringSettings
+    export: ExportSettings
+
+
+class ProductionSettingsOverride(ContractModel):
+    """Sparse run override accepted by future template resolution surfaces."""
+
+    target_integrated_lufs: float | None = Field(default=None, ge=-24.0, le=-14.0)
+    max_true_peak_dbtp: float | None = Field(default=None, ge=-3.0, le=-1.0)
+    target_loudness_range_lu: float | None = Field(default=None, ge=5.0, le=30.0)
+    wav: bool | None = None
+    mp3: bool | None = None
+    mp3_bitrate_kbps: Literal[128, 160, 192, 256, 320] | None = None
+
+
+class StudioTemplate(ContractModel):
+    """Mutable catalog identity; edits point to a new immutable version."""
+
+    template_id: Identifier
+    workspace_id: Identifier
+    name: str = Field(min_length=1, max_length=120)
+    description: str = Field(default="", max_length=512)
+    current_version_id: Identifier
+    is_default: bool = False
+    archived: bool = False
+
+
+class StudioTemplateVersion(ContractModel):
+    """Immutable template version containing a complete settings value."""
+
+    template_version_id: Identifier
+    template_id: Identifier
+    version: int = Field(ge=1)
+    recipe_version_id: Identifier
+    settings: ProductionSettings
+    settings_sha256: Sha256
+    built_in: bool = False
+    change_summary: str = Field(min_length=1, max_length=512)
+
+
+class ResolvedProductionSettings(ContractModel):
+    """Fully expanded, immutable settings snapshot attached to a run."""
+
+    resolved_settings_id: Identifier
+    recipe_version_id: Identifier
+    intent: Literal["podcast", "natural_voice", "broadcast", "social_voice"]
+    template_version_id: Identifier | None = None
+    settings: ProductionSettings
+    settings_sha256: Sha256
+    field_provenance: dict[
+        Literal[
+            "mastering.target_integrated_lufs",
+            "mastering.max_true_peak_dbtp",
+            "mastering.target_loudness_range_lu",
+            "export.wav",
+            "export.mp3",
+            "export.mp3_bitrate_kbps",
+        ],
+        Literal["recipe", "template", "run_override"],
+    ]
+    warnings: tuple[str, ...] = ()
 
 
 class EvidenceProvenance(SemanticContractModel):
@@ -1529,6 +1619,8 @@ class OutputManifest(ContractModel):
     run_id: Identifier
     source_asset_id: Identifier
     recipe_version_id: Identifier
+    resolved_settings_id: Identifier
+    resolved_settings_sha256: Sha256
     artifacts: tuple[OutputArtifact, ...]
     loudness_after: LoudnessMeasurement
     target_integrated_lufs: float
@@ -1543,6 +1635,8 @@ class ProcessingReport(ContractModel):
     run_id: Identifier
     source_asset_id: Identifier
     recipe_version_id: Identifier
+    resolved_settings_id: Identifier
+    resolved_settings_sha256: Sha256
     engine_build_id: Identifier
     status: RunStatus
     loudness_before: LoudnessMeasurement

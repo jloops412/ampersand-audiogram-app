@@ -1,28 +1,34 @@
 # Existing Google Hosting Integration Plan
 
-**Status:** Deferred until owner connection and integration readiness
+**Status:** New Cloud Run baseline selected; legacy cleanup follows beta verification
 
 **Last verified:** 2026-08-20
 **Authority:** [ADR-0009](../decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 
 ## Current rule
 
-Ampersand's already deployed Google-hosted site remains the production destination. Preserve it. The exact Google service, project, repository linkage, build, storage, identity, secrets, and domain configuration are currently unknown and must not be guessed from legacy source or Google AI Studio exports.
+The owner identified project `gen-lang-client-0564514768` and selected the new GitHub-to-Cloud Run V1 beta as
+Ampersand's fresh hosted baseline. Older Google/OpenAI deployments are deprecated and no longer need to be reconciled
+into the product.
 
-No step in this document authorizes a live publish, secret change, data migration, domain change, or deployment deletion.
+The reviewed [V1 beta publish guide](./GOOGLE_V1_BETA_PUBLISH.md) creates that baseline. Legacy resource deletion remains
+a separate explicit operation after smoke testing so unrelated storage, secrets, domains, and billing dependencies are
+not removed accidentally.
 
-## When this work starts
+## When legacy cleanup starts
 
-Begin only when:
+Legacy inventory and cleanup begins only when:
 
-- the owner says Ampersand has reached the Google integration stage;
-- the owner connects or explicitly opens the relevant Google account/project;
-- the engine/control contracts needed by the Studio slice are reviewed;
-- a rollback target can be identified before any production publish.
+- `ampersand-v1-beta` has deployed from reviewed `main`;
+- the release smoke test passes;
+- a known-good Cloud Run revision exists for rollback;
+- the owner approves the exact legacy resources to delete.
 
-## Read-only discovery
+The issue #24 private-beta checkpoint is governed by ADR-0010 and ADR-0011 and proceeds before cleanup.
 
-First record, without exposing secret values:
+## Read-only legacy inventory
+
+After the new beta is verified, record without exposing secret values:
 
 - Google product(s), project ID/name, region, billing account boundary, and environment names;
 - production URL, preview/staging URLs, domain and DNS ownership;
@@ -35,17 +41,15 @@ First record, without exposing secret values:
 
 Write findings into a deployment inventory tied to a GitHub issue and reviewed commit. Quarantine code/assets that cannot be attributed to Ampersand.
 
-## Integration sequence
+## Baseline and cleanup sequence
 
-1. Reconcile the deployed source with GitHub; never overwrite unique live code blindly.
-2. Extract Ampersand-only changes from any mixed Google AI Studio export and verify ownership/licensing.
-3. Establish preview/staging deploys from a reviewed Git commit.
-4. Bind only the minimum environment and secret names required by that slice.
-5. Connect the Google-hosted Studio to versioned Ampersand APIs and independently deployable workers.
-6. Test authentication, cross-workspace denial, resumable upload, callbacks, retry/idempotency, browser reopen, deletion, and private artifact access.
-7. Add release smoke checks, observable step/run IDs, alerts, budgets, and a documented rollback command/path.
-8. Publish production only after the owner approves the exact target and rollback.
-9. Connect the custom domain only after release-readiness and email/DNS preservation checks pass.
+1. Deploy `ampersand-v1-beta` from reviewed GitHub `main`.
+2. Bind only the minimum runtime identity, private bucket, and secret required by the beta.
+3. Test authentication, upload, processing, retry/idempotency, browser reopen, deletion, and private artifact access.
+4. Add release smoke checks, observable step/run IDs, alerts, budgets, and a documented rollback path.
+5. Inventory legacy services, storage, databases, secrets, domains, and billing dependencies read-only.
+6. Present exact cleanup targets to the owner and delete only approved deprecated resources.
+7. Connect the custom domain only after release-readiness and email/DNS preservation checks pass.
 
 ## Required handoff evidence
 

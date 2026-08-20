@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "description": "Delivery choices that map directly to admitted encoder paths.",
+  "properties": {
+    "mp3": {
+      "default": true,
+      "title": "Mp3",
+      "type": "boolean"
+    },
+    "mp3_bitrate_kbps": {
+      "default": 192,
+      "enum": [
+        128,
+        160,
+        192,
+        256,
+        320
+      ],
+      "title": "Mp3 Bitrate Kbps",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "wav": {
+      "default": true,
+      "title": "Wav",
+      "type": "boolean"
+    }
+  },
+  "title": "ExportSettings",
+  "type": "object"
+}

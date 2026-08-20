@@ -5,10 +5,16 @@
 # Dependencies - these will be installed inside the container
 node_modules
 backend/node_modules
+.venv
+.uv-cache
 
 # Build output - this will be generated inside the container
 dist
 build
+coverage
+.pytest_cache
+.mypy_cache
+.ruff_cache
 
 # IDE & Editor specific files
 .vscode

@@ -1,6 +1,6 @@
 # ADR-0009: Keep Google Hosting and Make Studio Settings/Template-Driven
 
-- **Status:** Accepted; supersedes ADR-0008's hosting destination
+- **Status:** Template/settings direction accepted; deployment-preservation direction superseded by ADR-0011
 - **Date:** 2026-08-20
 - **Decision owners:** Ampersand product and engineering
 - **Tracks:** GitHub issue #31
@@ -81,3 +81,7 @@ When the owner says the product is ready for Google integration and connects the
 ## Supersession
 
 ADR-0008 remains historical evidence for the web/worker separation and the Sites checkpoint. This ADR supersedes its selection of OpenAI Sites as the active production host. ADR-0006 and ADR-0007 are also historical where they name ChatGPT/OpenAI Sites as the intended destination.
+
+On 2026-08-20, the owner selected the new GitHub-to-Cloud Run build as a fresh baseline and deprecated the older
+deployments. ADR-0011 supersedes this ADR's requirement to preserve and integrate the pre-existing Google deployment;
+the rich settings, immutable resolved runs, and reusable template decisions remain accepted.

@@ -58,11 +58,16 @@ The examples are not permission to create unsupported toggles. The selected reci
 
 ### Implemented engine checkpoint
 
-Processing Router V0 now writes a strict `ProcessingRouterSettings` snapshot for every local run. Its cleanup,
-protection, confidence, transition, conservative-filter, and exact admitted-denoiser fields are the first executable
-subset of the rich settings model. The router hashes the complete snapshot into plan identity and records reasons and
-fallbacks suitable for Studio display. This does not yet implement template catalog/version CRUD or the complete
-`ResolvedProductionSettings` contract; those remain #25/#31 work.
+The issue #24 private beta now implements strict `MasteringSettings`, `ExportSettings`, `ProductionSettings`,
+`ProductionSettingsOverride`, `StudioTemplate`, `StudioTemplateVersion`, and `ResolvedProductionSettings` contracts and
+exports their JSON Schemas. Executable settings cover integrated loudness, true-peak ceiling, loudness-range target,
+WAV/MP3 selection, and MP3 bitrate. The complete resolved snapshot and hash participate in run identity and appear in
+the report. The Studio provides built-in quick starts and browser-local immutable template versions.
+
+Processing Router V0 separately writes its strict shadow settings, plan, reasons, and fallbacks. Cleanup and Leveler
+controls remain unavailable in the production settings surface because those processors are not active. Durable
+workspace template CRUD, `ControlDefinition` metadata, precedence over sparse nested overrides, permissions,
+Basic/Advanced views, and shared cross-device templates remain #25/#31 work.
 
 ## UX requirements
 

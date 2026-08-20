@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "description": "Mutable catalog identity; edits point to a new immutable version.",
+  "properties": {
+    "archived": {
+      "default": false,
+      "title": "Archived",
+      "type": "boolean"
+    },
+    "current_version_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Current Version Id",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 512,
+      "title": "Description",
+      "type": "string"
+    },
+    "is_default": {
+      "default": false,
+      "title": "Is Default",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "template_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Template Id",
+      "type": "string"
+    },
+    "workspace_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Workspace Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "template_id",
+    "workspace_id",
+    "name",
+    "current_version_id"
+  ],
+  "title": "StudioTemplate",
+  "type": "object"
+}

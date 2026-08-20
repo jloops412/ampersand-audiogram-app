@@ -5,8 +5,9 @@ import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import cast
 
-from ampersand_contracts import GainEnvelope, canonical_json_bytes, read_manifest
+from ampersand_contracts import GainEnvelope, ProductionSettings, canonical_json_bytes, read_manifest
 from ampersand_contracts.schema_export import EXPORTED_MODELS, export_json_schemas
 from pydantic import ValidationError
 
@@ -16,6 +17,7 @@ from .gain_renderer import render_leveler_candidate
 from .hashing import sha256_file, stable_id
 from .pipeline import process_source
 from .recipe_loader import BUILT_IN_RECIPES
+from .settings import SettingsSource
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -23,11 +25,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "process":
+            settings = read_manifest(args.settings, ProductionSettings) if args.settings is not None else None
+            settings_source = cast(
+                SettingsSource,
+                args.settings_source or ("run_override" if settings is not None else "recipe"),
+            )
             result = process_source(
                 args.source,
                 args.output,
                 recipe_slug=args.recipe,
                 title=args.title,
+                settings=settings,
+                intent=args.intent,
+                template_version_id=args.template_version_id,
+                settings_source=settings_source,
                 progress=lambda message: print(f"ampersand: {message}", file=sys.stderr),
             )
             print(
@@ -108,6 +119,29 @@ def _parser() -> argparse.ArgumentParser:
     )
     process.add_argument("--recipe", default="smart-spoken-word-v0", choices=sorted(BUILT_IN_RECIPES))
     process.add_argument("--title", default=None, help="Optional production title (does not affect source identity).")
+    process.add_argument(
+        "--settings",
+        type=Path,
+        default=None,
+        help="Optional complete ProductionSettings JSON; the resolved snapshot is stored with the run.",
+    )
+    process.add_argument(
+        "--intent",
+        choices=("podcast", "natural_voice", "broadcast", "social_voice"),
+        default="podcast",
+        help="Quick-start intent recorded in the resolved settings snapshot.",
+    )
+    process.add_argument(
+        "--template-version-id",
+        default=None,
+        help="Immutable template version identity when --settings-source=template.",
+    )
+    process.add_argument(
+        "--settings-source",
+        choices=("recipe", "template", "run_override"),
+        default=None,
+        help="Provenance for the complete settings value (inferred when omitted).",
+    )
 
     probe = subcommands.add_parser("probe", help="Validate and print normalized media metadata as canonical JSON.")
     probe.add_argument("source", type=Path)

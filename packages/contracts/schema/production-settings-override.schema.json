@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "description": "Sparse run override accepted by future template resolution surfaces.",
+  "properties": {
+    "max_true_peak_dbtp": {
+      "anyOf": [
+        {
+          "maximum": -1.0,
+          "minimum": -3.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max True Peak Dbtp"
+    },
+    "mp3": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mp3"
+    },
+    "mp3_bitrate_kbps": {
+      "anyOf": [
+        {
+          "enum": [
+            128,
+            160,
+            192,
+            256,
+            320
+          ],
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mp3 Bitrate Kbps"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "target_integrated_lufs": {
+      "anyOf": [
+        {
+          "maximum": -14.0,
+          "minimum": -24.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Integrated Lufs"
+    },
+    "target_loudness_range_lu": {
+      "anyOf": [
+        {
+          "maximum": 30.0,
+          "minimum": 5.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Loudness Range Lu"
+    },
+    "wav": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Wav"
+    }
+  },
+  "title": "ProductionSettingsOverride",
+  "type": "object"
+}

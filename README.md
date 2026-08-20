@@ -1,8 +1,8 @@
 # Ampersand
 
-**Status:** V2 implementation is active
+**Status:** V2 implementation is active; private-beta deployment candidate is ready for review
 
-**Studio/control plane:** existing Google-hosted deployment, integration pending owner connection
+**Studio/control plane:** new Cloud Run V1 beta deployed from reviewed GitHub `main`
 
 **Heavy processing:** independent media and render workers
 **Legacy prototype:** retained for history; not the V2 foundation
@@ -15,7 +15,11 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 
 ## What works now
 
-- a product-specific Studio reference shell with private durable source uploads;
+- a responsive private-beta Studio with a production library, upload/drop, progress, retry, delete, and downloads;
+- four useful quick-start intents plus executable loudness, true-peak, loudness-range, WAV/MP3, and bitrate controls;
+- browser-local reusable templates with immutable versions and an exact resolved-settings snapshot on every run;
+- same-position Original/Master playback, precomputed waveforms, measured results, and an understandable report;
+- a lightweight one-at-a-time control runner with durable job/source/output records and restart recovery;
 - strict provider-neutral V2 contracts and exported JSON Schemas;
 - a local, no-credential media-engine CLI;
 - immutable source hashing and normalized media probing;
@@ -90,6 +94,7 @@ leveler-settings.json
 gain-envelope.json
 leveler-statistics.json
 recipe.json
+resolved-settings.json
 production.json
 production-run.json
 steps/*.json
@@ -108,6 +113,26 @@ uv run ruff format --check packages services lab scripts
 uv run mypy
 uv run pytest
 ```
+
+## Run the private beta locally
+
+The beta keeps the independent Python engine and the web/control surface in one deployable container while preserving
+their versioned contract boundary. With Node.js 20 installed:
+
+```bash
+uv sync --all-packages --dev
+npm install
+npm install --prefix apps/worker-control
+npm run build
+AMPERSAND_DATA_DIR=/tmp/ampersand-beta-data \
+AMPERSAND_STATIC_DIR="$PWD/dist" \
+AMPERSAND_ENGINE_BIN="$PWD/.venv/bin/ampersand-engine" \
+AMPERSAND_BETA_TOKEN="replace-with-a-long-random-key" \
+node apps/worker-control/server.js
+```
+
+Open `http://localhost:8080`. The first Cloud Run beta intentionally caps direct browser uploads at 30 MiB; resumable
+direct-to-object-storage upload remains the next durability step.
 
 See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md),
 [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md),
@@ -161,7 +186,10 @@ Original media is immutable. Expensive work is checkpointable. Provider-native r
 9. #13 — one-hour recovery proof;
 10. #27 — deterministic professional audiogram renderer.
 
-Publishing into the existing Google deployment, operational management, and domain/DNS work remain deferred until those pieces produce a strong product and the owner connects the relevant Google account/project.
+Issue #24 now includes an intentionally narrow private-beta publish checkpoint. It creates the new Ampersand Cloud Run
+baseline from GitHub. Older deployments are deprecated and may be inventoried and removed after this service is verified;
+custom-domain/DNS work and a public production launch remain deferred until the stronger release gates pass. See the
+[Google V1 beta publish guide](./docs/deployment/GOOGLE_V1_BETA_PUBLISH.md).
 
 The four current production intents are convenience shortcuts, not the final settings model. Each run will support rich contract-backed settings and an immutable resolved-settings snapshot; users will be able to create and reuse versioned templates without changing historical runs.
 

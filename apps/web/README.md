@@ -1,6 +1,6 @@
 # Studio web boundary
 
-The active production destination is the owner's existing Google-hosted deployment. Until the owner connects the relevant Google account/project, this directory is the canonical future Studio source/client-adapter boundary and must not guess or mutate the live deployment. The OpenAI Sites checkpoint is a non-production reference artifact.
+This directory is the active Studio source for the new GitHub-to-Cloud Run baseline in Google Cloud project `gen-lang-client-0564514768`. Older deployments are deprecated and the OpenAI Sites checkpoint is reference-only. Legacy resource deletion remains a separate, explicit cleanup operation after the new service is verified.
 
 The Studio consumes versioned JSON Schemas from `packages/contracts/schema` and delegates native media work to independently deployable workers.
 
