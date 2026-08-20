@@ -1,0 +1,78 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "adapter_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Adapter Id",
+      "type": "string"
+    },
+    "adapter_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Adapter Version",
+      "type": "string"
+    },
+    "deterministic": {
+      "title": "Deterministic",
+      "type": "boolean"
+    },
+    "model_manifest_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Manifest Id"
+    },
+    "native_artifact_id": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Native Artifact Id"
+    },
+    "provenance_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "provider_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "provider_version": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Provider Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.1.0",
+      "default": "1.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provenance_id",
+    "provider_id",
+    "provider_version",
+    "adapter_id",
+    "adapter_version",
+    "deterministic"
+  ],
+  "title": "EvidenceProvenance",
+  "type": "object"
+}

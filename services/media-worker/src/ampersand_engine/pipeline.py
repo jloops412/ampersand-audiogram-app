@@ -11,6 +11,7 @@ from ampersand_contracts import (
     AnalysisManifest,
     AssetKind,
     AssetManifest,
+    EvidenceProvenance,
     GainEnvelope,
     GainPoint,
     JobStatus,
@@ -25,24 +26,29 @@ from ampersand_contracts import (
     ProductionRun,
     RunStatus,
     SemanticMap,
-    SemanticRegion,
     manifest_sha256,
     write_manifest,
 )
 
 from . import __version__
+from .energy_vad import analyze_energy_vad
 from .errors import EngineError, OutputValidationError
 from .ffmpeg import (
     FFmpegTools,
     canonicalize_audio,
     encode_master_mp3,
     measure_loudness,
+    measure_loudness_timeline,
     probe_media,
     render_master_wav,
     requires_canonical_audio,
 )
 from .hashing import sha256_file, sha256_text, stable_id
+from .provider_artifacts import write_provider_artifact
 from .recipe_loader import load_recipe
+from .semantic_adapters import normalize_loudness_frames, normalize_vad_frames
+from .semantic_debug import write_semantic_debug_report
+from .semantic_fusion import fuse_semantic_map
 from .waveform import generate_waveform_peaks
 
 ENGINE_BUILD_ID = f"ampersand-media-worker:{__version__}"
@@ -156,8 +162,18 @@ def process_source(
             write_manifest(stage / "canonical-manifest.json", analysis_asset)
             analysis_input = canonical_path
 
-        _notify(progress, "measure and build waveform")
+        _notify(progress, "measure, build waveform, and analyze semantics")
         loudness_before = measure_loudness(analysis_input, tools)
+        loudness_timeline = measure_loudness_timeline(
+            analysis_input,
+            duration_us=probe.duration_us,
+            tools=tools,
+        )
+        vad_analysis = analyze_energy_vad(
+            analysis_input,
+            duration_us=probe.duration_us,
+            tools=tools,
+        )
         waveform = generate_waveform_peaks(
             analysis_input,
             waveform_id=waveform_id,
@@ -167,6 +183,81 @@ def process_source(
             tools=tools,
         )
         write_manifest(stage / "waveform-peaks.json", waveform)
+
+        ebur128_artifact = write_provider_artifact(
+            stage,
+            relative_path="provider-native/ffmpeg-ebur128.json",
+            payload=loudness_timeline.provider_payload,
+            provider_id="provider:ffmpeg-ebur128",
+            provider_version=tools.ffmpeg_version,
+            adapter_id="adapter:ffmpeg-ebur128-v0",
+            adapter_version=ENGINE_BUILD_ID,
+            redaction_summary="Retains parsed metric frames only; excludes command lines and local paths.",
+        )
+        energy_vad_artifact = write_provider_artifact(
+            stage,
+            relative_path="provider-native/ampersand-energy-vad-v0.json",
+            payload=vad_analysis.provider_payload,
+            provider_id="provider:ampersand-energy-vad",
+            provider_version="0.1.0",
+            adapter_id="adapter:ampersand-energy-vad-v0",
+            adapter_version=ENGINE_BUILD_ID,
+            redaction_summary="First-party numeric frame features only; contains no path, transcript, or credential.",
+        )
+        write_manifest(stage / "provider-native/ffmpeg-ebur128.manifest.json", ebur128_artifact)
+        write_manifest(stage / "provider-native/ampersand-energy-vad-v0.manifest.json", energy_vad_artifact)
+
+        ebur128_provenance = EvidenceProvenance(
+            provenance_id=stable_id("provenance", sha256_text(ebur128_artifact.artifact_id)),
+            provider_id=ebur128_artifact.provider_id,
+            provider_version=ebur128_artifact.provider_version,
+            adapter_id=ebur128_artifact.adapter_id,
+            adapter_version=ebur128_artifact.adapter_version,
+            native_artifact_id=ebur128_artifact.artifact_id,
+            deterministic=True,
+        )
+        energy_vad_provenance = EvidenceProvenance(
+            provenance_id=stable_id("provenance", sha256_text(energy_vad_artifact.artifact_id)),
+            provider_id=energy_vad_artifact.provider_id,
+            provider_version=energy_vad_artifact.provider_version,
+            adapter_id=energy_vad_artifact.adapter_id,
+            adapter_version=energy_vad_artifact.adapter_version,
+            native_artifact_id=energy_vad_artifact.artifact_id,
+            deterministic=True,
+        )
+        semantic_map = fuse_semantic_map(
+            semantic_map_id=semantic_map_id,
+            source_asset_id=source_asset_id,
+            duration_us=probe.duration_us,
+            provenance_sources=(ebur128_provenance, energy_vad_provenance),
+            observations=(
+                *normalize_loudness_frames(
+                    loudness_timeline.frames,
+                    provenance=ebur128_provenance,
+                    id_seed=run_fingerprint,
+                ),
+                *normalize_vad_frames(
+                    vad_analysis.frames,
+                    provenance=energy_vad_provenance,
+                    id_seed=run_fingerprint,
+                ),
+            ),
+            provider_native_artifact_ids=(ebur128_artifact.artifact_id, energy_vad_artifact.artifact_id),
+            unavailable_adapters=(
+                "adapter:asr-unavailable",
+                "adapter:diarization-unavailable",
+                "adapter:music-classifier-unavailable",
+            ),
+            warnings=(
+                "The built-in energy/spectral VAD is confidence-bounded and cannot reliably separate "
+                "music from speech.",
+                "ASR, diarization, and music classification are optional and unavailable in this local baseline.",
+                "Uncertain, conflicting, and unsupported content remains protected.",
+            ),
+        )
+        write_manifest(stage / "semantic-map-v0.json", semantic_map)
+        write_semantic_debug_report(stage / "semantic-map-debug.html", semantic_map)
+
         analysis = AnalysisManifest(
             analysis_manifest_id=analysis_manifest_id,
             run_id=run_id,
@@ -175,33 +266,14 @@ def process_source(
             waveform_id=waveform_id,
             loudness_before=loudness_before,
             warnings=(
-                "Baseline semantic analysis does not yet include VAD, ASR, diarization, or defect classification.",
+                "Semantic Map V0 includes deterministic loudness/peak evidence and a conservative first-party VAD.",
+                "ASR, diarization, music classification, and advanced defect classification remain "
+                "optional/unavailable.",
             ),
         )
         write_manifest(stage / "analysis.json", analysis)
 
-        _notify(progress, "build protected semantic map and plan")
-        semantic_region = SemanticRegion(
-            region_id=stable_id("semantic-region", run_fingerprint),
-            start_us=0,
-            end_us=probe.duration_us,
-            content_label="unknown",
-            confidence=0.0,
-            protected=True,
-            observations={
-                "baseline": True,
-                "reason": "No admitted content classifier is active in issue 21.",
-            },
-        )
-        semantic_map = SemanticMap(
-            semantic_map_id=semantic_map_id,
-            source_asset_id=source_asset_id,
-            duration_us=probe.duration_us,
-            regions=(semantic_region,),
-            warnings=("Unknown content is protected and receives no enhancement.",),
-        )
-        write_manifest(stage / "semantic-map.json", semantic_map)
-
+        _notify(progress, "build protected processing plan")
         processing_region = ProcessingRegion(
             processing_region_id=stable_id("processing-region", run_fingerprint),
             start_us=0,
@@ -209,7 +281,10 @@ def process_source(
             action="protect",
             processor_id="processor:no-op-v0",
             confidence=1.0,
-            reason="No admitted regional processor is active; preserve source content before final mastering.",
+            reason=(
+                "Semantic analysis is available, but issue #23 routing and issue #6 Adaptive Leveler are not active; "
+                "preserve every region before final mastering."
+            ),
             parameters={"wet_mix": 0.0},
             transition_us=0,
             source="recipe",
@@ -366,17 +441,29 @@ def process_source(
                 "Canonicalized once to 48 kHz float PCM because the source was not already canonical."
                 if canonical_was_created
                 else "Used the source directly because it already matched the canonical working format.",
-                "Protected the full unknown-content region from enhancement.",
+                (
+                    f"Built Semantic Map V0 with {len(semantic_map.regions)} full-coverage regions, "
+                    f"{len(semantic_map.observations)} normalized observations, and "
+                    f"{len(semantic_map.conflicts)} explicit conflicts."
+                ),
+                "Protected regional processing until the versioned Router and Adaptive Leveler consume this evidence.",
                 "Applied only the recipe's standards-based two-pass final loudness master.",
             ),
             artifact_sha256={
                 "source": source_sha,
+                "semantic_map_v0": manifest_sha256(semantic_map),
+                "semantic_debug": sha256_file(stage / "semantic-map-debug.html"),
+                "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
+                "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
                 "master_wav": wav_sha,
                 "master_mp3": mp3_sha,
                 "output_manifest": manifest_sha256(output_manifest),
             },
             warnings=(
-                "This issue-21 baseline is not the Adaptive Leveler and performs no denoise, VAD, ASR, or diarization.",
+                "Semantic analysis is active, but this issue-22 build is not the Adaptive Leveler and performs "
+                "no denoise.",
+                "The bootstrap VAD is conservative; ASR, diarization, and music classification are not required "
+                "for mastering.",
             ),
             external_api_cost_usd=0.0,
             privacy_summary=(
@@ -443,8 +530,25 @@ def _build_steps(
             {"manifest_hash": waveform_hash},
         ),
         ("loudness-before", analysis_asset_hash, JobStatus.SUCCEEDED, (analysis.analysis_manifest_id,), {}),
-        ("semantic-map-baseline", analysis_hash, JobStatus.SUCCEEDED, (semantic_map.semantic_map_id,), {}),
-        ("regional-protect-baseline", semantic_hash, JobStatus.SUCCEEDED, (processing_plan.processing_plan_id,), {}),
+        (
+            "semantic-map-v0",
+            analysis_hash,
+            JobStatus.SUCCEEDED,
+            (semantic_map.semantic_map_id, *semantic_map.provider_native_artifact_ids),
+            {
+                "region_count": len(semantic_map.regions),
+                "observation_count": len(semantic_map.observations),
+                "conflict_count": len(semantic_map.conflicts),
+                "coverage": semantic_map.coverage,
+            },
+        ),
+        (
+            "regional-protect-pending-router",
+            semantic_hash,
+            JobStatus.SUCCEEDED,
+            (processing_plan.processing_plan_id,),
+            {},
+        ),
         ("unity-gain-envelope", plan_hash, JobStatus.SUCCEEDED, (gain_envelope.gain_envelope_id,), {}),
         (
             "two-pass-loudness-master",

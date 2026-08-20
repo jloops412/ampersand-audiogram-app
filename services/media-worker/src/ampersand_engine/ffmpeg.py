@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -13,6 +14,12 @@ from typing import Any, cast
 from ampersand_contracts import LoudnessMeasurement, MediaProbe, RecipeVersion
 
 from .errors import DependencyUnavailable, EngineError, InvalidMedia
+from .semantic_types import JsonValue, LoudnessFrame, LoudnessTimelineResult
+
+_EBUR128_FRAME = re.compile(
+    r"t:\s*(?P<time>\d+(?:\.\d+)?)\s+.*?M:\s*(?P<momentary>-?inf|-?\d+(?:\.\d+)?)"
+    r"\s+S:\s*(?P<short_term>-?inf|-?\d+(?:\.\d+)?)\s+.*?FTPK:\s*(?P<frame_peak>.*?)\s+dBFS"
+)
 
 
 @dataclass(frozen=True)
@@ -165,6 +172,107 @@ def measure_loudness(path: Path, tools: FFmpegTools) -> LoudnessMeasurement:
     )
 
 
+def measure_loudness_timeline(
+    path: Path,
+    *,
+    duration_us: int,
+    tools: FFmpegTools,
+    hop_us: int = 100_000,
+) -> LoudnessTimelineResult:
+    """Measure deterministic EBU R128 momentary/short-term loudness and frame true peak."""
+
+    if duration_us <= 0 or hop_us <= 0:
+        raise ValueError("duration_us and hop_us must be positive")
+    if hop_us != 100_000:
+        raise ValueError("FFmpeg ebur128 emits a fixed 100 ms analysis hop")
+    completed = _run(
+        [
+            tools.ffmpeg,
+            "-nostdin",
+            "-hide_banner",
+            "-loglevel",
+            "verbose",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            str(path),
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-af",
+            "ebur128=peak=true:framelog=verbose",
+            "-f",
+            "null",
+            "-",
+        ],
+        failure_message="ffmpeg failed to measure the loudness timeline",
+    )
+
+    parsed: list[tuple[float, float, float, float, bool, tuple[float, ...]]] = []
+    for line in completed.stderr.splitlines():
+        match = _EBUR128_FRAME.search(line)
+        if match is None:
+            continue
+        momentary = _finite_or_floor(match.group("momentary"))
+        short_term = _finite_or_floor(match.group("short_term"))
+        peaks, below_floor = _frame_true_peaks(match.group("frame_peak"))
+        parsed.append(
+            (
+                float(match.group("time")),
+                momentary,
+                short_term,
+                max(peaks),
+                below_floor,
+                peaks,
+            )
+        )
+
+    expected_frames = (duration_us + hop_us - 1) // hop_us
+    if len(parsed) < expected_frames:
+        raise EngineError(
+            f"ffmpeg ebur128 returned {len(parsed)} frames; {expected_frames} are required for full coverage."
+        )
+
+    frames: list[LoudnessFrame] = []
+    raw_frames: list[JsonValue] = []
+    for index, (provider_time, momentary, short_term, true_peak, below_floor, channel_peaks) in enumerate(
+        parsed[:expected_frames]
+    ):
+        start_us = index * hop_us
+        end_us = min(duration_us, start_us + hop_us)
+        frames.append(
+            LoudnessFrame(
+                start_us=start_us,
+                end_us=end_us,
+                momentary_lufs=momentary,
+                short_term_lufs=short_term,
+                true_peak_dbtp=true_peak,
+                below_true_peak_floor=below_floor,
+            )
+        )
+        raw_frames.append(
+            {
+                "t_seconds": round(provider_time, 7),
+                "M": momentary,
+                "S": short_term,
+                "FTPK": [round(value, 6) for value in channel_peaks],
+                "below_true_peak_floor": below_floor,
+            }
+        )
+
+    return LoudnessTimelineResult(
+        frames=tuple(frames),
+        provider_payload={
+            "provider": "ffmpeg-ebur128",
+            "provider_version": tools.ffmpeg_version,
+            "analysis_hop_us": hop_us,
+            "duration_us": duration_us,
+            "privacy_redaction": "Only parsed metric frames are retained; command lines and local paths are excluded.",
+            "frames": raw_frames,
+        },
+    )
+
+
 def render_master_wav(
     source: Path,
     destination: Path,
@@ -259,8 +367,14 @@ def encode_master_mp3(source_wav: Path, destination: Path, tools: FFmpegTools) -
     )
 
 
-def decode_float32_command(path: Path, tools: FFmpegTools, *, sample_rate_hz: int = 48_000) -> list[str]:
-    return [
+def decode_float32_command(
+    path: Path,
+    tools: FFmpegTools,
+    *,
+    sample_rate_hz: int = 48_000,
+    channels: int | None = None,
+) -> list[str]:
+    command = [
         tools.ffmpeg,
         "-nostdin",
         "-hide_banner",
@@ -273,14 +387,23 @@ def decode_float32_command(path: Path, tools: FFmpegTools, *, sample_rate_hz: in
         "-map",
         "0:a:0",
         "-vn",
-        "-ar",
-        str(sample_rate_hz),
-        "-c:a",
-        "pcm_f32le",
-        "-f",
-        "f32le",
-        "-",
     ]
+    if channels is not None:
+        if channels <= 0:
+            raise ValueError("channels must be positive")
+        command.extend(("-ac", str(channels)))
+    command.extend(
+        [
+            "-ar",
+            str(sample_rate_hz),
+            "-c:a",
+            "pcm_f32le",
+            "-f",
+            "f32le",
+            "-",
+        ]
+    )
+    return command
 
 
 def subprocess_environment() -> dict[str, str]:
@@ -410,6 +533,22 @@ def _finite_float(payload: dict[str, Any], key: str) -> float:
     if not math.isfinite(value):
         raise InvalidMedia(f"Audio is too short or silent for a finite {key} measurement.")
     return value
+
+
+def _finite_or_floor(raw: str, *, floor: float = -120.0) -> float:
+    try:
+        value = float(raw)
+    except ValueError:
+        return floor
+    return value if math.isfinite(value) else floor
+
+
+def _frame_true_peaks(raw: str) -> tuple[tuple[float, ...], bool]:
+    values = tuple(_finite_or_floor(token) for token in raw.split())
+    if not values:
+        raise EngineError("ffmpeg ebur128 frame omitted its true-peak measurement")
+    below_floor = all(not math.isfinite(float(token)) for token in raw.split())
+    return values, below_floor
 
 
 def _last_nonempty_line(value: str) -> str:

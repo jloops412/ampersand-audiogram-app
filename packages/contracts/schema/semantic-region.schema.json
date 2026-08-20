@@ -1,11 +1,73 @@
 {
+  "$defs": {
+    "ProcessingEligibility": {
+      "enum": [
+        "eligible",
+        "protect",
+        "no_op"
+      ],
+      "title": "ProcessingEligibility",
+      "type": "string"
+    }
+  },
   "additionalProperties": false,
   "properties": {
+    "active_speaker": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Active Speaker"
+    },
+    "active_speaker_confidence": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Active Speaker Confidence"
+    },
+    "ambience_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ambience Probability"
+    },
     "confidence": {
       "maximum": 1.0,
       "minimum": 0.0,
       "title": "Confidence",
       "type": "number"
+    },
+    "conflict_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Conflict Ids",
+      "type": "array"
     },
     "content_label": {
       "enum": [
@@ -39,6 +101,29 @@
       "default": null,
       "title": "Music Probability"
     },
+    "noise_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Noise Probability"
+    },
+    "observation_ids": {
+      "default": [],
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "title": "Observation Ids",
+      "type": "array"
+    },
     "observations": {
       "additionalProperties": {
         "anyOf": [
@@ -62,6 +147,24 @@
       "title": "Observations",
       "type": "object"
     },
+    "overlap_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Overlap Probability"
+    },
+    "processing_eligibility": {
+      "$ref": "#/$defs/ProcessingEligibility",
+      "default": "protect"
+    },
     "protected": {
       "default": true,
       "title": "Protected",
@@ -70,6 +173,7 @@
     "provider_refs": {
       "default": [],
       "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
         "type": "string"
       },
       "title": "Provider Refs",
@@ -81,8 +185,8 @@
       "type": "string"
     },
     "schema_version": {
-      "const": "1.0.0",
-      "default": "1.0.0",
+      "const": "1.1.0",
+      "default": "1.1.0",
       "title": "Schema Version",
       "type": "string"
     },
