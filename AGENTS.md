@@ -67,7 +67,7 @@ Agents should prioritize this sequence:
 7. #23 — Processing Router V0;
 8. #24 — durable singletrack engine;
 9. #25/#26/#31 — rich Studio, templates, A/B comparison, and report;
-10. #17/#18 — adapt the existing Google web/control boundary after the owner connects it;
+10. #18 — adapt the existing Google web/control boundary after the owner connects it;
 11. #13 — one-hour end-to-end proof;
 12. #27 — deterministic audiogram renderer.
 

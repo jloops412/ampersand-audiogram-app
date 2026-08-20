@@ -459,7 +459,7 @@ Agents should begin these in parallel where dependencies permit:
 11. **#9/#10** durable workflow and storage lifecycle;
 12. **#24** durable singletrack engine vertical slice;
 13. **#25/#26** rich Studio/templates, A/B, and report;
-14. **#17/#18** adapt the existing Google-hosted control/upload boundary after owner connection;
+14. **#18** adapt the existing Google-hosted control/upload boundary after owner connection;
 15. **#13** one-hour end-to-end product proof.
 
 ## After the real product works
