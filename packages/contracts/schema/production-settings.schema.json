@@ -1,5 +1,124 @@
 {
   "$defs": {
+    "AudiogramSettings": {
+      "additionalProperties": false,
+      "description": "Deterministic server-rendered audiogram controls for the V1 beta.",
+      "properties": {
+        "aspect_ratio": {
+          "default": "square",
+          "enum": [
+            "square",
+            "portrait",
+            "landscape"
+          ],
+          "title": "Aspect Ratio",
+          "type": "string"
+        },
+        "background_color": {
+          "default": "#111718",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Background Color",
+          "type": "string"
+        },
+        "background_mode": {
+          "default": "color",
+          "enum": [
+            "color",
+            "artwork"
+          ],
+          "title": "Background Mode",
+          "type": "string"
+        },
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "headline": {
+          "default": "",
+          "maxLength": 160,
+          "title": "Headline",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "subtitle": {
+          "default": "",
+          "maxLength": 160,
+          "title": "Subtitle",
+          "type": "string"
+        },
+        "text_color": {
+          "default": "#f4f1ea",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Text Color",
+          "type": "string"
+        },
+        "waveform_color": {
+          "default": "#e1b977",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Waveform Color",
+          "type": "string"
+        },
+        "waveform_style": {
+          "default": "mirrored",
+          "enum": [
+            "line",
+            "mirrored",
+            "bars"
+          ],
+          "title": "Waveform Style",
+          "type": "string"
+        }
+      },
+      "title": "AudiogramSettings",
+      "type": "object"
+    },
+    "CleanupSettings": {
+      "additionalProperties": false,
+      "description": "Deterministic spoken-word cleanup controls admitted for the V1 beta.",
+      "properties": {
+        "compression": {
+          "default": "balanced",
+          "enum": [
+            "off",
+            "gentle",
+            "balanced",
+            "firm"
+          ],
+          "title": "Compression",
+          "type": "string"
+        },
+        "noise_reduction": {
+          "default": "balanced",
+          "enum": [
+            "off",
+            "light",
+            "balanced",
+            "strong"
+          ],
+          "title": "Noise Reduction",
+          "type": "string"
+        },
+        "rumble_filter": {
+          "default": true,
+          "title": "Rumble Filter",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "CleanupSettings",
+      "type": "object"
+    },
     "ExportSettings": {
       "additionalProperties": false,
       "description": "Delivery choices that map directly to admitted encoder paths.",
@@ -72,16 +191,81 @@
       ],
       "title": "MasteringSettings",
       "type": "object"
+    },
+    "OutputMetadataSettings": {
+      "additionalProperties": false,
+      "description": "Portable delivery tags written by FFmpeg without adding a metadata dependency.",
+      "properties": {
+        "album": {
+          "default": "",
+          "maxLength": 160,
+          "title": "Album",
+          "type": "string"
+        },
+        "artist": {
+          "default": "",
+          "maxLength": 160,
+          "title": "Artist",
+          "type": "string"
+        },
+        "comment": {
+          "default": "",
+          "maxLength": 512,
+          "title": "Comment",
+          "type": "string"
+        },
+        "copyright": {
+          "default": "",
+          "maxLength": 256,
+          "title": "Copyright",
+          "type": "string"
+        },
+        "date": {
+          "default": "",
+          "maxLength": 40,
+          "title": "Date",
+          "type": "string"
+        },
+        "genre": {
+          "default": "",
+          "maxLength": 80,
+          "title": "Genre",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "track_number": {
+          "default": "",
+          "maxLength": 32,
+          "title": "Track Number",
+          "type": "string"
+        }
+      },
+      "title": "OutputMetadataSettings",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "description": "Complete executable settings for one beta production.",
   "properties": {
+    "audiogram": {
+      "$ref": "#/$defs/AudiogramSettings"
+    },
+    "cleanup": {
+      "$ref": "#/$defs/CleanupSettings"
+    },
     "export": {
       "$ref": "#/$defs/ExportSettings"
     },
     "mastering": {
       "$ref": "#/$defs/MasteringSettings"
+    },
+    "metadata": {
+      "$ref": "#/$defs/OutputMetadataSettings"
     },
     "schema_version": {
       "const": "1.0.0",

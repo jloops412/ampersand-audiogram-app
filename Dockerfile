@@ -19,11 +19,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     AMPERSAND_DATA_DIR=/data/ampersand \
+    AMPERSAND_GCS_BUCKET=gen-lang-client-0564514768-ampersand-beta-media \
+    AMPERSAND_MAX_DIRECT_UPLOAD_BYTES=1073741824 \
     AMPERSAND_STATIC_DIR=/app/dist \
     PORT=8080
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates ffmpeg libstdc++6 tini \
+    && apt-get install --yes --no-install-recommends ca-certificates ffmpeg fonts-dejavu-core libstdc++6 tini \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=control-builder /usr/local/bin/node /usr/local/bin/node

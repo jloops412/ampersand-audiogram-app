@@ -41,6 +41,7 @@ complete Studio. ADR-0011 records this superseding deployment direction.
 20. [Blinded Listening and Regression Harness V0](./research/BLINDED_LISTENING_HARNESS_V0.md)
 21. [Leveler Gain Renderer V0](./architecture/LEVELER_GAIN_RENDERER_V0.md)
 22. [Processing Router V0](./architecture/PROCESSING_ROUTER_V0.md)
+23. [ADR-0012 guided-processing beta upgrade](./decisions/ADR-0012-GUIDED-PROCESSING-LARGE-UPLOADS-AUDIOGRAMS.md)
 
 ## Architecture decision records
 
@@ -55,6 +56,7 @@ complete Studio. ADR-0011 records this superseding deployment direction.
 - [ADR-0009: Keep Google hosting and make Studio settings/template-driven](./decisions/ADR-0009-GOOGLE-HOSTING-RICH-STUDIO.md)
 - [ADR-0010: Cloud Run + GitHub private-beta checkpoint](./decisions/ADR-0010-CLOUD-RUN-GITHUB-PRIVATE-BETA.md)
 - [ADR-0011: Make the new Cloud Run service the baseline](./decisions/ADR-0011-FRESH-CLOUD-RUN-BASELINE.md)
+- [ADR-0012: Ship guided processing, large uploads, and audiograms](./decisions/ADR-0012-GUIDED-PROCESSING-LARGE-UPLOADS-AUDIOGRAMS.md)
 
 ## Governing rules
 

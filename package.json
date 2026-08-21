@@ -1,7 +1,7 @@
 {
   "name": "ampersand-studio-beta",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --config apps/web/vite.config.ts",
@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "beta:start": "node apps/worker-control/server.js",
     "beta:test": "node --test apps/worker-control/*.test.js",
-    "beta:check": "node --check apps/worker-control/server.js && node --check apps/worker-control/storage.js",
+    "beta:check": "node --check apps/worker-control/server.js && node --check apps/worker-control/storage.js && node --check apps/worker-control/gcs.js",
     "legacy:dev": "vite --config vite.config.ts",
     "legacy:build": "tsc && vite build",
     "v2:sync": "uv sync --all-packages --dev",

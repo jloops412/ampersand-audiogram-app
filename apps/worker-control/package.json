@@ -1,12 +1,12 @@
 {
   "name": "@ampersand/worker-control-beta",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check storage.js"
+    "check": "node --check server.js && node --check storage.js && node --check gcs.js"
   },
   "dependencies": {
     "express": "^4.21.2",

@@ -6,12 +6,20 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any, cast
 
-from ampersand_contracts import LoudnessMeasurement, MasteringSettings, MediaProbe
+from ampersand_contracts import (
+    AudiogramSettings,
+    CleanupSettings,
+    LoudnessMeasurement,
+    MasteringSettings,
+    MediaProbe,
+    OutputMetadataSettings,
+)
 
 from .errors import DependencyUnavailable, EngineError, InvalidMedia
 from .semantic_types import JsonValue, LoudnessFrame, LoudnessTimelineResult
@@ -273,12 +281,77 @@ def measure_loudness_timeline(
     )
 
 
+def render_cleanup_wav(
+    source: Path,
+    destination: Path,
+    *,
+    settings: CleanupSettings,
+    tools: FFmpegTools,
+) -> None:
+    """Apply the admitted global V1 cleanup chain to a new float working file."""
+
+    filters: list[str] = []
+    if settings.rumble_filter:
+        filters.append("highpass=f=70:poles=2")
+    denoise = {
+        "light": "afftdn=nr=6:nf=-55:tn=1:gs=4",
+        "balanced": "afftdn=nr=10:nf=-50:tn=1:gs=6",
+        "strong": "afftdn=nr=15:nf=-45:tn=1:gs=8",
+    }.get(settings.noise_reduction)
+    if denoise is not None:
+        filters.append(denoise)
+    compressor = {
+        "gentle": "acompressor=threshold=0.18:ratio=2:attack=20:release=250:makeup=1.15:knee=3:detection=rms",
+        "balanced": "acompressor=threshold=0.125:ratio=3:attack=12:release=180:makeup=1.30:knee=3:detection=rms",
+        "firm": "acompressor=threshold=0.09:ratio=4:attack=8:release=130:makeup=1.45:knee=4:detection=rms",
+    }.get(settings.compression)
+    if compressor is not None:
+        filters.extend((compressor, "alimiter=limit=0.95:attack=5:release=50:level=false"))
+    if not filters:
+        raise ValueError("cleanup render requires at least one enabled cleanup control")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    _run(
+        [
+            tools.ffmpeg,
+            "-nostdin",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            str(source),
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-af",
+            ",".join(filters),
+            "-map_metadata",
+            "-1",
+            "-fflags",
+            "+bitexact",
+            "-flags:a",
+            "+bitexact",
+            "-ar",
+            "48000",
+            "-c:a",
+            "pcm_f32le",
+            "-y",
+            str(destination),
+        ],
+        failure_message="ffmpeg failed to render the admitted cleanup chain",
+    )
+
+
 def render_master_wav(
     source: Path,
     destination: Path,
     *,
     measurement: LoudnessMeasurement,
     settings: MasteringSettings,
+    title: str,
+    metadata: OutputMetadataSettings,
     tools: FFmpegTools,
 ) -> None:
     first_pass = _measure_loudnorm_pass(source, settings=settings, tools=tools)
@@ -315,6 +388,7 @@ def render_master_wav(
             loudnorm,
             "-map_metadata",
             "-1",
+            *_metadata_arguments(title, metadata),
             "-fflags",
             "+bitexact",
             "-flags:a",
@@ -336,6 +410,8 @@ def encode_master_mp3(
     tools: FFmpegTools,
     *,
     bitrate_kbps: int = 192,
+    title: str,
+    metadata: OutputMetadataSettings,
 ) -> None:
     if bitrate_kbps not in {128, 160, 192, 256, 320}:
         raise ValueError("unsupported MP3 bitrate")
@@ -356,6 +432,7 @@ def encode_master_mp3(
             "-vn",
             "-map_metadata",
             "-1",
+            *_metadata_arguments(title, metadata),
             "-fflags",
             "+bitexact",
             "-flags:a",
@@ -365,6 +442,8 @@ def encode_master_mp3(
             "-b:a",
             f"{bitrate_kbps}k",
             "-id3v2_version",
+            "3",
+            "-write_id3v1",
             "0",
             "-write_xing",
             "0",
@@ -373,6 +452,131 @@ def encode_master_mp3(
         ],
         failure_message="ffmpeg failed to encode the MP3 master",
     )
+
+
+def render_audiogram_mp4(
+    source_wav: Path,
+    destination: Path,
+    *,
+    title: str,
+    metadata: OutputMetadataSettings,
+    settings: AudiogramSettings,
+    artwork: Path | None,
+    tools: FFmpegTools,
+) -> None:
+    """Render a deterministic full-duration H.264 audiogram from the mastered WAV."""
+
+    if not settings.enabled:
+        raise ValueError("audiogram render requires audiogram.enabled")
+    if settings.background_mode == "artwork" and artwork is None:
+        raise ValueError("an uploaded background artwork is required for artwork mode")
+    if artwork is not None and not artwork.is_file():
+        raise InvalidMedia("The audiogram background artwork is unavailable.")
+
+    width, height = {
+        "square": (1080, 1080),
+        "portrait": (1080, 1920),
+        "landscape": (1920, 1080),
+    }[settings.aspect_ratio]
+    wave_width = int(width * 0.82)
+    wave_height = max(220, int(height * 0.30))
+    wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p"}[settings.waveform_style]
+    background = settings.background_color.removeprefix("#")
+    waveform = settings.waveform_color.removeprefix("#")
+    text_color = settings.text_color.removeprefix("#")
+    headline = settings.headline.strip() or title
+    subtitle = settings.subtitle.strip()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    temporary_files: list[Path] = []
+    try:
+        headline_file = _write_drawtext_file(destination.parent, headline)
+        temporary_files.append(headline_file)
+        subtitle_file = _write_drawtext_file(destination.parent, subtitle) if subtitle else None
+        if subtitle_file is not None:
+            temporary_files.append(subtitle_file)
+
+        input_arguments = (
+            ["-loop", "1", "-framerate", "30", "-i", str(artwork)]
+            if settings.background_mode == "artwork" and artwork is not None
+            else ["-f", "lavfi", "-i", f"color=c=0x{background}:s={width}x{height}:r=30"]
+        )
+        base_filter = (
+            f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase,"
+            f"crop={width}:{height},setsar=1,format=rgba,"
+            "drawbox=x=0:y=0:w=iw:h=ih:color=black@0.34:t=fill[background]"
+        )
+        wave_filter = (
+            f"[1:a]showwaves=s={wave_width}x{wave_height}:mode={wave_mode}:"
+            f"colors=0x{waveform}:rate=30:scale=sqrt,format=rgba,"
+            "colorkey=black:0.02:0.10[waveform]"
+        )
+        overlay_filter = "[background][waveform]overlay=(W-w)/2:(H-h)/2:shortest=1[composite]"
+        headline_size = max(34, int(width * 0.048))
+        title_filter = (
+            f"[composite]drawtext=fontfile={_filter_path(_font_path())}:"
+            f"textfile={_filter_path(headline_file)}:fontcolor=0x{text_color}:fontsize={headline_size}:"
+            "x=(w-text_w)/2:y=h*0.14:box=1:boxcolor=black@0.28:boxborderw=18"
+        )
+        if subtitle_file is not None:
+            subtitle_size = max(24, int(width * 0.027))
+            title_filter += (
+                f"[titled];[titled]drawtext=fontfile={_filter_path(_font_path())}:"
+                f"textfile={_filter_path(subtitle_file)}:fontcolor=0x{text_color}@0.86:"
+                f"fontsize={subtitle_size}:x=(w-text_w)/2:y=h*0.14+{headline_size + 54}[video]"
+            )
+        else:
+            title_filter += "[video]"
+        filter_complex = ";".join((base_filter, wave_filter, overlay_filter, title_filter))
+
+        _run(
+            [
+                tools.ffmpeg,
+                "-nostdin",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-protocol_whitelist",
+                "file,pipe",
+                *input_arguments,
+                "-i",
+                str(source_wav),
+                "-filter_complex",
+                filter_complex,
+                "-map",
+                "[video]",
+                "-map",
+                "1:a:0",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "22",
+                "-pix_fmt",
+                "yuv420p",
+                "-r",
+                "30",
+                "-threads",
+                "1",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-map_metadata",
+                "-1",
+                *_metadata_arguments(title, metadata),
+                "-movflags",
+                "+faststart",
+                "-shortest",
+                "-y",
+                str(destination),
+            ],
+            failure_message="ffmpeg failed to render the audiogram",
+        )
+    finally:
+        for temporary_file in temporary_files:
+            temporary_file.unlink(missing_ok=True)
 
 
 def decode_float32_command(
@@ -412,6 +616,55 @@ def decode_float32_command(
         ]
     )
     return command
+
+
+def _metadata_arguments(title: str, metadata: OutputMetadataSettings) -> list[str]:
+    values = {
+        "title": title,
+        "artist": metadata.artist,
+        "album": metadata.album,
+        "genre": metadata.genre,
+        "date": metadata.date,
+        "comment": metadata.comment,
+        "copyright": metadata.copyright,
+        "track": metadata.track_number,
+    }
+    arguments: list[str] = []
+    for key, value in values.items():
+        normalized = " ".join(value.replace("\x00", " ").split()).strip()
+        if normalized:
+            arguments.extend(("-metadata", f"{key}={normalized}"))
+    return arguments
+
+
+def _write_drawtext_file(directory: Path, value: str) -> Path:
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        newline="\n",
+        prefix=".audiogram-text-",
+        suffix=".txt",
+        dir=directory,
+        delete=False,
+    ) as handle:
+        handle.write(" ".join(value.replace("\x00", " ").split())[:160])
+        return Path(handle.name)
+
+
+def _filter_path(path: Path) -> str:
+    value = str(path)
+    return "'" + value.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'") + "'"
+
+
+def _font_path() -> Path:
+    candidates = (
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"),
+    )
+    font = next((candidate for candidate in candidates if candidate.is_file()), None)
+    if font is None:
+        raise DependencyUnavailable("Ampersand requires an installed TrueType font for audiogram titles.")
+    return font
 
 
 def subprocess_environment() -> dict[str, str]:

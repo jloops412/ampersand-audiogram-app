@@ -1,6 +1,6 @@
 # Ampersand
 
-**Status:** V2 implementation is active; private-beta deployment candidate is ready for review
+**Status:** V2 implementation is active; guided-processing private-beta upgrade is ready for review
 
 **Studio/control plane:** new Cloud Run V1 beta deployed from reviewed GitHub `main`
 
@@ -15,11 +15,13 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 
 ## What works now
 
-- a responsive private-beta Studio with a production library, upload/drop, progress, retry, delete, and downloads;
-- four useful quick-start intents plus executable loudness, true-peak, loudness-range, WAV/MP3, and bitrate controls;
+- a responsive private-beta Studio with a production library, single/batch upload, progress, retry, delete, and downloads;
+- private resumable browser-to-Cloud-Storage uploads up to 1 GiB without proxying source bytes through Cloud Run;
+- four useful quick-start intents plus executable noise reduction, rumble filtering, compression, loudness, true-peak,
+  loudness-range, output-format, bitrate, metadata, and audiogram controls;
 - browser-local reusable templates with immutable versions and an exact resolved-settings snapshot on every run;
 - same-position Original/Master playback, precomputed waveforms, measured results, and an understandable report;
-- a lightweight one-at-a-time control runner with durable job/source/output records and restart recovery;
+- a lightweight serial batch runner with independent durable job/source/output records and restart recovery;
 - strict provider-neutral V2 contracts and exported JSON Schemas;
 - a local, no-credential media-engine CLI;
 - immutable source hashing and normalized media probing;
@@ -36,6 +38,9 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - a deterministic Adaptive Leveler V0 shadow envelope with bounded speaker/content-aware gain and Studio-ready reasoning;
 - a sample-accurate, channel-linked, evaluation-only Leveler renderer that leaves production masters unchanged;
 - deterministic two-pass WAV/MP3 loudness mastering;
+- conservative deterministic high-pass, steady-noise reduction, and compression processing;
+- full-duration H.264/AAC audiograms with square, portrait, and landscape layouts, three waveform styles, solid colors,
+  or uploaded background artwork;
 - a versioned, rights-clear synthetic Audio Lab corpus with controls, degradations, lineage, and an opt-in one-hour stream;
 - a local-only blinded listening/regression harness with deterministic loudness-matched Original/A/B and clean-input
   preservation sessions, delayed identity reveal, artifact scoring, diagnostics, and tamper-checked reports;
@@ -43,7 +48,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - tests that reproduce manifests and media hashes across repeated runs.
 
 This is the content-aware deterministic engine foundation, not a claim that the Adaptive Leveler, active Router,
-neural cleanup, checkpoint-backed VAD, ASR, or audiogram renderer is finished.
+neural restoration, background-music separation, dereverberation, checkpoint-backed VAD, or ASR is finished. The active
+beta denoiser is intentionally limited to conservative steady-noise reduction.
 
 ## Run the independent engine
 
@@ -100,6 +106,7 @@ production-run.json
 steps/*.json
 artifacts/master.wav
 artifacts/master.mp3
+artifacts/audiogram.mp4       # only when requested
 output-manifest.json
 processing-report.json
 ```
@@ -131,8 +138,9 @@ AMPERSAND_BETA_TOKEN="replace-with-a-long-random-key" \
 node apps/worker-control/server.js
 ```
 
-Open `http://localhost:8080`. The first Cloud Run beta intentionally caps direct browser uploads at 30 MiB; resumable
-direct-to-object-storage upload remains the next durability step.
+Open `http://localhost:8080`. Multipart upload remains capped at 30 MiB for local fallback. A configured Cloud Run beta
+uses scoped resumable browser-to-Cloud-Storage sessions for source files up to 1 GiB; the bucket must use the reviewed
+origin-specific CORS policy in `infra/cloud-storage-cors.json`.
 
 See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md),
 [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md),
@@ -184,7 +192,7 @@ Original media is immutable. Expensive work is checkpointable. Provider-native r
 7. #7/#8/#23 — enhancement, speech understanding, and active Processing Router promotion;
 8. #24/#25/#26 — durable engine, Studio integration, A/B, and report;
 9. #13 — one-hour recovery proof;
-10. #27 — deterministic professional audiogram renderer.
+10. #27 — expand the deterministic audiogram renderer with captions, clip selection, and richer motion styles.
 
 Issue #24 now includes an intentionally narrow private-beta publish checkpoint. It creates the new Ampersand Cloud Run
 baseline from GitHub. Older deployments are deprecated and may be inventoried and removed after this service is verified;

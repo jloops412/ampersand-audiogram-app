@@ -14,9 +14,16 @@ const OPAQUE_ID = /^[a-z0-9][a-z0-9._:-]{1,127}$/;
 function isSettings(value: unknown): value is ProductionSettings {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<ProductionSettings>;
+  const cleanup = candidate.cleanup;
   const mastering = candidate.mastering;
+  const metadata = candidate.metadata;
+  const audiogram = candidate.audiogram;
   const delivery = candidate.export;
   return Boolean(
+    cleanup &&
+      ['off', 'light', 'balanced', 'strong'].includes(cleanup.noise_reduction) &&
+      typeof cleanup.rumble_filter === 'boolean' &&
+      ['off', 'gentle', 'balanced', 'firm'].includes(cleanup.compression) &&
     mastering &&
       delivery &&
       Number.isFinite(mastering.target_integrated_lufs) &&
@@ -28,6 +35,16 @@ function isSettings(value: unknown): value is ProductionSettings {
       Number.isFinite(mastering.target_loudness_range_lu) &&
       mastering.target_loudness_range_lu >= 5 &&
       mastering.target_loudness_range_lu <= 30 &&
+      metadata &&
+      Object.values(metadata).every((item) => typeof item === 'string') &&
+      audiogram &&
+      typeof audiogram.enabled === 'boolean' &&
+      ['square', 'portrait', 'landscape'].includes(audiogram.aspect_ratio) &&
+      ['line', 'mirrored', 'bars'].includes(audiogram.waveform_style) &&
+      ['color', 'artwork'].includes(audiogram.background_mode) &&
+      [audiogram.background_color, audiogram.waveform_color, audiogram.text_color].every((color) =>
+        /^#[0-9a-f]{6}$/i.test(color),
+      ) &&
       typeof delivery.wav === 'boolean' &&
       typeof delivery.mp3 === 'boolean' &&
       (delivery.wav || delivery.mp3) &&
@@ -65,12 +82,38 @@ function settings(
   peak: number,
   range: number,
   mp3Bitrate: 128 | 160 | 192 | 256 | 320 = 192,
+  cleanup: ProductionSettings['cleanup'] = {
+    noise_reduction: 'balanced',
+    rumble_filter: true,
+    compression: 'balanced',
+  },
 ): ProductionSettings {
   return {
+    cleanup,
     mastering: {
       target_integrated_lufs: target,
       max_true_peak_dbtp: peak,
       target_loudness_range_lu: range,
+    },
+    metadata: {
+      artist: '',
+      album: '',
+      genre: 'Spoken Word',
+      date: '',
+      comment: '',
+      copyright: '',
+      track_number: '',
+    },
+    audiogram: {
+      enabled: false,
+      aspect_ratio: 'square',
+      waveform_style: 'mirrored',
+      background_mode: 'color',
+      background_color: '#111718',
+      waveform_color: '#e1b977',
+      text_color: '#f4f1ea',
+      headline: '',
+      subtitle: '',
     },
     export: { wav: true, mp3: true, mp3_bitrate_kbps: mp3Bitrate },
   };
@@ -94,7 +137,11 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
     name: 'Natural voice',
     version: 1,
     intent: 'natural_voice',
-    settings: settings(-18, -1.5, 14, 192),
+    settings: settings(-18, -1.5, 14, 192, {
+      noise_reduction: 'light',
+      rumble_filter: true,
+      compression: 'gentle',
+    }),
     builtIn: true,
   },
   {
@@ -104,7 +151,11 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
     name: 'Broadcast delivery',
     version: 1,
     intent: 'broadcast',
-    settings: settings(-23, -1, 7, 256),
+    settings: settings(-23, -1, 7, 256, {
+      noise_reduction: 'balanced',
+      rumble_filter: true,
+      compression: 'firm',
+    }),
     builtIn: true,
   },
   {
@@ -114,7 +165,11 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
     name: 'Social voice',
     version: 1,
     intent: 'social_voice',
-    settings: settings(-14, -1, 8, 192),
+    settings: settings(-14, -1, 8, 192, {
+      noise_reduction: 'balanced',
+      rumble_filter: true,
+      compression: 'firm',
+    }),
     builtIn: true,
   },
 ];
@@ -123,10 +178,36 @@ export function cloneSettings(value: ProductionSettings): ProductionSettings {
   return structuredClone(value);
 }
 
+function migrateSettings(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value;
+  const candidate = value as Partial<ProductionSettings>;
+  const fallback = settings(-16, -1, 11);
+  return {
+    cleanup: candidate.cleanup || fallback.cleanup,
+    mastering: candidate.mastering,
+    metadata: { ...fallback.metadata, ...(candidate.metadata || {}) },
+    audiogram: { ...fallback.audiogram, ...(candidate.audiogram || {}) },
+    export: candidate.export,
+  };
+}
+
 export function loadUserTemplates(): UserTemplate[] {
   try {
     const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') as unknown;
-    return Array.isArray(value) ? value.filter(isUserTemplate).map((template) => structuredClone(template)) : [];
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') return entry;
+        const candidate = entry as Partial<UserTemplate>;
+        return {
+          ...candidate,
+          versions: Array.isArray(candidate.versions)
+            ? candidate.versions.map((version) => ({ ...version, settings: migrateSettings(version?.settings) }))
+            : candidate.versions,
+        };
+      })
+      .filter(isUserTemplate)
+      .map((template) => structuredClone(template));
   } catch {
     return [];
   }

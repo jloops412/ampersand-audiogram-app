@@ -3,8 +3,11 @@ from __future__ import annotations
 from typing import Literal
 
 from ampersand_contracts import (
+    AudiogramSettings,
+    CleanupSettings,
     ExportSettings,
     MasteringSettings,
+    OutputMetadataSettings,
     ProductionSettings,
     RecipeVersion,
     ResolvedProductionSettings,
@@ -16,18 +19,56 @@ from .hashing import sha256_text, stable_id
 ProductionIntent = Literal["podcast", "natural_voice", "broadcast", "social_voice"]
 SettingsSource = Literal["recipe", "template", "run_override"]
 SettingPath = Literal[
+    "cleanup.noise_reduction",
+    "cleanup.rumble_filter",
+    "cleanup.compression",
     "mastering.target_integrated_lufs",
     "mastering.max_true_peak_dbtp",
     "mastering.target_loudness_range_lu",
+    "metadata.artist",
+    "metadata.album",
+    "metadata.genre",
+    "metadata.date",
+    "metadata.comment",
+    "metadata.copyright",
+    "metadata.track_number",
+    "audiogram.enabled",
+    "audiogram.aspect_ratio",
+    "audiogram.waveform_style",
+    "audiogram.background_mode",
+    "audiogram.background_color",
+    "audiogram.waveform_color",
+    "audiogram.text_color",
+    "audiogram.headline",
+    "audiogram.subtitle",
     "export.wav",
     "export.mp3",
     "export.mp3_bitrate_kbps",
 ]
 
 _SETTING_PATHS: tuple[SettingPath, ...] = (
+    "cleanup.noise_reduction",
+    "cleanup.rumble_filter",
+    "cleanup.compression",
     "mastering.target_integrated_lufs",
     "mastering.max_true_peak_dbtp",
     "mastering.target_loudness_range_lu",
+    "metadata.artist",
+    "metadata.album",
+    "metadata.genre",
+    "metadata.date",
+    "metadata.comment",
+    "metadata.copyright",
+    "metadata.track_number",
+    "audiogram.enabled",
+    "audiogram.aspect_ratio",
+    "audiogram.waveform_style",
+    "audiogram.background_mode",
+    "audiogram.background_color",
+    "audiogram.waveform_color",
+    "audiogram.text_color",
+    "audiogram.headline",
+    "audiogram.subtitle",
     "export.wav",
     "export.mp3",
     "export.mp3_bitrate_kbps",
@@ -36,11 +77,14 @@ _SETTING_PATHS: tuple[SettingPath, ...] = (
 
 def default_production_settings(recipe: RecipeVersion) -> ProductionSettings:
     return ProductionSettings(
+        cleanup=CleanupSettings(),
         mastering=MasteringSettings(
             target_integrated_lufs=recipe.target_integrated_lufs,
             max_true_peak_dbtp=recipe.max_true_peak_dbtp,
             target_loudness_range_lu=recipe.target_loudness_range_lu,
         ),
+        metadata=OutputMetadataSettings(),
+        audiogram=AudiogramSettings(),
         export=ExportSettings(
             wav="wav" in recipe.output_formats,
             mp3="mp3" in recipe.output_formats,
@@ -90,7 +134,9 @@ def resolve_production_settings(
         settings_sha256=settings_sha,
         field_provenance={path: settings_source for path in _SETTING_PATHS},
         warnings=(
-            "Cleanup routing and Adaptive Leveler analysis remain shadow-only in this private beta; "
-            "the executable controls affect deterministic final mastering and delivery encodes.",
+            "The selected deterministic cleanup and compression controls are applied globally before final mastering. "
+            "They are conservative V1 baselines, not neural restoration.",
+            "True background-music separation, dereverberation, and Adaptive Leveler rendering remain protected "
+            "until their model, listening, and promotion gates pass.",
         ),
     )

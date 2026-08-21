@@ -4,6 +4,7 @@ import {
   ApiError,
   createProduction,
   deleteProduction,
+  getCapabilities,
   getProduction,
   getWaveform,
   listProductions,
@@ -20,6 +21,7 @@ import {
   saveUserTemplates,
 } from './templates';
 import type {
+  Capabilities,
   Production,
   ProductionIntent,
   ProductionSettings,
@@ -30,7 +32,6 @@ import type {
 import { Waveform } from './Waveform';
 
 type View = 'library' | 'new' | 'production';
-const MAX_DIRECT_UPLOAD_BYTES = 30 * 1024 * 1024;
 
 const STEP_LABELS = [
   ['validate/probe', 'Validate source'],
@@ -38,7 +39,9 @@ const STEP_LABELS = [
   ['measure, build waveform, and analyze semantics', 'Analyze audio'],
   ['build Processing Router V0 shadow plan', 'Plan safe processing'],
   ['plan Adaptive Leveler shadow candidate', 'Analyze leveling'],
+  ['apply deterministic cleanup and compression', 'Clean noise and even dynamics'],
   ['render deterministic WAV and MP3', 'Master and encode'],
+  ['render audiogram MP4', 'Render audiogram'],
   ['validate outputs and report', 'Validate delivery'],
 ] as const;
 
@@ -196,11 +199,13 @@ function NewProductionView({
   onCreated,
   onCancel,
 }: {
-  onCreated: (production: Production) => void;
+  onCreated: (productions: Production[]) => void;
   onCancel: () => void;
 }) {
-  const [source, setSource] = useState<File | null>(null);
+  const [sources, setSources] = useState<File[]>([]);
   const [title, setTitle] = useState('');
+  const [artwork, setArtwork] = useState<File | null>(null);
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [userTemplates, setUserTemplates] = useState<UserTemplate[]>(loadUserTemplates);
   const allTemplates = useMemo(
     () => [...BUILT_IN_TEMPLATES, ...flattenUserTemplates(userTemplates)],
@@ -213,8 +218,17 @@ function NewProductionView({
   const [templateName, setTemplateName] = useState('');
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState('');
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const artworkInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    getCapabilities().then(setCapabilities).catch((caught) => {
+      setError(caught instanceof Error ? caught.message : 'Could not read upload capabilities.');
+    });
+  }, []);
 
   const applyTemplate = (template: SelectableTemplate) => {
     setSelected(template);
@@ -241,33 +255,53 @@ function NewProductionView({
     setTemplateName(result.selected.name);
     setDirty(false);
   };
-  const acceptFile = (file: File | null) => {
-    if (!file) return;
-    if (file.size > MAX_DIRECT_UPLOAD_BYTES) {
-      setSource(null);
-      setError('This first Cloud Run beta accepts files up to 30 MB. Direct-to-storage uploads are next.');
+  const acceptFiles = (files: FileList | File[]) => {
+    const selectedFiles = Array.from(files);
+    if (!selectedFiles.length) return;
+    const maximum = capabilities?.directUpload.enabled
+      ? capabilities.directUpload.maxBytes
+      : capabilities?.maxUploadBytes || 30 * 1024 * 1024;
+    const tooLarge = selectedFiles.find((file) => file.size > maximum);
+    if (tooLarge) {
+      setError(`${tooLarge.name} is larger than this revision's ${formatBytes(maximum)} upload limit.`);
       return;
     }
-    setSource(file);
-    if (!title) setTitle(file.name.replace(/\.[^.]+$/, ''));
+    setSources(selectedFiles);
+    if (!title && selectedFiles.length === 1) setTitle(selectedFiles[0].name.replace(/\.[^.]+$/, ''));
     setError('');
   };
   const submit = async () => {
-    if (!source) {
-      setError('Choose an audio file first.');
+    if (!sources.length || !capabilities) {
+      setError(capabilities ? 'Choose at least one audio file first.' : 'Upload capabilities are still loading.');
+      return;
+    }
+    if (settings.audiogram.enabled && settings.audiogram.background_mode === 'artwork' && !artwork) {
+      setError('Choose background artwork for the audiogram.');
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const production = await createProduction({
-        source,
-        title: title.trim() || source.name,
-        intent,
-        templateVersionId: dirty ? null : selected.templateVersionId,
-        settings,
-      });
-      onCreated(production);
+      const created: Production[] = [];
+      for (let index = 0; index < sources.length; index += 1) {
+        const source = sources[index];
+        const production = await createProduction({
+          source,
+          artwork:
+            settings.audiogram.enabled && settings.audiogram.background_mode === 'artwork' ? artwork : null,
+          title: sources.length === 1 ? title.trim() || source.name : source.name.replace(/\.[^.]+$/, ''),
+          intent,
+          templateVersionId: dirty ? null : selected.templateVersionId,
+          settings,
+          capabilities,
+          onProgress: (progress, phase) => {
+            setUploadProgress(((index + progress / 100) / sources.length) * 100);
+            setUploadPhase(`${phase} · file ${index + 1} of ${sources.length}`);
+          },
+        });
+        created.push(production);
+      }
+      onCreated(created);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not start this production.');
     } finally {
@@ -291,24 +325,24 @@ function NewProductionView({
           <section className="studio-section">
             <div className="section-number">01</div>
             <div className="section-content">
-              <div className="section-heading"><div><h2>Add your audio</h2><p>WAV, MP3, M4A, FLAC, or another FFmpeg-readable audio file · 30 MB beta limit.</p></div></div>
+              <div className="section-heading"><div><h2>Add your audio</h2><p>Choose one file or a batch. Large WAV, MP3, M4A, FLAC, OGG, Opus, and other FFmpeg-readable formats upload directly to private storage.</p></div><span className="live-chip">Resumable</span></div>
               <div
-                className={`drop-zone ${dragging ? 'is-dragging' : ''} ${source ? 'has-file' : ''}`}
+                className={`drop-zone ${dragging ? 'is-dragging' : ''} ${sources.length ? 'has-file' : ''}`}
                 onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
                 onDragOver={(event) => event.preventDefault()}
                 onDragLeave={() => setDragging(false)}
-                onDrop={(event) => { event.preventDefault(); setDragging(false); acceptFile(event.dataTransfer.files[0] || null); }}
+                onDrop={(event) => { event.preventDefault(); setDragging(false); acceptFiles(event.dataTransfer.files); }}
                 onClick={() => fileInputRef.current?.click()}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') fileInputRef.current?.click(); }}
               >
-                <input ref={fileInputRef} type="file" accept="audio/*,.m4a,.flac,.ogg,.opus" onChange={(event) => acceptFile(event.target.files?.[0] || null)} hidden />
+                <input ref={fileInputRef} type="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.aac,.aiff,.wma,.caf,.ac3,.alac,.amr,.ape,.mka,.webm,.mp4,.mov,.3gp" multiple onChange={(event) => { if (event.target.files) acceptFiles(event.target.files); }} hidden />
                 <span className="upload-glyph" aria-hidden="true">↑</span>
-                {source ? <><strong>{source.name}</strong><span>{formatBytes(source.size)} · click to replace</span></> : <><strong>Drop audio here</strong><span>or choose a file from your device</span></>}
+                {sources.length ? <><strong>{sources.length === 1 ? sources[0].name : `${sources.length} files selected`}</strong><span>{formatBytes(sources.reduce((total, file) => total + file.size, 0))} · click to replace</span></> : <><strong>Drop audio here</strong><span>or choose one or many files from your device</span></>}
               </div>
-              <label className="field-label" htmlFor="production-title">Production title</label>
-              <input id="production-title" className="text-input" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Episode, ceremony, interview…" />
+              {sources.length > 1 && <div className="batch-list">{sources.map((file, index) => <div key={`${file.name}-${file.size}-${index}`}><span>{String(index + 1).padStart(2, '0')}</span><strong>{file.name}</strong><small>{formatBytes(file.size)}</small></div>)}</div>}
+              {sources.length <= 1 && <><label className="field-label" htmlFor="production-title">Production title</label><input id="production-title" className="text-input" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Episode, ceremony, interview…" /></>}
             </div>
           </section>
 
@@ -345,8 +379,17 @@ function NewProductionView({
           <section className="studio-section">
             <div className="section-number">03</div>
             <div className="section-content">
-              <div className="section-heading"><div><h2>Mastering settings</h2><p>Safe beta ranges, stored exactly with this run.</p></div><span className="live-chip">Executable</span></div>
-              <div className="control-stack">
+              <div className="section-heading"><div><h2>Cleanup &amp; mastering</h2><p>The selected starting point already chooses a sensible delivery level. Adjust only when you have a reason.</p></div><span className="live-chip">Executable</span></div>
+              <div className="guided-banner"><span>✓</span><div><strong>Recommended target selected: {settings.mastering.target_integrated_lufs.toFixed(1)} LUFS</strong><p>{INTENT_COPY[intent].description} Ampersand will measure, normalize, and verify it automatically.</p></div></div>
+              <div className="cleanup-grid">
+                <label className="select-card"><span>Background noise</span><select value={settings.cleanup.noise_reduction} onChange={(event) => updateSettings((next) => { next.cleanup.noise_reduction = event.target.value as ProductionSettings['cleanup']['noise_reduction']; return next; })}><option value="off">Off</option><option value="light">Light · safest</option><option value="balanced">Balanced · recommended</option><option value="strong">Strong · review carefully</option></select><small>Reduces steady room, fan, and broadband noise. This is not music separation.</small></label>
+                <label className="select-card"><span>Voice compression</span><select value={settings.cleanup.compression} onChange={(event) => updateSettings((next) => { next.cleanup.compression = event.target.value as ProductionSettings['cleanup']['compression']; return next; })}><option value="off">Off</option><option value="gentle">Gentle</option><option value="balanced">Balanced · recommended</option><option value="firm">Firm · voice-forward</option></select><small>Evens broad dynamics before the final measured loudness pass.</small></label>
+                <label className={`toggle-card ${settings.cleanup.rumble_filter ? 'selected' : ''}`}><input type="checkbox" checked={settings.cleanup.rumble_filter} onChange={(event) => updateSettings((next) => { next.cleanup.rumble_filter = event.target.checked; return next; })} /><div><strong>Remove low rumble</strong><small>Filters handling noise and energy below typical speech fundamentals.</small></div></label>
+              </div>
+              <details className="advanced-controls">
+                <summary>Advanced loudness controls</summary>
+                <p>Use these when a publisher or broadcaster gives you a specific delivery standard.</p>
+                <div className="control-stack">
                 <label className="range-control">
                   <span><strong>Integrated loudness</strong><small>Overall delivery level</small></span>
                   <input type="range" min="-24" max="-14" step="0.5" value={settings.mastering.target_integrated_lufs} onChange={(event) => updateSettings((next) => { next.mastering.target_integrated_lufs = Number(event.target.value); return next; })} />
@@ -363,17 +406,52 @@ function NewProductionView({
                   <output>{settings.mastering.target_loudness_range_lu.toFixed(0)} LU</output>
                 </label>
               </div>
+              </details>
 
               <div className="engine-boundaries">
                 <article><span className="boundary-icon">◎</span><div><strong>Semantic analysis</strong><p>Waveform, loudness, speech probability, and safe routing report included.</p></div><em>On</em></article>
                 <article><span className="boundary-icon">≈</span><div><strong>Adaptive Leveler</strong><p>Analyzed and reported, but not yet applied until listening approval.</p></div><em>Shadow</em></article>
-                <article><span className="boundary-icon">✦</span><div><strong>Neural cleanup</strong><p>Protected in this beta; no private audio is sent to an outside processor.</p></div><em>Off</em></article>
+                <article><span className="boundary-icon">✦</span><div><strong>Music separation &amp; dereverb</strong><p>These need qualified restoration models; the current beta does not mislabel basic filtering as either feature.</p></div><em>Next</em></article>
               </div>
             </div>
           </section>
 
           <section className="studio-section">
             <div className="section-number">04</div>
+            <div className="section-content">
+              <div className="section-heading"><div><h2>Output metadata</h2><p>The production title becomes the file title tag. Add reusable creator and series details here.</p></div><span className="live-chip">Embedded</span></div>
+              <div className="metadata-grid">
+                <label><span>Artist / creator</span><input className="text-input" value={settings.metadata.artist} onChange={(event) => updateSettings((next) => { next.metadata.artist = event.target.value; return next; })} placeholder="Creator or organization" /></label>
+                <label><span>Album / series</span><input className="text-input" value={settings.metadata.album} onChange={(event) => updateSettings((next) => { next.metadata.album = event.target.value; return next; })} placeholder="Podcast or collection" /></label>
+                <label><span>Genre</span><input className="text-input" value={settings.metadata.genre} onChange={(event) => updateSettings((next) => { next.metadata.genre = event.target.value; return next; })} placeholder="Spoken Word" /></label>
+                <label><span>Date</span><input className="text-input" value={settings.metadata.date} onChange={(event) => updateSettings((next) => { next.metadata.date = event.target.value; return next; })} placeholder="2026-08-20" /></label>
+                <label><span>Track number</span><input className="text-input" value={settings.metadata.track_number} onChange={(event) => updateSettings((next) => { next.metadata.track_number = event.target.value; return next; })} placeholder="12" /></label>
+                <label><span>Copyright</span><input className="text-input" value={settings.metadata.copyright} onChange={(event) => updateSettings((next) => { next.metadata.copyright = event.target.value; return next; })} placeholder="© Owner" /></label>
+                <label className="wide"><span>Comment</span><input className="text-input" value={settings.metadata.comment} onChange={(event) => updateSettings((next) => { next.metadata.comment = event.target.value; return next; })} placeholder="Optional delivery note" /></label>
+              </div>
+            </div>
+          </section>
+
+          <section className="studio-section">
+            <div className="section-number">05</div>
+            <div className="section-content">
+              <div className="section-heading"><div><h2>Audiogram</h2><p>Create a full-duration H.264 MP4 on the server with a branded waveform and optional background artwork.</p></div><span className="live-chip">Rendered</span></div>
+              <label className={`toggle-card hero-toggle ${settings.audiogram.enabled ? 'selected' : ''}`}><input type="checkbox" checked={settings.audiogram.enabled} onChange={(event) => updateSettings((next) => { next.audiogram.enabled = event.target.checked; return next; })} /><div><strong>Create an audiogram MP4</strong><small>Uses the mastered audio; no browser recording and no third-party renderer.</small></div></label>
+              {settings.audiogram.enabled && <div className="audiogram-controls">
+                <div className="three-up">
+                  <label className="select-card"><span>Canvas</span><select value={settings.audiogram.aspect_ratio} onChange={(event) => updateSettings((next) => { next.audiogram.aspect_ratio = event.target.value as ProductionSettings['audiogram']['aspect_ratio']; return next; })}><option value="square">Square · 1080×1080</option><option value="portrait">Portrait · 1080×1920</option><option value="landscape">Landscape · 1920×1080</option></select></label>
+                  <label className="select-card"><span>Waveform</span><select value={settings.audiogram.waveform_style} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_style = event.target.value as ProductionSettings['audiogram']['waveform_style']; return next; })}><option value="line">Line</option><option value="mirrored">Mirrored</option><option value="bars">Bars</option></select></label>
+                  <label className="select-card"><span>Background</span><select value={settings.audiogram.background_mode} onChange={(event) => updateSettings((next) => { next.audiogram.background_mode = event.target.value as ProductionSettings['audiogram']['background_mode']; return next; })}><option value="color">Solid color</option><option value="artwork">Uploaded artwork</option></select></label>
+                </div>
+                {settings.audiogram.background_mode === 'artwork' && <div className="artwork-picker"><input ref={artworkInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => setArtwork(event.target.files?.[0] || null)} /><button className="button button-secondary" onClick={() => artworkInputRef.current?.click()}>{artwork ? 'Replace artwork' : 'Choose background artwork'}</button><span>{artwork ? `${artwork.name} · ${formatBytes(artwork.size)}` : 'JPG, PNG, or WebP · up to 25 MB'}</span></div>}
+                <div className="color-row"><label><span>Background</span><input type="color" value={settings.audiogram.background_color} onChange={(event) => updateSettings((next) => { next.audiogram.background_color = event.target.value; return next; })} /></label><label><span>Waveform</span><input type="color" value={settings.audiogram.waveform_color} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_color = event.target.value; return next; })} /></label><label><span>Text</span><input type="color" value={settings.audiogram.text_color} onChange={(event) => updateSettings((next) => { next.audiogram.text_color = event.target.value; return next; })} /></label></div>
+                <div className="metadata-grid"><label><span>Headline override</span><input className="text-input" value={settings.audiogram.headline} onChange={(event) => updateSettings((next) => { next.audiogram.headline = event.target.value; return next; })} placeholder="Uses production title when blank" /></label><label><span>Subtitle</span><input className="text-input" value={settings.audiogram.subtitle} onChange={(event) => updateSettings((next) => { next.audiogram.subtitle = event.target.value; return next; })} placeholder="Show, speaker, or call to action" /></label></div>
+              </div>}
+            </div>
+          </section>
+
+          <section className="studio-section">
+            <div className="section-number">06</div>
             <div className="section-content">
               <div className="section-heading"><div><h2>Delivery</h2><p>Choose one or both validated outputs.</p></div></div>
               <div className="delivery-grid">
@@ -400,16 +478,18 @@ function NewProductionView({
         <aside className="run-sidebar">
           <div className="run-card">
             <p className="eyebrow">Run summary</p>
-            <h2>{title || source?.name.replace(/\.[^.]+$/, '') || 'Untitled production'}</h2>
+            <h2>{sources.length > 1 ? `${sources.length}-file batch` : title || sources[0]?.name.replace(/\.[^.]+$/, '') || 'Untitled production'}</h2>
             <dl className="summary-list">
               <div><dt>Starting point</dt><dd>{selected.name}{dirty ? ' · modified' : ` · v${selected.version}`}</dd></div>
+              <div><dt>Cleanup</dt><dd>{settings.cleanup.noise_reduction} noise · {settings.cleanup.compression} compression</dd></div>
               <div><dt>Loudness</dt><dd>{settings.mastering.target_integrated_lufs.toFixed(1)} LUFS</dd></div>
               <div><dt>Peak ceiling</dt><dd>{settings.mastering.max_true_peak_dbtp.toFixed(1)} dBTP</dd></div>
-              <div><dt>Outputs</dt><dd>{[settings.export.wav && 'WAV', settings.export.mp3 && 'MP3'].filter(Boolean).join(' + ')}</dd></div>
+              <div><dt>Outputs</dt><dd>{[settings.export.wav && 'WAV', settings.export.mp3 && 'MP3', settings.audiogram.enabled && 'MP4'].filter(Boolean).join(' + ')}</dd></div>
             </dl>
             <div className="privacy-note"><span>⌾</span><p><strong>Private by design</strong> No hosted audio processor, no external processing API, no training use.</p></div>
             {error && <p className="form-error" role="alert">{error}</p>}
-            <button className="button button-primary button-block" onClick={submit} disabled={busy || !source}>{busy ? 'Uploading…' : 'Create master'}</button>
+            {busy && <div className="upload-progress"><span style={{ width: `${uploadProgress}%` }} /><small>{uploadPhase || 'Preparing uploads'}</small></div>}
+            <button className="button button-primary button-block" onClick={submit} disabled={busy || !sources.length || !capabilities}>{busy ? `Uploading ${Math.round(uploadProgress)}%` : sources.length > 1 ? `Queue ${sources.length} productions` : 'Create master'}</button>
             <small className="run-hint">You may close this page after the job is queued.</small>
           </div>
           <div className="template-save-card">
@@ -476,6 +556,8 @@ function ProductionView({ production, onBack, onRetry, onDelete }: { production:
             <audio ref={audioRef} src={audioUrl} controls preload="metadata" onLoadedMetadata={restorePosition} />
           </section>
 
+          {production.outputs.audiogram && <section className="audiogram-result"><div><p className="eyebrow">Audiogram preview</p><h2>Ready for video delivery.</h2><p>{production.settings.audiogram.aspect_ratio} · {production.settings.audiogram.waveform_style} waveform</p></div><video src={production.outputs.audiogram} controls preload="metadata" /></section>}
+
           <div className="result-grid">
             <section className="result-card loudness-card">
               <p className="eyebrow">Measured delivery</p>
@@ -487,6 +569,7 @@ function ProductionView({ production, onBack, onRetry, onDelete }: { production:
               <div className="download-list">
                 {production.outputs.wav && <a href={production.outputs.wav} download><span>WAV</span><div><strong>24-bit master</strong><small>For archive and editing</small></div><b>↓</b></a>}
                 {production.outputs.mp3 && <a href={production.outputs.mp3} download><span>MP3</span><div><strong>{production.settings.export.mp3_bitrate_kbps} kbps delivery</strong><small>For upload and sharing</small></div><b>↓</b></a>}
+                {production.outputs.audiogram && <a href={production.outputs.audiogram} download><span>MP4</span><div><strong>Audiogram video</strong><small>H.264 video with mastered audio</small></div><b>↓</b></a>}
                 <a href={production.outputs.report} download><span>JSON</span><div><strong>Processing report</strong><small>Decisions, versions, and hashes</small></div><b>↓</b></a>
               </div>
             </section>
@@ -529,6 +612,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [globalError, setGlobalError] = useState('');
   const current = productions.find((production) => production.id === currentId) || null;
+  const hasActiveProductions = productions.some((production) => ['queued', 'running'].includes(production.status));
 
   const refresh = async () => {
     const values = await listProductions();
@@ -558,6 +642,13 @@ export default function App() {
     }, 1500);
     return () => window.clearInterval(timer);
   }, [current]);
+  useEffect(() => {
+    if (view !== 'library' || !hasActiveProductions) return;
+    const timer = window.setInterval(() => {
+      listProductions().then(setProductions).catch(() => {});
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [view, hasActiveProductions]);
 
   const openProduction = (id: string) => { setCurrentId(id); setView('production'); window.scrollTo(0, 0); };
   const removeProduction = async (id: string) => {
@@ -586,7 +677,7 @@ export default function App() {
       </header>
       {globalError && <div className="global-error" role="alert"><span>{globalError}</span><button onClick={() => setGlobalError('')}>×</button></div>}
       {view === 'library' && <LibraryView productions={productions} onOpen={openProduction} onNew={() => setView('new')} onDelete={(id) => void removeProduction(id)} />}
-      {view === 'new' && <NewProductionView onCancel={() => setView('library')} onCreated={(production) => { setProductions((items) => [production, ...items]); openProduction(production.id); }} />}
+      {view === 'new' && <NewProductionView onCancel={() => setView('library')} onCreated={(created) => { setProductions((items) => [...created, ...items.filter((item) => !created.some((production) => production.id === item.id))]); if (created.length === 1) openProduction(created[0].id); else setView('library'); }} />}
       {view === 'production' && current && <ProductionView production={current} onBack={() => setView('library')} onDelete={() => void removeProduction(current.id)} onRetry={() => { retryProduction(current.id).then((updated) => setProductions((items) => [updated, ...items.filter((item) => item.id !== updated.id)])).catch((caught) => setGlobalError(caught.message)); }} />}
       {view === 'production' && !current && <LibraryView productions={productions} onOpen={openProduction} onNew={() => setView('new')} onDelete={(id) => void removeProduction(id)} />}
       <footer><span>Ampersand beta · deterministic mastering</span><span>Independent engine · no external API cost</span></footer>
