@@ -1,0 +1,56 @@
+{
+  "additionalProperties": false,
+  "description": "Portable delivery tags written by FFmpeg without adding a metadata dependency.",
+  "properties": {
+    "album": {
+      "default": "",
+      "maxLength": 160,
+      "title": "Album",
+      "type": "string"
+    },
+    "artist": {
+      "default": "",
+      "maxLength": 160,
+      "title": "Artist",
+      "type": "string"
+    },
+    "comment": {
+      "default": "",
+      "maxLength": 512,
+      "title": "Comment",
+      "type": "string"
+    },
+    "copyright": {
+      "default": "",
+      "maxLength": 256,
+      "title": "Copyright",
+      "type": "string"
+    },
+    "date": {
+      "default": "",
+      "maxLength": 40,
+      "title": "Date",
+      "type": "string"
+    },
+    "genre": {
+      "default": "",
+      "maxLength": 80,
+      "title": "Genre",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "track_number": {
+      "default": "",
+      "maxLength": 32,
+      "title": "Track Number",
+      "type": "string"
+    }
+  },
+  "title": "OutputMetadataSettings",
+  "type": "object"
+}

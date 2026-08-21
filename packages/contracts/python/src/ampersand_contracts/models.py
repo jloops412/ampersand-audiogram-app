@@ -35,10 +35,12 @@ class SemanticContractModel(BaseModel):
 
 class AssetKind(StrEnum):
     SOURCE = "source"
+    BACKGROUND_ARTWORK = "background_artwork"
     CANONICAL_AUDIO = "canonical_audio"
     WAVEFORM = "waveform"
     MASTER_WAV = "master_wav"
     MASTER_MP3 = "master_mp3"
+    AUDIOGRAM_MP4 = "audiogram_mp4"
     MANIFEST = "manifest"
 
 
@@ -399,6 +401,40 @@ class MasteringSettings(ContractModel):
     target_loudness_range_lu: float = Field(ge=5.0, le=30.0)
 
 
+class CleanupSettings(ContractModel):
+    """Deterministic spoken-word cleanup controls admitted for the V1 beta."""
+
+    noise_reduction: Literal["off", "light", "balanced", "strong"] = "balanced"
+    rumble_filter: bool = True
+    compression: Literal["off", "gentle", "balanced", "firm"] = "balanced"
+
+
+class OutputMetadataSettings(ContractModel):
+    """Portable delivery tags written by FFmpeg without adding a metadata dependency."""
+
+    artist: str = Field(default="", max_length=160)
+    album: str = Field(default="", max_length=160)
+    genre: str = Field(default="", max_length=80)
+    date: str = Field(default="", max_length=40)
+    comment: str = Field(default="", max_length=512)
+    copyright: str = Field(default="", max_length=256)
+    track_number: str = Field(default="", max_length=32)
+
+
+class AudiogramSettings(ContractModel):
+    """Deterministic server-rendered audiogram controls for the V1 beta."""
+
+    enabled: bool = False
+    aspect_ratio: Literal["square", "portrait", "landscape"] = "square"
+    waveform_style: Literal["line", "mirrored", "bars"] = "mirrored"
+    background_mode: Literal["color", "artwork"] = "color"
+    background_color: str = Field(default="#111718", pattern=r"^#[0-9a-fA-F]{6}$")
+    waveform_color: str = Field(default="#e1b977", pattern=r"^#[0-9a-fA-F]{6}$")
+    text_color: str = Field(default="#f4f1ea", pattern=r"^#[0-9a-fA-F]{6}$")
+    headline: str = Field(default="", max_length=160)
+    subtitle: str = Field(default="", max_length=160)
+
+
 class ExportSettings(ContractModel):
     """Delivery choices that map directly to admitted encoder paths."""
 
@@ -416,7 +452,10 @@ class ExportSettings(ContractModel):
 class ProductionSettings(ContractModel):
     """Complete executable settings for one beta production."""
 
+    cleanup: CleanupSettings = Field(default_factory=CleanupSettings)
     mastering: MasteringSettings
+    metadata: OutputMetadataSettings = Field(default_factory=OutputMetadataSettings)
+    audiogram: AudiogramSettings = Field(default_factory=AudiogramSettings)
     export: ExportSettings
 
 
@@ -467,9 +506,28 @@ class ResolvedProductionSettings(ContractModel):
     settings_sha256: Sha256
     field_provenance: dict[
         Literal[
+            "cleanup.noise_reduction",
+            "cleanup.rumble_filter",
+            "cleanup.compression",
             "mastering.target_integrated_lufs",
             "mastering.max_true_peak_dbtp",
             "mastering.target_loudness_range_lu",
+            "metadata.artist",
+            "metadata.album",
+            "metadata.genre",
+            "metadata.date",
+            "metadata.comment",
+            "metadata.copyright",
+            "metadata.track_number",
+            "audiogram.enabled",
+            "audiogram.aspect_ratio",
+            "audiogram.waveform_style",
+            "audiogram.background_mode",
+            "audiogram.background_color",
+            "audiogram.waveform_color",
+            "audiogram.text_color",
+            "audiogram.headline",
+            "audiogram.subtitle",
             "export.wav",
             "export.mp3",
             "export.mp3_bitrate_kbps",

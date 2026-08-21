@@ -29,12 +29,16 @@ This checkpoint accelerates real owner testing without redefining the first rele
 - use one Cloud Run instance and one private Cloud Storage mount for this filesystem-backed beta runner;
 - perform FFmpeg working I/O on instance-local temporary storage, then persist only durable inputs and completed outputs;
 - keep legacy deployment cleanup and custom-domain work outside this beta publish;
-- cap direct browser uploads at 30 MiB until direct-to-object-storage resumable upload is implemented;
-- treat active Router execution, production Adaptive Leveler, neural cleanup, one-hour proof, server-side workspace
-  templates, and audiogram rendering as required follow-on work rather than implied beta features.
+- accept one source or a browser batch and upload sources up to 1 GiB through scoped resumable Cloud Storage sessions;
+- apply executable deterministic steady-noise reduction, rumble filtering, compression, loudness mastering, metadata,
+  and optional full-duration audiogram rendering while preserving exact resolved settings;
+- treat active Router execution, production Adaptive Leveler, neural restoration, true background-music separation,
+  dereverberation, one-hour proof, and server-side workspace templates as required follow-on work rather than implied
+  beta features.
 
 The deployment choice is provisional until the first staging smoke test; see
-[ADR-0010](../decisions/ADR-0010-CLOUD-RUN-GITHUB-PRIVATE-BETA.md) and the
+[ADR-0010](../decisions/ADR-0010-CLOUD-RUN-GITHUB-PRIVATE-BETA.md),
+[ADR-0012](../decisions/ADR-0012-GUIDED-PROCESSING-LARGE-UPLOADS-AUDIOGRAMS.md), and the
 [publish guide](../deployment/GOOGLE_V1_BETA_PUBLISH.md).
 
 ## Product target for the first working release

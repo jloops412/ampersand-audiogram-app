@@ -3,10 +3,12 @@
     "AssetKind": {
       "enum": [
         "source",
+        "background_artwork",
         "canonical_audio",
         "waveform",
         "master_wav",
         "master_mp3",
+        "audiogram_mp4",
         "manifest"
       ],
       "title": "AssetKind",

@@ -123,11 +123,14 @@ def prepare_experiment(
                 )
                 output_name = option_id.replace(":", "-") + ".wav"
                 output = audio_directory / output_name
+                default_settings = default_production_settings(recipe)
                 render_master_wav(
                     listening_source,
                     output,
                     measurement=loudness_before,
-                    settings=default_production_settings(recipe).mastering,
+                    settings=default_settings.mastering,
+                    title="Ampersand blinded listening option",
+                    metadata=default_settings.metadata,
                     tools=selected_tools,
                 )
                 loudness_after = measure_loudness(output, selected_tools)

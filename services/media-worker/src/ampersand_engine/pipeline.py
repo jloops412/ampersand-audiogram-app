@@ -43,6 +43,8 @@ from .ffmpeg import (
     measure_loudness,
     measure_loudness_timeline,
     probe_media,
+    render_audiogram_mp4,
+    render_cleanup_wav,
     render_master_wav,
     requires_canonical_audio,
 )
@@ -71,6 +73,7 @@ class PipelineResult:
     source_sha256: str
     wav_sha256: str | None
     mp3_sha256: str | None
+    audiogram_sha256: str | None
 
 
 def process_source(
@@ -79,6 +82,7 @@ def process_source(
     *,
     recipe_slug: str = "smart-spoken-word-v0",
     title: str | None = None,
+    artwork: Path | None = None,
     settings: ProductionSettings | None = None,
     intent: ProductionIntent = "podcast",
     template_version_id: str | None = None,
@@ -106,13 +110,24 @@ def process_source(
         template_version_id=template_version_id,
         settings_source=settings_source,
     )
+    production_title = (title or source_path.stem).strip()[:160] or "Untitled production"
+    artwork_path = artwork.expanduser().resolve(strict=True) if artwork is not None else None
+    if artwork_path is not None and not artwork_path.is_file():
+        raise EngineError("The background artwork must be a local regular file.")
+    audiogram_settings = resolved_settings.settings.audiogram
+    if audiogram_settings.enabled and audiogram_settings.background_mode == "artwork" and artwork_path is None:
+        raise EngineError("Audiogram artwork mode requires --artwork.")
+    if not audiogram_settings.enabled and artwork_path is not None:
+        raise EngineError("Background artwork is valid only when audiogram rendering is enabled.")
     source_sha = sha256_file(source_path)
+    artwork_sha = sha256_file(artwork_path) if artwork_path is not None else None
     recipe_sha = manifest_sha256(recipe)
     resolved_settings_manifest_sha = manifest_sha256(resolved_settings)
     run_fingerprint = sha256_text(
         "|".join(
             (
                 source_sha,
+                artwork_sha or "no-artwork",
                 recipe_sha,
                 resolved_settings_manifest_sha,
                 ENGINE_BUILD_ID,
@@ -154,6 +169,24 @@ def process_source(
             },
         )
         write_manifest(stage / "source-manifest.json", source_manifest)
+        if artwork_path is not None and artwork_sha is not None:
+            artwork_manifest = AssetManifest(
+                asset_id=stable_id("asset", artwork_sha),
+                kind=AssetKind.BACKGROUND_ARTWORK,
+                uri=f"sha256://{artwork_sha}",
+                sha256=artwork_sha,
+                size_bytes=artwork_path.stat().st_size,
+                mime_type=mimetypes.guess_type(artwork_path.name)[0] or "application/octet-stream",
+                filename=artwork_path.name[:255],
+                retention_class="local_fixture",
+                provenance={
+                    "ingest_mode": "local_cli",
+                    "immutable": True,
+                    "network_used": False,
+                    "purpose": "audiogram_background",
+                },
+            )
+            write_manifest(stage / "background-artwork-manifest.json", artwork_manifest)
         probe = probe_media(source_path, source_asset_id=source_asset_id, probe_id=probe_id, tools=tools)
         write_manifest(stage / "probe.json", probe)
 
@@ -330,16 +363,40 @@ def process_source(
         write_manifest(stage / "recipe.json", recipe)
         write_manifest(stage / "resolved-settings.json", resolved_settings)
 
+        cleanup_settings = resolved_settings.settings.cleanup
+        cleanup_applied = (
+            cleanup_settings.rumble_filter
+            or cleanup_settings.noise_reduction != "off"
+            or cleanup_settings.compression != "off"
+        )
+        mastering_input = analysis_input
+        if cleanup_applied:
+            _notify(progress, "apply deterministic cleanup and compression")
+            cleanup_path = stage / "cleanup-working.wav"
+            render_cleanup_wav(
+                analysis_input,
+                cleanup_path,
+                settings=cleanup_settings,
+                tools=tools,
+            )
+            mastering_input = cleanup_path
+        cleanup_input_loudness = measure_loudness(mastering_input, tools)
+        write_manifest(stage / "pre-master-loudness.json", cleanup_input_loudness)
+
         _notify(progress, "render deterministic WAV and MP3")
         export_settings = resolved_settings.settings.export
+        metadata_settings = resolved_settings.settings.metadata
         mastering_settings = resolved_settings.settings.mastering
         wav_path = artifacts / "master.wav" if export_settings.wav else stage / "master-for-encode.wav"
         mp3_path = artifacts / "master.mp3"
+        audiogram_path = artifacts / "audiogram.mp4"
         render_master_wav(
-            analysis_input,
+            mastering_input,
             wav_path,
-            measurement=loudness_before,
+            measurement=cleanup_input_loudness,
             settings=mastering_settings,
+            title=production_title,
+            metadata=metadata_settings,
             tools=tools,
         )
         if export_settings.mp3:
@@ -348,13 +405,28 @@ def process_source(
                 mp3_path,
                 tools,
                 bitrate_kbps=export_settings.mp3_bitrate_kbps,
+                title=production_title,
+                metadata=metadata_settings,
+            )
+        if audiogram_settings.enabled:
+            _notify(progress, "render audiogram MP4")
+            render_audiogram_mp4(
+                wav_path,
+                audiogram_path,
+                title=production_title,
+                metadata=metadata_settings,
+                settings=audiogram_settings,
+                artwork=artwork_path,
+                tools=tools,
             )
 
         _notify(progress, "validate outputs and report")
         wav_sha = sha256_file(wav_path) if export_settings.wav else None
         mp3_sha = sha256_file(mp3_path) if export_settings.mp3 else None
+        audiogram_sha = sha256_file(audiogram_path) if audiogram_settings.enabled else None
         wav_asset_id = stable_id("asset", wav_sha) if wav_sha is not None else None
         mp3_asset_id = stable_id("asset", mp3_sha) if mp3_sha is not None else None
+        audiogram_asset_id = stable_id("asset", audiogram_sha) if audiogram_sha is not None else None
         wav_probe = probe_media(
             wav_path,
             source_asset_id=wav_asset_id or stable_id("asset", sha256_file(wav_path)),
@@ -371,12 +443,23 @@ def process_source(
             if mp3_asset_id is not None and mp3_sha is not None
             else None
         )
+        audiogram_probe = (
+            probe_media(
+                audiogram_path,
+                source_asset_id=audiogram_asset_id,
+                probe_id=stable_id("probe", audiogram_sha),
+                tools=tools,
+            )
+            if audiogram_asset_id is not None and audiogram_sha is not None
+            else None
+        )
         loudness_after = measure_loudness(wav_path, tools)
         write_manifest(stage / "loudness-after.json", loudness_after)
         validation_notes = _validate_outputs(
             source_duration_us=probe.duration_us,
             wav_duration_us=wav_probe.duration_us,
             mp3_duration_us=mp3_probe.duration_us if mp3_probe is not None else None,
+            audiogram_duration_us=audiogram_probe.duration_us if audiogram_probe is not None else None,
             target_integrated_lufs=mastering_settings.target_integrated_lufs,
             max_true_peak_dbtp=mastering_settings.max_true_peak_dbtp,
             loudness_after=loudness_after,
@@ -411,6 +494,20 @@ def process_source(
                     validation_notes=("Container, audio stream, duration, and checksum validated.",),
                 )
             )
+        if audiogram_asset_id is not None and audiogram_sha is not None and audiogram_probe is not None:
+            output_artifacts.append(
+                OutputArtifact(
+                    artifact_id=audiogram_asset_id,
+                    kind=AssetKind.AUDIOGRAM_MP4,
+                    relative_path="artifacts/audiogram.mp4",
+                    sha256=audiogram_sha,
+                    size_bytes=audiogram_path.stat().st_size,
+                    mime_type="video/mp4",
+                    duration_us=audiogram_probe.duration_us,
+                    validation_status="valid",
+                    validation_notes=("H.264 video, AAC audio, duration, and checksum validated.",),
+                )
+            )
         output_manifest = OutputManifest(
             output_manifest_id=output_manifest_id,
             run_id=run_id,
@@ -427,6 +524,8 @@ def process_source(
         write_manifest(stage / "output-manifest.json", output_manifest)
         if not export_settings.wav:
             wav_path.unlink()
+        if cleanup_applied:
+            mastering_input.unlink()
 
         steps = _build_steps(
             run_id=run_id,
@@ -445,6 +544,9 @@ def process_source(
             leveler_settings=leveler_settings,
             leveler_statistics=leveler_statistics,
             gain_envelope=gain_envelope,
+            cleanup_applied=cleanup_applied,
+            cleanup_settings_hash=manifest_sha256(cleanup_settings),
+            audiogram_enabled=audiogram_settings.enabled,
             output_manifest=output_manifest,
         )
         for step in steps:
@@ -453,7 +555,7 @@ def process_source(
         production = Production(
             production_id=production_id,
             workspace_id="workspace:local",
-            title=(title or source_path.stem).strip()[:160] or "Untitled production",
+            title=production_title,
             source_asset_id=source_asset_id,
             recipe_version_id=recipe.recipe_version_id,
             current_run_id=run_id,
@@ -481,6 +583,7 @@ def process_source(
             "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
             "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
             "loudness_before": manifest_sha256(loudness_before),
+            "pre_master_loudness": manifest_sha256(cleanup_input_loudness),
             "router_settings": manifest_sha256(router_settings),
             "processing_plan": manifest_sha256(processing_plan),
             "processing_router_report": manifest_sha256(router_report),
@@ -494,6 +597,10 @@ def process_source(
             artifact_hashes["master_wav"] = wav_sha
         if mp3_sha is not None:
             artifact_hashes["master_mp3"] = mp3_sha
+        if artwork_sha is not None:
+            artifact_hashes["background_artwork"] = artwork_sha
+        if audiogram_sha is not None:
+            artifact_hashes["audiogram_mp4"] = audiogram_sha
         enabled_output_names = ", ".join(
             format_name.upper() for format_name in recipe.output_formats if getattr(export_settings, format_name)
         )
@@ -535,8 +642,16 @@ def process_source(
                     f"eligible regions, {leveler_statistics.changed_region_count} proposed changes, and "
                     f"{leveler_statistics.gain_min_db:.2f} to {leveler_statistics.gain_max_db:.2f} dB gain."
                 ),
-                "Did not render the shadow gain envelope; applied only the recipe's standards-based two-pass "
-                "final loudness master.",
+                (
+                    f"Applied the deterministic V1 cleanup chain globally: noise reduction "
+                    f"{cleanup_settings.noise_reduction}, rumble filter "
+                    f"{'on' if cleanup_settings.rumble_filter else 'off'}, and compression "
+                    f"{cleanup_settings.compression}."
+                    if cleanup_applied
+                    else "Bypassed deterministic cleanup because every cleanup control was off."
+                ),
+                "Did not render the shadow Adaptive Leveler gain envelope; applied the selected cleanup chain "
+                "followed by the standards-based two-pass final loudness master.",
                 (
                     f"Resolved the {resolved_settings.intent} intent to "
                     f"{mastering_settings.target_integrated_lufs:.1f} LUFS, "
@@ -544,12 +659,21 @@ def process_source(
                     f"{enabled_output_names} "
                     "delivery outputs."
                 ),
+                (
+                    f"Wrote portable delivery metadata and rendered a {audiogram_settings.aspect_ratio} "
+                    f"{audiogram_settings.waveform_style} audiogram with "
+                    f"{audiogram_settings.background_mode} background."
+                    if audiogram_settings.enabled
+                    else "Wrote portable delivery metadata; audiogram rendering was not requested."
+                ),
             ),
             artifact_sha256=artifact_hashes,
             warnings=(
                 "Processing Router V0 and Adaptive Leveler V0 are shadow-only in this pipeline until admitted "
-                "processors, music/protected-content evidence, and human listening gates authorize rendering; "
-                "no denoise, regional cleanup, or Leveler gain is applied.",
+                "processors, music/protected-content evidence, and human listening gates authorize regional rendering; "
+                "no regional cleanup or Leveler gain is applied.",
+                "The deterministic FFT denoiser targets steady background noise. It does not perform true "
+                "background-music separation or dereverberation, and strong settings require listening review.",
                 "The bootstrap VAD is conservative; ASR, diarization, and music classification are not required "
                 "for mastering.",
                 *resolved_settings.warnings,
@@ -563,7 +687,7 @@ def process_source(
             reproducibility_summary=(
                 "IDs and JSON manifests derive from source, resolved settings, recipe, engine, "
                 "and native-tool versions; "
-                "media metadata is stripped. "
+                "incidental source metadata is stripped and requested output metadata is written explicitly. "
                 "Exact binary hashes require the same admitted FFmpeg build and runtime architecture."
             ),
         )
@@ -579,6 +703,7 @@ def process_source(
         source_sha256=source_sha,
         wav_sha256=wav_sha,
         mp3_sha256=mp3_sha,
+        audiogram_sha256=audiogram_sha,
     )
 
 
@@ -600,6 +725,9 @@ def _build_steps(
     leveler_settings: AdaptiveLevelerSettings,
     leveler_statistics: LevelerStatistics,
     gain_envelope: GainEnvelope,
+    cleanup_applied: bool,
+    cleanup_settings_hash: str,
+    audiogram_enabled: bool,
     output_manifest: OutputManifest,
 ) -> tuple[JobStep, ...]:
     source_hash = manifest_sha256(source_manifest)
@@ -676,11 +804,29 @@ def _build_steps(
             },
         ),
         (
+            "deterministic-cleanup-v1",
+            sha256_text(f"{analysis_hash}|{cleanup_settings_hash}"),
+            JobStatus.SUCCEEDED if cleanup_applied else JobStatus.BYPASSED,
+            (),
+            {
+                "settings_hash": cleanup_settings_hash,
+                "applied_to_audio": cleanup_applied,
+                "scope": "global",
+            },
+        ),
+        (
             "two-pass-loudness-master",
-            sha256_text(f"{analysis_hash}|{plan_hash}|shadow-unity-render"),
+            sha256_text(f"{analysis_hash}|{plan_hash}|{cleanup_settings_hash}|shadow-unity-render"),
             JobStatus.SUCCEEDED,
             (),
             {},
+        ),
+        (
+            "render-audiogram",
+            output_hash,
+            JobStatus.SUCCEEDED if audiogram_enabled else JobStatus.BYPASSED,
+            (),
+            {"enabled": audiogram_enabled},
         ),
         ("output-validation", output_hash, JobStatus.SUCCEEDED, (output_manifest.output_manifest_id,), {}),
     )
@@ -705,6 +851,7 @@ def _validate_outputs(
     source_duration_us: int,
     wav_duration_us: int,
     mp3_duration_us: int | None,
+    audiogram_duration_us: int | None,
     target_integrated_lufs: float,
     max_true_peak_dbtp: float,
     loudness_after: LoudnessMeasurement,
@@ -715,6 +862,8 @@ def _validate_outputs(
         raise OutputValidationError("The WAV master duration differs from the source by more than 10 ms.")
     if mp3_duration_us is not None and abs(mp3_duration_us - source_duration_us) > 120_000:
         raise OutputValidationError("The MP3 master duration differs from the source by more than 120 ms.")
+    if audiogram_duration_us is not None and abs(audiogram_duration_us - source_duration_us) > 150_000:
+        raise OutputValidationError("The audiogram duration differs from the source by more than 150 ms.")
     if abs(integrated_lufs - target_integrated_lufs) > 0.35:
         raise OutputValidationError(
             f"The WAV master measured {integrated_lufs:.2f} LUFS; target tolerance is ±0.35 LU."
@@ -727,6 +876,9 @@ def _validate_outputs(
         "Container, audio stream, duration, and checksum validated.",
         f"Integrated loudness is within ±0.35 LU of {target_integrated_lufs:.2f} LUFS.",
         f"True peak does not exceed {max_true_peak_dbtp + 0.20:.2f} dBTP.",
+        "Audiogram duration matches the source within 150 ms."
+        if audiogram_duration_us is not None
+        else "Audiogram output was not requested.",
     ]
 
 

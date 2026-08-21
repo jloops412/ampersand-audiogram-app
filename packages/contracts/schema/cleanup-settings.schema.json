@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "description": "Deterministic spoken-word cleanup controls admitted for the V1 beta.",
+  "properties": {
+    "compression": {
+      "default": "balanced",
+      "enum": [
+        "off",
+        "gentle",
+        "balanced",
+        "firm"
+      ],
+      "title": "Compression",
+      "type": "string"
+    },
+    "noise_reduction": {
+      "default": "balanced",
+      "enum": [
+        "off",
+        "light",
+        "balanced",
+        "strong"
+      ],
+      "title": "Noise Reduction",
+      "type": "string"
+    },
+    "rumble_filter": {
+      "default": true,
+      "title": "Rumble Filter",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "title": "CleanupSettings",
+  "type": "object"
+}

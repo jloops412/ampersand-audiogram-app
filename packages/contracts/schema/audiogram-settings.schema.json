@@ -1,0 +1,78 @@
+{
+  "additionalProperties": false,
+  "description": "Deterministic server-rendered audiogram controls for the V1 beta.",
+  "properties": {
+    "aspect_ratio": {
+      "default": "square",
+      "enum": [
+        "square",
+        "portrait",
+        "landscape"
+      ],
+      "title": "Aspect Ratio",
+      "type": "string"
+    },
+    "background_color": {
+      "default": "#111718",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "title": "Background Color",
+      "type": "string"
+    },
+    "background_mode": {
+      "default": "color",
+      "enum": [
+        "color",
+        "artwork"
+      ],
+      "title": "Background Mode",
+      "type": "string"
+    },
+    "enabled": {
+      "default": false,
+      "title": "Enabled",
+      "type": "boolean"
+    },
+    "headline": {
+      "default": "",
+      "maxLength": 160,
+      "title": "Headline",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "subtitle": {
+      "default": "",
+      "maxLength": 160,
+      "title": "Subtitle",
+      "type": "string"
+    },
+    "text_color": {
+      "default": "#f4f1ea",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "title": "Text Color",
+      "type": "string"
+    },
+    "waveform_color": {
+      "default": "#e1b977",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "title": "Waveform Color",
+      "type": "string"
+    },
+    "waveform_style": {
+      "default": "mirrored",
+      "enum": [
+        "line",
+        "mirrored",
+        "bars"
+      ],
+      "title": "Waveform Style",
+      "type": "string"
+    }
+  },
+  "title": "AudiogramSettings",
+  "type": "object"
+}

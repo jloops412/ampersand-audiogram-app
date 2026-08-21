@@ -35,6 +35,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.output,
                 recipe_slug=args.recipe,
                 title=args.title,
+                artwork=args.artwork,
                 settings=settings,
                 intent=args.intent,
                 template_version_id=args.template_version_id,
@@ -50,6 +51,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "source_sha256": result.source_sha256,
                         "wav_sha256": result.wav_sha256,
                         "mp3_sha256": result.mp3_sha256,
+                        "audiogram_sha256": result.audiogram_sha256,
                     },
                     sort_keys=True,
                 )
@@ -119,6 +121,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     process.add_argument("--recipe", default="smart-spoken-word-v0", choices=sorted(BUILT_IN_RECIPES))
     process.add_argument("--title", default=None, help="Optional production title (does not affect source identity).")
+    process.add_argument(
+        "--artwork",
+        type=Path,
+        default=None,
+        help="Optional local background artwork required when audiogram background_mode=artwork.",
+    )
     process.add_argument(
         "--settings",
         type=Path,

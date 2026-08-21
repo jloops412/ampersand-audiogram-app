@@ -1,0 +1,13 @@
+[
+  {
+    "origin": [
+      "https://ampersand-v1-beta-347549493009.us-east4.run.app",
+      "https://ampersand-v1-beta-pjiza6c4oq-uk.a.run.app",
+      "https://ampersandaudiogram.com",
+      "https://www.ampersandaudiogram.com"
+    ],
+    "method": ["PUT", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Content-Range", "Range", "x-goog-resumable"],
+    "maxAgeSeconds": 3600
+  }
+]

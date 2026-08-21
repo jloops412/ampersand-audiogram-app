@@ -1,19 +1,26 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 from ampersand_contracts import (
     AdaptiveLevelerSettings,
+    AudiogramSettings,
+    CleanupSettings,
+    ExportSettings,
     GainEnvelope,
     JobStep,
     LevelerStatistics,
+    MasteringSettings,
     OutputManifest,
+    OutputMetadataSettings,
     ProcessingPlan,
     ProcessingReport,
     ProcessingRouterReport,
     ProcessingRouterSettings,
+    ProductionSettings,
     ProviderNativeArtifactManifest,
     read_manifest,
     read_semantic_map,
@@ -153,6 +160,96 @@ def test_report_makes_baseline_limitations_explicit(tmp_path: Path, synthetic_so
     assert "shadow-only" in warning
     assert "human listening" in warning
     assert "denoise" in warning
+
+
+def test_pipeline_applies_cleanup_metadata_and_renders_audiogram(
+    tmp_path: Path,
+    synthetic_source: Path,
+) -> None:
+    settings = ProductionSettings(
+        cleanup=CleanupSettings(noise_reduction="light", rumble_filter=True, compression="gentle"),
+        mastering=MasteringSettings(
+            target_integrated_lufs=-16,
+            max_true_peak_dbtp=-1,
+            target_loudness_range_lu=11,
+        ),
+        metadata=OutputMetadataSettings(
+            artist="Ampersand Test Artist",
+            album="Ampersand Test Series",
+            genre="Spoken Word",
+            date="2026-08-20",
+            track_number="7",
+        ),
+        audiogram=AudiogramSettings(
+            enabled=True,
+            aspect_ratio="square",
+            waveform_style="mirrored",
+            background_mode="artwork",
+            headline="Test audiogram",
+            subtitle="Independent renderer",
+        ),
+        export=ExportSettings(wav=True, mp3=True, mp3_bitrate_kbps=192),
+    )
+    artwork = tmp_path / "background.png"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-nostdin",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=0x203040:s=640x640",
+            "-frames:v",
+            "1",
+            "-y",
+            str(artwork),
+        ],
+        check=True,
+    )
+    result = process_source(
+        synthetic_source,
+        tmp_path / "audiogram-run",
+        title="Tagged production",
+        artwork=artwork,
+        settings=settings,
+        settings_source="run_override",
+    )
+
+    assert result.audiogram_sha256 is not None
+    assert (result.output_directory / "artifacts/audiogram.mp4").is_file()
+    output = read_manifest(result.output_directory / "output-manifest.json", OutputManifest)
+    assert {artifact.kind.value for artifact in output.artifacts} == {
+        "master_wav",
+        "master_mp3",
+        "audiogram_mp4",
+    }
+    cleanup_step = read_manifest(result.output_directory / "steps/deterministic-cleanup-v1.json", JobStep)
+    audiogram_step = read_manifest(result.output_directory / "steps/render-audiogram.json", JobStep)
+    assert cleanup_step.metrics["applied_to_audio"] is True
+    assert audiogram_step.status.value == "succeeded"
+
+    completed = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format_tags=title,artist,album,genre,date,track",
+            "-of",
+            "json",
+            str(result.output_directory / "artifacts/master.mp3"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    tags = json.loads(completed.stdout)["format"]["tags"]
+    assert tags["title"] == "Tagged production"
+    assert tags["artist"] == "Ampersand Test Artist"
+    assert tags["album"] == "Ampersand Test Series"
 
 
 def _json_artifacts(directory: Path) -> dict[str, bytes]:

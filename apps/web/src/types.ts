@@ -7,6 +7,34 @@ export interface MasteringSettings {
   target_loudness_range_lu: number;
 }
 
+export interface CleanupSettings {
+  noise_reduction: 'off' | 'light' | 'balanced' | 'strong';
+  rumble_filter: boolean;
+  compression: 'off' | 'gentle' | 'balanced' | 'firm';
+}
+
+export interface OutputMetadataSettings {
+  artist: string;
+  album: string;
+  genre: string;
+  date: string;
+  comment: string;
+  copyright: string;
+  track_number: string;
+}
+
+export interface AudiogramSettings {
+  enabled: boolean;
+  aspect_ratio: 'square' | 'portrait' | 'landscape';
+  waveform_style: 'line' | 'mirrored' | 'bars';
+  background_mode: 'color' | 'artwork';
+  background_color: string;
+  waveform_color: string;
+  text_color: string;
+  headline: string;
+  subtitle: string;
+}
+
 export interface ExportSettings {
   wav: boolean;
   mp3: boolean;
@@ -14,8 +42,20 @@ export interface ExportSettings {
 }
 
 export interface ProductionSettings {
+  cleanup: CleanupSettings;
   mastering: MasteringSettings;
+  metadata: OutputMetadataSettings;
+  audiogram: AudiogramSettings;
   export: ExportSettings;
+}
+
+export interface Capabilities {
+  apiVersion: string;
+  maxUploadBytes: number;
+  maxArtworkBytes: number;
+  directUpload: { enabled: boolean; maxBytes: number; chunkBytes: number };
+  batch: { enabled: boolean; processingConcurrency: number };
+  betaLimitations: string[];
 }
 
 export interface LoudnessMeasurement {
@@ -62,6 +102,7 @@ export interface Production {
     original: string;
     wav: string | null;
     mp3: string | null;
+    audiogram: string | null;
     report: string;
     waveform: string;
   } | null;
