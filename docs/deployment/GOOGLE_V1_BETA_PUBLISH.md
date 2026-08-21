@@ -185,18 +185,20 @@ service account's existing **Storage Object User** role is sufficient to initiat
 Do not call the beta usable until every item passes:
 
 1. Open the new `run.app` URL and confirm the beta-key gate appears.
-2. Enter the exact key stored in Secret Manager.
-3. Confirm **Productions** loads and no legacy service credential is requested.
-4. Upload a short rights-cleared WAV/MP3/M4A, then a source larger than 32 MiB and confirm resumable progress works.
-5. Select two small files together and confirm both become separate queued productions.
-6. Select each quick start and confirm loudness, cleanup, and compression settings change.
-7. Add metadata, enable an audiogram, upload background art, save a reusable template, and launch one production.
-8. Confirm queued → running → ready, then refresh the browser and reopen the production.
-9. Compare Original/Master at the same play position and visually inspect the audiogram.
-10. Download every selected format and the JSON report; inspect MP3 tags in a media player.
-11. Confirm the report's resolved-settings ID/hash, cleanup decisions, and `$0.00` external API cost.
-12. Delete the production, confirm it disappears after refresh, and verify its live objects are gone from the bucket.
-13. In Cloud Logging, confirm no beta key, upload-session URL, source path, or private media bytes appear in logs.
+2. Open `/health` on that URL and confirm it returns `{"status":"ok"}`. Cloud Run reserves some paths ending in
+   `z`, so use `/health` rather than the local compatibility alias `/healthz` for external probes.
+3. Enter the exact key stored in Secret Manager.
+4. Confirm **Productions** loads and no legacy service credential is requested.
+5. Upload a short rights-cleared WAV/MP3/M4A, then a source larger than 32 MiB and confirm resumable progress works.
+6. Select two small files together and confirm both become separate queued productions.
+7. Select each quick start and confirm loudness, cleanup, and compression settings change.
+8. Add metadata, enable an audiogram, upload background art, save a reusable template, and launch one production.
+9. Confirm queued → running → ready, then refresh the browser and reopen the production.
+10. Compare Original/Master at the same play position and visually inspect the audiogram.
+11. Download every selected format and the JSON report; inspect MP3 tags in a media player.
+12. Confirm the report's resolved-settings ID/hash, cleanup decisions, and `$0.00` external API cost.
+13. Delete the production, confirm it disappears after refresh, and verify its live objects are gone from the bucket.
+14. In Cloud Logging, confirm no beta key, upload-session URL, source path, or private media bytes appear in logs.
 
 Then test recovery: start another short production, deploy/restart only after it is safe to interrupt, confirm the job is
 shown as **Interrupted**, and use **Retry without re-uploading**.
