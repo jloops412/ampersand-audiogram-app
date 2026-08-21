@@ -483,7 +483,9 @@ export async function createApp() {
     next();
   });
 
-  app.get('/healthz', (_request, response) => response.json({ status: 'ok' }));
+  const healthHandler = (_request, response) => response.json({ status: 'ok' });
+  app.get('/health', healthHandler);
+  app.get('/healthz', healthHandler);
   app.post('/api/v2/session', requireBetaAccess, (request, response) => {
     if (BETA_SESSION) {
       const secure = request.secure || request.get('x-forwarded-proto') === 'https';
