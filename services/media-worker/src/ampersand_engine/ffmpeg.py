@@ -311,8 +311,7 @@ def render_cleanup_wav(
     gate = {
         "light": "agate=threshold=0.006:ratio=1.8:range=0.25:attack=15:release=350:knee=4:detection=rms:link=maximum",
         "balanced": (
-            "agate=threshold=0.012:ratio=2.5:range=0.12:attack=12:release=300:"
-            "knee=4:detection=rms:link=maximum"
+            "agate=threshold=0.012:ratio=2.5:range=0.12:attack=12:release=300:knee=4:detection=rms:link=maximum"
         ),
     }.get(settings.noise_gate)
     if gate is not None:
@@ -325,18 +324,10 @@ def render_cleanup_wav(
     if deesser is not None:
         filters.append(deesser)
     voice_enhancement = {
-        "natural": (
-            "equalizer=f=250:t=q:w=0.9:g=-1.5,"
-            "equalizer=f=3200:t=q:w=1.0:g=1.5"
-        ),
-        "warm": (
-            "equalizer=f=180:t=q:w=0.8:g=1.5,"
-            "equalizer=f=2500:t=q:w=1.0:g=0.8"
-        ),
+        "natural": ("equalizer=f=250:t=q:w=0.9:g=-1.5,equalizer=f=3200:t=q:w=1.0:g=1.5"),
+        "warm": ("equalizer=f=180:t=q:w=0.8:g=1.5,equalizer=f=2500:t=q:w=1.0:g=0.8"),
         "presence": (
-            "equalizer=f=250:t=q:w=0.9:g=-2.0,"
-            "equalizer=f=3500:t=q:w=1.0:g=2.5,"
-            "equalizer=f=6500:t=q:w=1.2:g=1.0"
+            "equalizer=f=250:t=q:w=0.9:g=-2.0,equalizer=f=3500:t=q:w=1.0:g=2.5,equalizer=f=6500:t=q:w=1.2:g=1.0"
         ),
     }.get(settings.voice_enhancement)
     if voice_enhancement is not None:
@@ -492,10 +483,7 @@ def _correct_master_loudness(
                 "0:a:0",
                 "-vn",
                 "-af",
-                (
-                    f"volume={correction_db:.6f}dB,"
-                    f"alimiter=limit={peak_limit:.8f}:attack=5:release=50:level=false"
-                ),
+                (f"volume={correction_db:.6f}dB,alimiter=limit={peak_limit:.8f}:attack=5:release=50:level=false"),
                 "-map_metadata",
                 "-1",
                 *_metadata_arguments(title, metadata),
