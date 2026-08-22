@@ -21,6 +21,11 @@ SettingsSource = Literal["recipe", "template", "run_override"]
 SettingPath = Literal[
     "cleanup.noise_reduction",
     "cleanup.rumble_filter",
+    "cleanup.hum_reduction",
+    "cleanup.declip",
+    "cleanup.noise_gate",
+    "cleanup.deesser",
+    "cleanup.voice_enhancement",
     "cleanup.compression",
     "mastering.target_integrated_lufs",
     "mastering.max_true_peak_dbtp",
@@ -62,6 +67,11 @@ SettingPath = Literal[
 _SETTING_PATHS: tuple[SettingPath, ...] = (
     "cleanup.noise_reduction",
     "cleanup.rumble_filter",
+    "cleanup.hum_reduction",
+    "cleanup.declip",
+    "cleanup.noise_gate",
+    "cleanup.deesser",
+    "cleanup.voice_enhancement",
     "cleanup.compression",
     "mastering.target_integrated_lufs",
     "mastering.max_true_peak_dbtp",
@@ -160,8 +170,9 @@ def resolve_production_settings(
         settings_sha256=settings_sha,
         field_provenance={path: settings_source for path in _SETTING_PATHS},
         warnings=(
-            "The selected deterministic cleanup and compression controls are applied globally before final mastering. "
-            "They are conservative V1 baselines, not neural restoration.",
+            "The selected deterministic cleanup, repair, voice-tone, and compression controls are applied globally "
+            "before final mastering. They are conservative V1 baselines, not neural restoration; review gates, "
+            "strong de-essing, declipping, and tone changes against the original.",
             "True background-music separation, dereverberation, and Adaptive Leveler rendering remain protected "
             "until their model, listening, and promotion gates pass.",
         ),

@@ -64,8 +64,10 @@ exports their JSON Schemas. Executable settings cover integrated loudness, true-
 WAV/MP3 selection, and MP3 bitrate. The complete resolved snapshot and hash participate in run identity and appear in
 the report. The Studio provides built-in quick starts and browser-local immutable template versions.
 
-Processing Router V0 separately writes its strict shadow settings, plan, reasons, and fallbacks. Cleanup and Leveler
-controls remain unavailable in the production settings surface because those processors are not active. Durable
+Processing Router V0 separately writes its strict shadow settings, plan, reasons, and fallbacks. The active deterministic
+cleanup surface includes steady-noise reduction, rumble and mains-hum filtering, declipping, gating, de-essing, mild
+voice-tone EQ, and compression. True music separation, dereverberation, neural restoration, and the Adaptive Leveler
+remain unavailable until their evidence and promotion gates pass. Durable
 workspace template CRUD, `ControlDefinition` metadata, precedence over sparse nested overrides, permissions,
 Basic/Advanced views, and shared cross-device templates remain #25/#31 work.
 

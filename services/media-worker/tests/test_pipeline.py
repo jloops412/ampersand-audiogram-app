@@ -168,7 +168,16 @@ def test_pipeline_applies_cleanup_metadata_and_renders_audiogram(
     synthetic_source: Path,
 ) -> None:
     settings = ProductionSettings(
-        cleanup=CleanupSettings(noise_reduction="light", rumble_filter=True, compression="gentle"),
+        cleanup=CleanupSettings(
+            noise_reduction="light",
+            rumble_filter=True,
+            hum_reduction="60hz",
+            declip=True,
+            noise_gate="light",
+            deesser="light",
+            voice_enhancement="natural",
+            compression="gentle",
+        ),
         mastering=MasteringSettings(
             target_integrated_lufs=-16,
             max_true_peak_dbtp=-1,
@@ -231,6 +240,11 @@ def test_pipeline_applies_cleanup_metadata_and_renders_audiogram(
     audiogram_step = read_manifest(result.output_directory / "steps/render-audiogram.json", JobStep)
     assert cleanup_step.metrics["applied_to_audio"] is True
     assert audiogram_step.status.value == "succeeded"
+    report = read_manifest(result.output_directory / "processing-report.json", ProcessingReport)
+    cleanup_decision = next(decision for decision in report.decisions if "cleanup chain" in decision)
+    assert "hum 60hz" in cleanup_decision
+    assert "de-esser light" in cleanup_decision
+    assert "voice enhancement natural" in cleanup_decision
 
     completed = subprocess.run(
         [

@@ -406,6 +406,11 @@ class CleanupSettings(ContractModel):
 
     noise_reduction: Literal["off", "light", "balanced", "strong"] = "balanced"
     rumble_filter: bool = True
+    hum_reduction: Literal["off", "50hz", "60hz"] = "off"
+    declip: bool = False
+    noise_gate: Literal["off", "light", "balanced"] = "off"
+    deesser: Literal["off", "light", "balanced", "strong"] = "off"
+    voice_enhancement: Literal["off", "natural", "warm", "presence"] = "off"
     compression: Literal["off", "gentle", "balanced", "firm"] = "balanced"
 
 
@@ -521,6 +526,11 @@ class ResolvedProductionSettings(ContractModel):
         Literal[
             "cleanup.noise_reduction",
             "cleanup.rumble_filter",
+            "cleanup.hum_reduction",
+            "cleanup.declip",
+            "cleanup.noise_gate",
+            "cleanup.deesser",
+            "cleanup.voice_enhancement",
             "cleanup.compression",
             "mastering.target_integrated_lufs",
             "mastering.max_true_peak_dbtp",

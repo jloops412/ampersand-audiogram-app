@@ -291,8 +291,16 @@ def render_cleanup_wav(
     """Apply the admitted global V1 cleanup chain to a new float working file."""
 
     filters: list[str] = []
+    if settings.declip:
+        filters.append("adeclip=window=55:overlap=75:arorder=8:threshold=10:hsize=1000:method=add")
     if settings.rumble_filter:
         filters.append("highpass=f=70:poles=2")
+    hum_fundamental = {"50hz": 50, "60hz": 60}.get(settings.hum_reduction)
+    if hum_fundamental is not None:
+        filters.extend(
+            f"bandreject=f={hum_fundamental * harmonic}:width_type=h:width={4 if harmonic < 3 else 6}"
+            for harmonic in range(1, 4)
+        )
     denoise = {
         "light": "afftdn=nr=6:nf=-55:tn=1:gs=4",
         "balanced": "afftdn=nr=10:nf=-50:tn=1:gs=6",
@@ -300,6 +308,30 @@ def render_cleanup_wav(
     }.get(settings.noise_reduction)
     if denoise is not None:
         filters.append(denoise)
+    gate = {
+        "light": "agate=threshold=0.006:ratio=1.8:range=0.25:attack=15:release=350:knee=4:detection=rms:link=maximum",
+        "balanced": (
+            "agate=threshold=0.012:ratio=2.5:range=0.12:attack=12:release=300:knee=4:detection=rms:link=maximum"
+        ),
+    }.get(settings.noise_gate)
+    if gate is not None:
+        filters.append(gate)
+    deesser = {
+        "light": "deesser=i=0.15:m=0.35:f=0.50:s=o",
+        "balanced": "deesser=i=0.30:m=0.50:f=0.50:s=o",
+        "strong": "deesser=i=0.50:m=0.65:f=0.48:s=o",
+    }.get(settings.deesser)
+    if deesser is not None:
+        filters.append(deesser)
+    voice_enhancement = {
+        "natural": ("equalizer=f=250:t=q:w=0.9:g=-1.5,equalizer=f=3200:t=q:w=1.0:g=1.5"),
+        "warm": ("equalizer=f=180:t=q:w=0.8:g=1.5,equalizer=f=2500:t=q:w=1.0:g=0.8"),
+        "presence": (
+            "equalizer=f=250:t=q:w=0.9:g=-2.0,equalizer=f=3500:t=q:w=1.0:g=2.5,equalizer=f=6500:t=q:w=1.2:g=1.0"
+        ),
+    }.get(settings.voice_enhancement)
+    if voice_enhancement is not None:
+        filters.append(voice_enhancement)
     compressor = {
         "gentle": "acompressor=threshold=0.18:ratio=2:attack=20:release=250:makeup=1.15:knee=3:detection=rms",
         "balanced": "acompressor=threshold=0.125:ratio=3:attack=12:release=180:makeup=1.30:knee=3:detection=rms",
@@ -355,6 +387,7 @@ def render_master_wav(
     tools: FFmpegTools,
 ) -> None:
     first_pass = _measure_loudnorm_pass(source, settings=settings, tools=tools)
+    linear_mode = str(first_pass.get("normalization_type", "")).lower() == "linear"
     loudnorm = ":".join(
         (
             f"loudnorm=I={settings.target_integrated_lufs:.3f}",
@@ -365,7 +398,7 @@ def render_master_wav(
             f"measured_LRA={measurement.loudness_range_lu:.6f}",
             f"measured_thresh={measurement.threshold_lufs:.6f}",
             f"offset={_finite_float(first_pass, 'target_offset'):.6f}",
-            "linear=true",
+            f"linear={'true' if linear_mode else 'false'}",
             "print_format=summary",
         )
     )
@@ -402,6 +435,74 @@ def render_master_wav(
         ],
         failure_message="ffmpeg failed to render the WAV master",
     )
+    rendered_measurement = measure_loudness(destination, tools)
+    correction_db = settings.target_integrated_lufs - rendered_measurement.integrated_lufs
+    if abs(correction_db) > 0.20:
+        _correct_master_loudness(
+            destination,
+            correction_db=correction_db,
+            max_true_peak_dbtp=settings.max_true_peak_dbtp,
+            title=title,
+            metadata=metadata,
+            tools=tools,
+        )
+
+
+def _correct_master_loudness(
+    destination: Path,
+    *,
+    correction_db: float,
+    max_true_peak_dbtp: float,
+    title: str,
+    metadata: OutputMetadataSettings,
+    tools: FFmpegTools,
+) -> None:
+    """Apply a bounded deterministic correction when FFmpeg dynamic loudnorm misses on short/low-LRA material."""
+
+    peak_limit = 10 ** (max_true_peak_dbtp / 20)
+    with tempfile.NamedTemporaryFile(
+        prefix=".loudness-correction-",
+        suffix=".wav",
+        dir=destination.parent,
+        delete=False,
+    ) as handle:
+        corrected = Path(handle.name)
+    try:
+        _run(
+            [
+                tools.ffmpeg,
+                "-nostdin",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-protocol_whitelist",
+                "file,pipe",
+                "-i",
+                str(destination),
+                "-map",
+                "0:a:0",
+                "-vn",
+                "-af",
+                (f"volume={correction_db:.6f}dB,alimiter=limit={peak_limit:.8f}:attack=5:release=50:level=false"),
+                "-map_metadata",
+                "-1",
+                *_metadata_arguments(title, metadata),
+                "-fflags",
+                "+bitexact",
+                "-flags:a",
+                "+bitexact",
+                "-ar",
+                "48000",
+                "-c:a",
+                "pcm_s24le",
+                "-y",
+                str(corrected),
+            ],
+            failure_message="ffmpeg failed to correct the WAV master loudness",
+        )
+        os.replace(corrected, destination)
+    finally:
+        corrected.unlink(missing_ok=True)
 
 
 def encode_master_mp3(
