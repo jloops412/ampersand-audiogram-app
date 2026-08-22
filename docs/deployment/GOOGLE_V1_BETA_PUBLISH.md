@@ -132,6 +132,7 @@ Add ordinary environment variables:
 | `AMPERSAND_MAX_UPLOAD_BYTES` | `31457280` |
 | `AMPERSAND_GCS_BUCKET` | `gen-lang-client-0564514768-ampersand-beta-media` |
 | `AMPERSAND_MAX_DIRECT_UPLOAD_BYTES` | `1073741824` |
+| `AMPERSAND_MAX_ARTWORK_BYTES` | `536870912` |
 
 Under **Variables & Secrets**, reference secret `AMPERSAND_BETA_TOKEN`, version **1**, as environment variable
 `AMPERSAND_BETA_TOKEN`. Pinning the version makes a rotation a deliberate new revision.
@@ -192,7 +193,8 @@ Do not call the beta usable until every item passes:
 5. Upload a short rights-cleared WAV/MP3/M4A, then a source larger than 32 MiB and confirm resumable progress works.
 6. Select two small files together and confirm both become separate queued productions.
 7. Select each quick start and confirm loudness, cleanup, and compression settings change.
-8. Add metadata, enable an audiogram, upload background art, save a reusable template, and launch one production.
+8. Add metadata, enable an audiogram, exercise image and short looping-video backgrounds plus multiple layouts, save a
+   reusable template, and launch one production.
 9. Confirm queued → running → ready, then refresh the browser and reopen the production.
 10. Compare Original/Master at the same play position and visually inspect the audiogram.
 11. Download every selected format and the JSON report; inspect MP3 tags in a media player.
@@ -219,5 +221,5 @@ part of rollback.
 - durable queue/workflow execution that scales to zero between jobs;
 - server-side workspace identity and shared template catalog;
 - admitted active Adaptive Leveler, neural voice restoration, background-music separation, and dereverberation;
-- transcription, captions, more waveform styles, clip selection, and richer audiogram animation;
+- transcription, captions, clip selection, font/brand asset management, and richer audiogram compositing/motion;
 - one-hour recovery/listening proof, budgets/alerts, retention automation, and then custom-domain readiness.

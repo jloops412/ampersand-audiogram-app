@@ -125,7 +125,7 @@ def _parser() -> argparse.ArgumentParser:
         "--artwork",
         type=Path,
         default=None,
-        help="Optional local background artwork required when audiogram background_mode=artwork.",
+        help="Optional local background image/video required for audiogram artwork or video mode.",
     )
     process.add_argument(
         "--settings",

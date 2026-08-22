@@ -422,17 +422,30 @@ class OutputMetadataSettings(ContractModel):
 
 
 class AudiogramSettings(ContractModel):
-    """Deterministic server-rendered audiogram controls for the V1 beta."""
+    """Versioned deterministic controls shared by Studio and the server renderer."""
 
+    spec_version: Literal["1.0"] = "1.0"
     enabled: bool = False
-    aspect_ratio: Literal["square", "portrait", "landscape"] = "square"
-    waveform_style: Literal["line", "mirrored", "bars"] = "mirrored"
-    background_mode: Literal["color", "artwork"] = "color"
+    aspect_ratio: Literal["square", "feed_portrait", "portrait", "landscape"] = "square"
+    waveform_style: Literal["line", "mirrored", "bars", "dots"] = "mirrored"
+    waveform_scale: Literal["linear", "sqrt", "cbrt", "log"] = "sqrt"
+    waveform_position: Literal["top", "center", "bottom"] = "center"
+    waveform_width_percent: int = Field(default=82, ge=40, le=100)
+    waveform_height_percent: int = Field(default=30, ge=10, le=60)
+    waveform_opacity: float = Field(default=1.0, ge=0.1, le=1.0)
+    background_mode: Literal["color", "artwork", "video"] = "color"
+    background_fit: Literal["cover", "contain"] = "cover"
+    background_dim: float = Field(default=0.34, ge=0.0, le=0.85)
     background_color: str = Field(default="#111718", pattern=r"^#[0-9a-fA-F]{6}$")
     waveform_color: str = Field(default="#e1b977", pattern=r"^#[0-9a-fA-F]{6}$")
     text_color: str = Field(default="#f4f1ea", pattern=r"^#[0-9a-fA-F]{6}$")
+    text_align: Literal["left", "center", "right"] = "center"
+    headline_size_percent: float = Field(default=4.8, ge=2.0, le=10.0)
+    subtitle_size_percent: float = Field(default=2.7, ge=1.0, le=6.0)
     headline: str = Field(default="", max_length=160)
     subtitle: str = Field(default="", max_length=160)
+    frame_rate: Literal[24, 30, 60] = 30
+    render_quality: Literal["draft", "standard", "high"] = "standard"
 
 
 class ExportSettings(ContractModel):
@@ -520,14 +533,27 @@ class ResolvedProductionSettings(ContractModel):
             "metadata.copyright",
             "metadata.track_number",
             "audiogram.enabled",
+            "audiogram.spec_version",
             "audiogram.aspect_ratio",
             "audiogram.waveform_style",
+            "audiogram.waveform_scale",
+            "audiogram.waveform_position",
+            "audiogram.waveform_width_percent",
+            "audiogram.waveform_height_percent",
+            "audiogram.waveform_opacity",
             "audiogram.background_mode",
+            "audiogram.background_fit",
+            "audiogram.background_dim",
             "audiogram.background_color",
             "audiogram.waveform_color",
             "audiogram.text_color",
+            "audiogram.text_align",
+            "audiogram.headline_size_percent",
+            "audiogram.subtitle_size_percent",
             "audiogram.headline",
             "audiogram.subtitle",
+            "audiogram.frame_rate",
+            "audiogram.render_quality",
             "export.wav",
             "export.mp3",
             "export.mp3_bitrate_kbps",

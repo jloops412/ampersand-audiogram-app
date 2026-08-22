@@ -24,15 +24,28 @@ export interface OutputMetadataSettings {
 }
 
 export interface AudiogramSettings {
+  spec_version: '1.0';
   enabled: boolean;
-  aspect_ratio: 'square' | 'portrait' | 'landscape';
-  waveform_style: 'line' | 'mirrored' | 'bars';
-  background_mode: 'color' | 'artwork';
+  aspect_ratio: 'square' | 'feed_portrait' | 'portrait' | 'landscape';
+  waveform_style: 'line' | 'mirrored' | 'bars' | 'dots';
+  waveform_scale: 'linear' | 'sqrt' | 'cbrt' | 'log';
+  waveform_position: 'top' | 'center' | 'bottom';
+  waveform_width_percent: number;
+  waveform_height_percent: number;
+  waveform_opacity: number;
+  background_mode: 'color' | 'artwork' | 'video';
+  background_fit: 'cover' | 'contain';
+  background_dim: number;
   background_color: string;
   waveform_color: string;
   text_color: string;
+  text_align: 'left' | 'center' | 'right';
+  headline_size_percent: number;
+  subtitle_size_percent: number;
   headline: string;
   subtitle: string;
+  frame_rate: 24 | 30 | 60;
+  render_quality: 'draft' | 'standard' | 'high';
 }
 
 export interface ExportSettings {

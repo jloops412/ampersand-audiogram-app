@@ -468,19 +468,25 @@ def render_audiogram_mp4(
 
     if not settings.enabled:
         raise ValueError("audiogram render requires audiogram.enabled")
-    if settings.background_mode == "artwork" and artwork is None:
-        raise ValueError("an uploaded background artwork is required for artwork mode")
+    if settings.background_mode in {"artwork", "video"} and artwork is None:
+        raise ValueError("an uploaded background asset is required for artwork and video modes")
     if artwork is not None and not artwork.is_file():
-        raise InvalidMedia("The audiogram background artwork is unavailable.")
+        raise InvalidMedia("The audiogram background asset is unavailable.")
 
     width, height = {
         "square": (1080, 1080),
+        "feed_portrait": (1080, 1350),
         "portrait": (1080, 1920),
         "landscape": (1920, 1080),
     }[settings.aspect_ratio]
-    wave_width = int(width * 0.82)
-    wave_height = max(220, int(height * 0.30))
-    wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p"}[settings.waveform_style]
+    wave_width = int(width * settings.waveform_width_percent / 100)
+    wave_height = max(108, int(height * settings.waveform_height_percent / 100))
+    wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p", "dots": "point"}[
+        settings.waveform_style
+    ]
+    wave_scale = {"linear": "lin", "sqrt": "sqrt", "cbrt": "cbrt", "log": "log"}[
+        settings.waveform_scale
+    ]
     background = settings.background_color.removeprefix("#")
     waveform = settings.waveform_color.removeprefix("#")
     text_color = settings.text_color.removeprefix("#")
@@ -496,39 +502,72 @@ def render_audiogram_mp4(
         if subtitle_file is not None:
             temporary_files.append(subtitle_file)
 
-        input_arguments = (
-            ["-loop", "1", "-framerate", "30", "-i", str(artwork)]
-            if settings.background_mode == "artwork" and artwork is not None
-            else ["-f", "lavfi", "-i", f"color=c=0x{background}:s={width}x{height}:r=30"]
-        )
+        if settings.background_mode == "artwork" and artwork is not None:
+            input_arguments = ["-loop", "1", "-framerate", str(settings.frame_rate), "-i", str(artwork)]
+        elif settings.background_mode == "video" and artwork is not None:
+            input_arguments = ["-stream_loop", "-1", "-i", str(artwork)]
+        else:
+            input_arguments = [
+                "-f",
+                "lavfi",
+                "-i",
+                f"color=c=0x{background}:s={width}x{height}:r={settings.frame_rate}",
+            ]
+        if settings.background_mode == "color":
+            fit_filter = f"[0:v]fps={settings.frame_rate},setsar=1,format=rgba"
+        elif settings.background_fit == "contain":
+            fit_filter = (
+                f"[0:v]fps={settings.frame_rate},scale={width}:{height}:force_original_aspect_ratio=decrease,"
+                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=0x{background},setsar=1,format=rgba"
+            )
+        else:
+            fit_filter = (
+                f"[0:v]fps={settings.frame_rate},scale={width}:{height}:force_original_aspect_ratio=increase,"
+                f"crop={width}:{height},setsar=1,format=rgba"
+            )
         base_filter = (
-            f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase,"
-            f"crop={width}:{height},setsar=1,format=rgba,"
-            "drawbox=x=0:y=0:w=iw:h=ih:color=black@0.34:t=fill[background]"
+            f"{fit_filter},drawbox=x=0:y=0:w=iw:h=ih:"
+            f"color=black@{settings.background_dim:.3f}:t=fill[background]"
         )
         wave_filter = (
             f"[1:a]showwaves=s={wave_width}x{wave_height}:mode={wave_mode}:"
-            f"colors=0x{waveform}:rate=30:scale=sqrt,format=rgba,"
+            f"colors=0x{waveform}@{settings.waveform_opacity:.3f}:rate={settings.frame_rate}:scale={wave_scale},"
+            "format=rgba,"
             "colorkey=black:0.02:0.10[waveform]"
         )
-        overlay_filter = "[background][waveform]overlay=(W-w)/2:(H-h)/2:shortest=1[composite]"
-        headline_size = max(34, int(width * 0.048))
+        wave_y = {
+            "top": "H*0.31-h/2",
+            "center": "(H-h)/2",
+            "bottom": "H*0.76-h/2",
+        }[settings.waveform_position]
+        overlay_filter = f"[background][waveform]overlay=(W-w)/2:{wave_y}:shortest=1[composite]"
+        headline_size = max(28, int(width * settings.headline_size_percent / 100))
+        text_x = {
+            "left": "w*0.08",
+            "center": "(w-text_w)/2",
+            "right": "w-text_w-w*0.08",
+        }[settings.text_align]
         title_filter = (
             f"[composite]drawtext=fontfile={_filter_path(_font_path())}:"
             f"textfile={_filter_path(headline_file)}:fontcolor=0x{text_color}:fontsize={headline_size}:"
-            "x=(w-text_w)/2:y=h*0.14:box=1:boxcolor=black@0.28:boxborderw=18"
+            f"x={text_x}:y=h*0.14:box=1:boxcolor=black@0.28:boxborderw=18"
         )
         if subtitle_file is not None:
-            subtitle_size = max(24, int(width * 0.027))
+            subtitle_size = max(18, int(width * settings.subtitle_size_percent / 100))
             title_filter += (
                 f"[titled];[titled]drawtext=fontfile={_filter_path(_font_path())}:"
                 f"textfile={_filter_path(subtitle_file)}:fontcolor=0x{text_color}@0.86:"
-                f"fontsize={subtitle_size}:x=(w-text_w)/2:y=h*0.14+{headline_size + 54}[video]"
+                f"fontsize={subtitle_size}:x={text_x}:y=h*0.14+{headline_size + 54}[video]"
             )
         else:
             title_filter += "[video]"
         filter_complex = ";".join((base_filter, wave_filter, overlay_filter, title_filter))
 
+        preset, crf = {
+            "draft": ("ultrafast", "28"),
+            "standard": ("veryfast", "22"),
+            "high": ("medium", "18"),
+        }[settings.render_quality]
         _run(
             [
                 tools.ffmpeg,
@@ -550,13 +589,13 @@ def render_audiogram_mp4(
                 "-c:v",
                 "libx264",
                 "-preset",
-                "veryfast",
+                preset,
                 "-crf",
-                "22",
+                crf,
                 "-pix_fmt",
                 "yuv420p",
                 "-r",
-                "30",
+                str(settings.frame_rate),
                 "-threads",
                 "1",
                 "-c:a",
