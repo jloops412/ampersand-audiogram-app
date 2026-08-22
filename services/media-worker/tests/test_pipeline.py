@@ -26,6 +26,7 @@ from ampersand_contracts import (
     read_semantic_map,
 )
 from ampersand_engine.errors import EngineError, InvalidMedia
+from ampersand_engine.ffmpeg import FFmpegTools, render_audiogram_mp4
 from ampersand_engine.hashing import sha256_file
 from ampersand_engine.pipeline import process_source
 from ampersand_test_fixtures import generate_spoken_word_fixture
@@ -250,6 +251,81 @@ def test_pipeline_applies_cleanup_metadata_and_renders_audiogram(
     assert tags["title"] == "Tagged production"
     assert tags["artist"] == "Ampersand Test Artist"
     assert tags["album"] == "Ampersand Test Series"
+
+
+def test_audiogram_renderer_loops_video_and_executes_rich_spec(
+    tmp_path: Path,
+    synthetic_source: Path,
+) -> None:
+    background = tmp_path / "background.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-nostdin",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc2=s=640x360:r=24:d=0.4",
+            "-an",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-y",
+            str(background),
+        ],
+        check=True,
+    )
+    output = tmp_path / "rich-audiogram.mp4"
+    render_audiogram_mp4(
+        synthetic_source,
+        output,
+        title="Rich renderer",
+        metadata=OutputMetadataSettings(artist="Ampersand"),
+        settings=AudiogramSettings(
+            enabled=True,
+            aspect_ratio="feed_portrait",
+            waveform_style="dots",
+            waveform_scale="log",
+            waveform_position="bottom",
+            waveform_width_percent=70,
+            waveform_height_percent=20,
+            waveform_opacity=0.65,
+            background_mode="video",
+            background_fit="contain",
+            background_dim=0.2,
+            text_align="left",
+            headline_size_percent=6.0,
+            subtitle_size_percent=3.0,
+            subtitle="Video background",
+            frame_rate=24,
+            render_quality="draft",
+        ),
+        artwork=background,
+        tools=FFmpegTools.discover(),
+    )
+    completed = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "stream=codec_type,width,height,r_frame_rate",
+            "-of",
+            "json",
+            str(output),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    streams = json.loads(completed.stdout)["streams"]
+    video = next(stream for stream in streams if stream["codec_type"] == "video")
+    assert (video["width"], video["height"], video["r_frame_rate"]) == (1080, 1350, "24/1")
+    assert any(stream["codec_type"] == "audio" for stream in streams)
 
 
 def _json_artifacts(directory: Path) -> dict[str, bytes]:

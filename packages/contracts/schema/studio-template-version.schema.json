@@ -2,12 +2,13 @@
   "$defs": {
     "AudiogramSettings": {
       "additionalProperties": false,
-      "description": "Deterministic server-rendered audiogram controls for the V1 beta.",
+      "description": "Versioned deterministic controls shared by Studio and the server renderer.",
       "properties": {
         "aspect_ratio": {
           "default": "square",
           "enum": [
             "square",
+            "feed_portrait",
             "portrait",
             "landscape"
           ],
@@ -20,11 +21,28 @@
           "title": "Background Color",
           "type": "string"
         },
+        "background_dim": {
+          "default": 0.34,
+          "maximum": 0.85,
+          "minimum": 0.0,
+          "title": "Background Dim",
+          "type": "number"
+        },
+        "background_fit": {
+          "default": "cover",
+          "enum": [
+            "cover",
+            "contain"
+          ],
+          "title": "Background Fit",
+          "type": "string"
+        },
         "background_mode": {
           "default": "color",
           "enum": [
             "color",
-            "artwork"
+            "artwork",
+            "video"
           ],
           "title": "Background Mode",
           "type": "string"
@@ -34,10 +52,37 @@
           "title": "Enabled",
           "type": "boolean"
         },
+        "frame_rate": {
+          "default": 30,
+          "enum": [
+            24,
+            30,
+            60
+          ],
+          "title": "Frame Rate",
+          "type": "integer"
+        },
         "headline": {
           "default": "",
           "maxLength": 160,
           "title": "Headline",
+          "type": "string"
+        },
+        "headline_size_percent": {
+          "default": 4.8,
+          "maximum": 10.0,
+          "minimum": 2.0,
+          "title": "Headline Size Percent",
+          "type": "number"
+        },
+        "render_quality": {
+          "default": "standard",
+          "enum": [
+            "draft",
+            "standard",
+            "high"
+          ],
+          "title": "Render Quality",
           "type": "string"
         },
         "schema_version": {
@@ -46,10 +91,33 @@
           "title": "Schema Version",
           "type": "string"
         },
+        "spec_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Spec Version",
+          "type": "string"
+        },
         "subtitle": {
           "default": "",
           "maxLength": 160,
           "title": "Subtitle",
+          "type": "string"
+        },
+        "subtitle_size_percent": {
+          "default": 2.7,
+          "maximum": 6.0,
+          "minimum": 1.0,
+          "title": "Subtitle Size Percent",
+          "type": "number"
+        },
+        "text_align": {
+          "default": "center",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ],
+          "title": "Text Align",
           "type": "string"
         },
         "text_color": {
@@ -64,15 +132,58 @@
           "title": "Waveform Color",
           "type": "string"
         },
+        "waveform_height_percent": {
+          "default": 30,
+          "maximum": 60,
+          "minimum": 10,
+          "title": "Waveform Height Percent",
+          "type": "integer"
+        },
+        "waveform_opacity": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.1,
+          "title": "Waveform Opacity",
+          "type": "number"
+        },
+        "waveform_position": {
+          "default": "center",
+          "enum": [
+            "top",
+            "center",
+            "bottom"
+          ],
+          "title": "Waveform Position",
+          "type": "string"
+        },
+        "waveform_scale": {
+          "default": "sqrt",
+          "enum": [
+            "linear",
+            "sqrt",
+            "cbrt",
+            "log"
+          ],
+          "title": "Waveform Scale",
+          "type": "string"
+        },
         "waveform_style": {
           "default": "mirrored",
           "enum": [
             "line",
             "mirrored",
-            "bars"
+            "bars",
+            "dots"
           ],
           "title": "Waveform Style",
           "type": "string"
+        },
+        "waveform_width_percent": {
+          "default": 82,
+          "maximum": 100,
+          "minimum": 40,
+          "title": "Waveform Width Percent",
+          "type": "integer"
         }
       },
       "title": "AudiogramSettings",

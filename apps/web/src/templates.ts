@@ -38,13 +38,26 @@ function isSettings(value: unknown): value is ProductionSettings {
       metadata &&
       Object.values(metadata).every((item) => typeof item === 'string') &&
       audiogram &&
+      audiogram.spec_version === '1.0' &&
       typeof audiogram.enabled === 'boolean' &&
-      ['square', 'portrait', 'landscape'].includes(audiogram.aspect_ratio) &&
-      ['line', 'mirrored', 'bars'].includes(audiogram.waveform_style) &&
-      ['color', 'artwork'].includes(audiogram.background_mode) &&
+      ['square', 'feed_portrait', 'portrait', 'landscape'].includes(audiogram.aspect_ratio) &&
+      ['line', 'mirrored', 'bars', 'dots'].includes(audiogram.waveform_style) &&
+      ['linear', 'sqrt', 'cbrt', 'log'].includes(audiogram.waveform_scale) &&
+      ['top', 'center', 'bottom'].includes(audiogram.waveform_position) &&
+      audiogram.waveform_width_percent >= 40 && audiogram.waveform_width_percent <= 100 &&
+      audiogram.waveform_height_percent >= 10 && audiogram.waveform_height_percent <= 60 &&
+      audiogram.waveform_opacity >= 0.1 && audiogram.waveform_opacity <= 1 &&
+      ['color', 'artwork', 'video'].includes(audiogram.background_mode) &&
+      ['cover', 'contain'].includes(audiogram.background_fit) &&
+      audiogram.background_dim >= 0 && audiogram.background_dim <= 0.85 &&
       [audiogram.background_color, audiogram.waveform_color, audiogram.text_color].every((color) =>
         /^#[0-9a-f]{6}$/i.test(color),
       ) &&
+      ['left', 'center', 'right'].includes(audiogram.text_align) &&
+      audiogram.headline_size_percent >= 2 && audiogram.headline_size_percent <= 10 &&
+      audiogram.subtitle_size_percent >= 1 && audiogram.subtitle_size_percent <= 6 &&
+      [24, 30, 60].includes(audiogram.frame_rate) &&
+      ['draft', 'standard', 'high'].includes(audiogram.render_quality) &&
       typeof delivery.wav === 'boolean' &&
       typeof delivery.mp3 === 'boolean' &&
       (delivery.wav || delivery.mp3) &&
@@ -105,15 +118,28 @@ function settings(
       track_number: '',
     },
     audiogram: {
+      spec_version: '1.0',
       enabled: false,
       aspect_ratio: 'square',
       waveform_style: 'mirrored',
+      waveform_scale: 'sqrt',
+      waveform_position: 'center',
+      waveform_width_percent: 82,
+      waveform_height_percent: 30,
+      waveform_opacity: 1,
       background_mode: 'color',
+      background_fit: 'cover',
+      background_dim: 0.34,
       background_color: '#111718',
       waveform_color: '#e1b977',
       text_color: '#f4f1ea',
+      text_align: 'center',
+      headline_size_percent: 4.8,
+      subtitle_size_percent: 2.7,
       headline: '',
       subtitle: '',
+      frame_rate: 30,
+      render_quality: 'standard',
     },
     export: { wav: true, mp3: true, mp3_bitrate_kbps: mp3Bitrate },
   };

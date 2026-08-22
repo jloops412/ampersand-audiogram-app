@@ -170,6 +170,24 @@ input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; heigh
 .metadata-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }.metadata-grid label { display: flex; flex-direction: column; gap: .45rem; }.metadata-grid .wide { grid-column: 1 / -1; }
 .hero-toggle { min-height: auto; margin-bottom: .9rem; }.audiogram-controls { display: grid; gap: .9rem; }.artwork-picker { display: flex; align-items: center; gap: .9rem; border: 1px dashed var(--line-strong); border-radius: 11px; padding: .8rem; }.artwork-picker span { color: var(--muted); font-size: .66rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .color-row { display: flex; gap: .7rem; }.color-row label { display: flex; align-items: center; gap: .6rem; border: 1px solid var(--line); border-radius: 9px; padding: .55rem .7rem; background: var(--surface); }.color-row input { width: 34px; height: 28px; padding: 0; border: 0; background: transparent; }
+.audiogram-preview-shell { display: grid; justify-items: center; gap: .55rem; padding: 1rem; border: 1px solid var(--line); border-radius: 14px; background: #090c0d; }
+.audiogram-preview-shell > small { color: var(--dim); font-size: .6rem; text-align: center; }
+.audiogram-preview { container-type: inline-size; position: relative; width: min(100%, 520px); max-height: 560px; overflow: hidden; isolation: isolate; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.audiogram-preview > img, .audiogram-preview > video, .preview-dim { position: absolute; inset: 0; width: 100%; height: 100%; }
+.audiogram-preview > img, .audiogram-preview > video { z-index: -2; }
+.preview-dim { z-index: -1; }
+.preview-copy { position: absolute; top: 14%; left: 8%; right: 8%; display: flex; flex-direction: column; gap: .45cqw; text-shadow: 0 2px 12px rgba(0,0,0,.55); }
+.preview-copy strong { line-height: 1.05; letter-spacing: -.025em; }
+.preview-copy small { color: inherit; opacity: .86; line-height: 1.2; }
+.preview-waveform { position: absolute; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: space-between; gap: max(1px, .25cqw); }
+.preview-waveform i { display: block; flex: 1; min-width: 1px; max-width: .8cqw; background: currentColor; border-radius: 999px; box-shadow: 0 0 .8cqw currentColor; }
+.preview-waveform.style-line i { max-width: .25cqw; border-radius: 0; }
+.preview-waveform.style-mirrored i { transform: scaleY(.72); }
+.preview-waveform.style-bars i { border-radius: .18cqw; }
+.preview-waveform.style-dots i { height: .72cqw !important; flex-basis: .72cqw; border-radius: 50%; transform: translateY(calc((var(--peak-offset, 0)) * 1px)); }
+.audiogram-advanced { margin-top: 0; }
+.audiogram-advanced .compact-selects { padding: 0 1rem 1rem; }
+.audiogram-advanced .compact-selects .select-card { min-height: 92px; }
 .upload-progress { position: relative; height: 34px; margin-bottom: .7rem; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #0b0e0f; }.upload-progress > span { position: absolute; inset: 0 auto 0 0; background: rgba(208,173,121,.18); transition: width .2s; }.upload-progress small { position: relative; z-index: 1; display: grid; place-items: center; height: 100%; color: #d6d1c8; font-size: .58rem; }
 
 .production-title-row { display: flex; justify-content: space-between; align-items: end; gap: 2rem; margin-bottom: 2.4rem; }

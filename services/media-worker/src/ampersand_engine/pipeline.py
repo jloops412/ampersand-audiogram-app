@@ -113,10 +113,16 @@ def process_source(
     production_title = (title or source_path.stem).strip()[:160] or "Untitled production"
     artwork_path = artwork.expanduser().resolve(strict=True) if artwork is not None else None
     if artwork_path is not None and not artwork_path.is_file():
-        raise EngineError("The background artwork must be a local regular file.")
+        raise EngineError("The audiogram background asset must be a local regular file.")
     audiogram_settings = resolved_settings.settings.audiogram
-    if audiogram_settings.enabled and audiogram_settings.background_mode == "artwork" and artwork_path is None:
-        raise EngineError("Audiogram artwork mode requires --artwork.")
+    if (
+        audiogram_settings.enabled
+        and audiogram_settings.background_mode in {"artwork", "video"}
+        and artwork_path is None
+    ):
+        raise EngineError("Audiogram artwork and video modes require --artwork.")
+    if audiogram_settings.enabled and audiogram_settings.background_mode == "color" and artwork_path is not None:
+        raise EngineError("Audiogram color mode does not accept a background asset.")
     if not audiogram_settings.enabled and artwork_path is not None:
         raise EngineError("Background artwork is valid only when audiogram rendering is enabled.")
     source_sha = sha256_file(source_path)
@@ -183,7 +189,7 @@ def process_source(
                     "ingest_mode": "local_cli",
                     "immutable": True,
                     "network_used": False,
-                    "purpose": "audiogram_background",
+                    "purpose": f"audiogram_{audiogram_settings.background_mode}_background",
                 },
             )
             write_manifest(stage / "background-artwork-manifest.json", artwork_manifest)

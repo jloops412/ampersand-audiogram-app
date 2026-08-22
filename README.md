@@ -39,8 +39,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - a sample-accurate, channel-linked, evaluation-only Leveler renderer that leaves production masters unchanged;
 - deterministic two-pass WAV/MP3 loudness mastering;
 - conservative deterministic high-pass, steady-noise reduction, and compression processing;
-- full-duration H.264/AAC audiograms with square, portrait, and landscape layouts, three waveform styles, solid colors,
-  or uploaded background artwork;
+- full-duration H.264/AAC audiograms with 1:1, 4:5, 9:16, and 16:9 layouts; four waveform primitives; rich layout,
+  opacity, typography, frame-rate, and quality controls; and color, uploaded image, or looping-video backgrounds;
 - a versioned, rights-clear synthetic Audio Lab corpus with controls, degradations, lineage, and an opt-in one-hour stream;
 - a local-only blinded listening/regression harness with deterministic loudness-matched Original/A/B and clean-input
   preservation sessions, delayed identity reveal, artifact scoring, diagnostics, and tamper-checked reports;

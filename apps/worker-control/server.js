@@ -38,7 +38,7 @@ const ENGINE_BIN = process.env.AMPERSAND_ENGINE_BIN || 'ampersand-engine';
 const PORT = Number(process.env.PORT || 8080);
 const MAX_UPLOAD_BYTES = Number(process.env.AMPERSAND_MAX_UPLOAD_BYTES || 30 * 1024 * 1024);
 const MAX_DIRECT_UPLOAD_BYTES = Number(process.env.AMPERSAND_MAX_DIRECT_UPLOAD_BYTES || 1024 * 1024 * 1024);
-const MAX_ARTWORK_BYTES = Number(process.env.AMPERSAND_MAX_ARTWORK_BYTES || 25 * 1024 * 1024);
+const MAX_ARTWORK_BYTES = Number(process.env.AMPERSAND_MAX_ARTWORK_BYTES || 512 * 1024 * 1024);
 const GCS_BUCKET = process.env.AMPERSAND_GCS_BUCKET || '';
 const BETA_TOKEN = process.env.AMPERSAND_BETA_TOKEN || '';
 const BETA_SESSION = BETA_TOKEN
@@ -325,7 +325,7 @@ async function runJobAttempt(job, workDirectory) {
   ];
   if (
     job.settings.audiogram?.enabled &&
-    job.settings.audiogram.background_mode === 'artwork' &&
+    ['artwork', 'video'].includes(job.settings.audiogram.background_mode) &&
     job.artwork?.path
   ) {
     argumentsList.push('--artwork', job.artwork.path);
@@ -570,8 +570,11 @@ export async function createApp() {
         error.statusCode = 413;
         throw error;
       }
-      if (kind === 'artwork' && !['.jpg', '.jpeg', '.png', '.webp'].includes(safeMediaExtension(filename))) {
-        const error = new Error('Artwork must be a JPG, PNG, or WebP image.');
+      if (
+        kind === 'artwork' &&
+        !['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.mov', '.m4v', '.webm'].includes(safeMediaExtension(filename))
+      ) {
+        const error = new Error('Background media must be a JPG, PNG, WebP, MP4, MOV, M4V, or WebM file.');
         error.statusCode = 400;
         throw error;
       }
@@ -672,14 +675,18 @@ export async function createApp() {
         }
         artworkRecord = await readJson(uploadRecordFilename(artworkUploadId));
         if (artworkRecord.kind !== 'artwork') {
-          const error = new Error('The selected upload is not background artwork.');
+          const error = new Error('The selected upload is not audiogram background media.');
           error.statusCode = 400;
           throw error;
         }
         await verifyUploadedObject(artworkRecord);
       }
-      if (settings.audiogram?.enabled && settings.audiogram?.background_mode === 'artwork' && !artworkRecord) {
-        const error = new Error('Choose background artwork for the selected audiogram style.');
+      if (
+        settings.audiogram?.enabled &&
+        ['artwork', 'video'].includes(settings.audiogram?.background_mode) &&
+        !artworkRecord
+      ) {
+        const error = new Error('Choose background media for the selected audiogram style.');
         error.statusCode = 400;
         throw error;
       }
