@@ -204,6 +204,42 @@
           "title": "Compression",
           "type": "string"
         },
+        "declip": {
+          "default": false,
+          "title": "Declip",
+          "type": "boolean"
+        },
+        "deesser": {
+          "default": "off",
+          "enum": [
+            "off",
+            "light",
+            "balanced",
+            "strong"
+          ],
+          "title": "Deesser",
+          "type": "string"
+        },
+        "hum_reduction": {
+          "default": "off",
+          "enum": [
+            "off",
+            "50hz",
+            "60hz"
+          ],
+          "title": "Hum Reduction",
+          "type": "string"
+        },
+        "noise_gate": {
+          "default": "off",
+          "enum": [
+            "off",
+            "light",
+            "balanced"
+          ],
+          "title": "Noise Gate",
+          "type": "string"
+        },
         "noise_reduction": {
           "default": "balanced",
           "enum": [
@@ -224,6 +260,17 @@
           "const": "1.0.0",
           "default": "1.0.0",
           "title": "Schema Version",
+          "type": "string"
+        },
+        "voice_enhancement": {
+          "default": "off",
+          "enum": [
+            "off",
+            "natural",
+            "warm",
+            "presence"
+          ],
+          "title": "Voice Enhancement",
           "type": "string"
         }
       },
@@ -409,6 +456,11 @@
         "enum": [
           "cleanup.noise_reduction",
           "cleanup.rumble_filter",
+          "cleanup.hum_reduction",
+          "cleanup.declip",
+          "cleanup.noise_gate",
+          "cleanup.deesser",
+          "cleanup.voice_enhancement",
           "cleanup.compression",
           "mastering.target_integrated_lufs",
           "mastering.max_true_peak_dbtp",

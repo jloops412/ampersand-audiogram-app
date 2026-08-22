@@ -373,6 +373,11 @@ def process_source(
         cleanup_applied = (
             cleanup_settings.rumble_filter
             or cleanup_settings.noise_reduction != "off"
+            or cleanup_settings.hum_reduction != "off"
+            or cleanup_settings.declip
+            or cleanup_settings.noise_gate != "off"
+            or cleanup_settings.deesser != "off"
+            or cleanup_settings.voice_enhancement != "off"
             or cleanup_settings.compression != "off"
         )
         mastering_input = analysis_input
@@ -650,9 +655,12 @@ def process_source(
                 ),
                 (
                     f"Applied the deterministic V1 cleanup chain globally: noise reduction "
-                    f"{cleanup_settings.noise_reduction}, rumble filter "
-                    f"{'on' if cleanup_settings.rumble_filter else 'off'}, and compression "
-                    f"{cleanup_settings.compression}."
+                    f"{cleanup_settings.noise_reduction}, rumble "
+                    f"{'on' if cleanup_settings.rumble_filter else 'off'}, hum "
+                    f"{cleanup_settings.hum_reduction}, declip "
+                    f"{'on' if cleanup_settings.declip else 'off'}, gate {cleanup_settings.noise_gate}, "
+                    f"de-esser {cleanup_settings.deesser}, voice enhancement "
+                    f"{cleanup_settings.voice_enhancement}, and compression {cleanup_settings.compression}."
                     if cleanup_applied
                     else "Bypassed deterministic cleanup because every cleanup control was off."
                 ),

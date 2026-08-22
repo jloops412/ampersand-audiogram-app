@@ -10,6 +10,11 @@ export interface MasteringSettings {
 export interface CleanupSettings {
   noise_reduction: 'off' | 'light' | 'balanced' | 'strong';
   rumble_filter: boolean;
+  hum_reduction: 'off' | '50hz' | '60hz';
+  declip: boolean;
+  noise_gate: 'off' | 'light' | 'balanced';
+  deesser: 'off' | 'light' | 'balanced' | 'strong';
+  voice_enhancement: 'off' | 'natural' | 'warm' | 'presence';
   compression: 'off' | 'gentle' | 'balanced' | 'firm';
 }
 

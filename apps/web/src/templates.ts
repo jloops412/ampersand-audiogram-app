@@ -23,6 +23,11 @@ function isSettings(value: unknown): value is ProductionSettings {
     cleanup &&
       ['off', 'light', 'balanced', 'strong'].includes(cleanup.noise_reduction) &&
       typeof cleanup.rumble_filter === 'boolean' &&
+      ['off', '50hz', '60hz'].includes(cleanup.hum_reduction) &&
+      typeof cleanup.declip === 'boolean' &&
+      ['off', 'light', 'balanced'].includes(cleanup.noise_gate) &&
+      ['off', 'light', 'balanced', 'strong'].includes(cleanup.deesser) &&
+      ['off', 'natural', 'warm', 'presence'].includes(cleanup.voice_enhancement) &&
       ['off', 'gentle', 'balanced', 'firm'].includes(cleanup.compression) &&
     mastering &&
       delivery &&
@@ -95,14 +100,21 @@ function settings(
   peak: number,
   range: number,
   mp3Bitrate: 128 | 160 | 192 | 256 | 320 = 192,
-  cleanup: ProductionSettings['cleanup'] = {
+  cleanup: Partial<ProductionSettings['cleanup']> = {},
+): ProductionSettings {
+  const resolvedCleanup: ProductionSettings['cleanup'] = {
     noise_reduction: 'balanced',
     rumble_filter: true,
+    hum_reduction: 'off',
+    declip: false,
+    noise_gate: 'off',
+    deesser: 'off',
+    voice_enhancement: 'off',
     compression: 'balanced',
-  },
-): ProductionSettings {
+    ...cleanup,
+  };
   return {
-    cleanup,
+    cleanup: resolvedCleanup,
     mastering: {
       target_integrated_lufs: target,
       max_true_peak_dbtp: peak,
@@ -153,7 +165,7 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
     name: 'Podcast polish',
     version: 1,
     intent: 'podcast',
-    settings: settings(-16, -1, 11, 192),
+    settings: settings(-16, -1, 11, 192, { deesser: 'light', voice_enhancement: 'natural' }),
     builtIn: true,
   },
   {
@@ -180,6 +192,8 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
     settings: settings(-23, -1, 7, 256, {
       noise_reduction: 'balanced',
       rumble_filter: true,
+      deesser: 'balanced',
+      voice_enhancement: 'presence',
       compression: 'firm',
     }),
     builtIn: true,
@@ -194,6 +208,9 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
     settings: settings(-14, -1, 8, 192, {
       noise_reduction: 'balanced',
       rumble_filter: true,
+      noise_gate: 'light',
+      deesser: 'balanced',
+      voice_enhancement: 'presence',
       compression: 'firm',
     }),
     builtIn: true,
@@ -209,7 +226,7 @@ function migrateSettings(value: unknown): unknown {
   const candidate = value as Partial<ProductionSettings>;
   const fallback = settings(-16, -1, 11);
   return {
-    cleanup: candidate.cleanup || fallback.cleanup,
+    cleanup: { ...fallback.cleanup, ...(candidate.cleanup || {}) },
     mastering: candidate.mastering,
     metadata: { ...fallback.metadata, ...(candidate.metadata || {}) },
     audiogram: { ...fallback.audiogram, ...(candidate.audiogram || {}) },
