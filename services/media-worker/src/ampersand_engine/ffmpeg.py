@@ -481,12 +481,8 @@ def render_audiogram_mp4(
     }[settings.aspect_ratio]
     wave_width = int(width * settings.waveform_width_percent / 100)
     wave_height = max(108, int(height * settings.waveform_height_percent / 100))
-    wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p", "dots": "point"}[
-        settings.waveform_style
-    ]
-    wave_scale = {"linear": "lin", "sqrt": "sqrt", "cbrt": "cbrt", "log": "log"}[
-        settings.waveform_scale
-    ]
+    wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p", "dots": "point"}[settings.waveform_style]
+    wave_scale = {"linear": "lin", "sqrt": "sqrt", "cbrt": "cbrt", "log": "log"}[settings.waveform_scale]
     background = settings.background_color.removeprefix("#")
     waveform = settings.waveform_color.removeprefix("#")
     text_color = settings.text_color.removeprefix("#")
@@ -526,8 +522,7 @@ def render_audiogram_mp4(
                 f"crop={width}:{height},setsar=1,format=rgba"
             )
         base_filter = (
-            f"{fit_filter},drawbox=x=0:y=0:w=iw:h=ih:"
-            f"color=black@{settings.background_dim:.3f}:t=fill[background]"
+            f"{fit_filter},drawbox=x=0:y=0:w=iw:h=ih:color=black@{settings.background_dim:.3f}:t=fill[background]"
         )
         wave_filter = (
             f"[1:a]showwaves=s={wave_width}x{wave_height}:mode={wave_mode}:"
