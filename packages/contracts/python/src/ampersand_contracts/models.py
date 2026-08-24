@@ -358,6 +358,14 @@ class ProductionRun(ContractModel):
     idempotency_key: Sha256
     status: RunStatus
     step_ids: tuple[Identifier, ...]
+    cleanup_plan_id: Identifier | None = None
+    cleanup_plan_sha256: Sha256 | None = None
+
+    @model_validator(mode="after")
+    def cleanup_identity_is_complete(self) -> Self:
+        if (self.cleanup_plan_id is None) is not (self.cleanup_plan_sha256 is None):
+            raise ValueError("cleanup plan ID and SHA-256 must be present or absent together")
+        return self
 
 
 class JobStep(ContractModel):
@@ -404,14 +412,189 @@ class MasteringSettings(ContractModel):
 class CleanupSettings(ContractModel):
     """Deterministic spoken-word cleanup controls admitted for the V1 beta."""
 
-    noise_reduction: Literal["off", "light", "balanced", "strong"] = "balanced"
-    rumble_filter: bool = True
+    mode: Literal["smart", "manual"] = "manual"
+    noise_reduction: Literal["off", "light", "balanced", "strong"] = "off"
+    rumble_filter: bool = False
     hum_reduction: Literal["off", "50hz", "60hz"] = "off"
     declip: bool = False
     noise_gate: Literal["off", "light", "balanced"] = "off"
     deesser: Literal["off", "light", "balanced", "strong"] = "off"
     voice_enhancement: Literal["off", "natural", "warm", "presence"] = "off"
-    compression: Literal["off", "gentle", "balanced", "firm"] = "balanced"
+    compression: Literal["off", "gentle", "balanced", "firm"] = "off"
+
+
+class CleanupPlannerSettings(ContractModel):
+    """Versioned, protect-only admission policy for Smart Cleanup V0.3."""
+
+    settings_id: Identifier = "cleanup-planner-settings:smart-v0.3"
+    algorithm_version: Literal["0.3.0"] = "0.3.0"
+    activation_mode: Literal["protect"] = "protect"
+    maximum_music_probability: Probability = 0.35
+    minimum_noise_probability_for_candidate: Probability = 0.65
+    minimum_rumble_probability_for_candidate: Probability = 0.75
+    minimum_hum_probability_for_candidate: Probability = 0.80
+    require_full_coverage_music_evidence: Literal[True] = True
+    automatic_declip_enabled: Literal[False] = False
+
+
+class CleanupEvidenceSummary(ContractModel):
+    """Bounded measurements used to explain one Smart Cleanup resolution."""
+
+    semantic_map_sha256: Sha256
+    duration_us: Microseconds
+    region_count: int = Field(gt=0)
+    protected_region_count: int = Field(ge=0)
+    conflict_count: int = Field(ge=0)
+    music_evidence_available: bool
+    stationary_noise_evidence_available: bool
+    maximum_music_probability: Probability | None = None
+    maximum_noise_probability: Probability | None = None
+    maximum_rumble_probability: Probability | None = None
+    maximum_hum_probability: Probability | None = None
+    maximum_clipping_probability: Probability | None = None
+    resolved_hum_fundamental_hz: Literal[50, 60] | None = None
+
+
+class CleanupStageDecision(ContractModel):
+    """One explicit stage disposition in a resolved cleanup plan."""
+
+    stage: Literal[
+        "declip",
+        "rumble_filter",
+        "hum_reduction",
+        "noise_reduction",
+        "noise_gate",
+        "deesser",
+        "voice_enhancement",
+        "compression",
+    ]
+    disposition: Literal["candidate", "applied", "skipped", "protected"]
+    measured_probability: Probability | None = None
+    candidate_threshold: Probability | None = None
+    reason_code: Identifier
+    reason: str = Field(min_length=1, max_length=512)
+
+
+class CleanupPlan(ContractModel):
+    """Resolved, auditable cleanup decision used by the production renderer."""
+
+    cleanup_plan_id: Identifier
+    run_id: Identifier
+    semantic_map_id: Identifier
+    algorithm_version: Literal["0.3.0"] = "0.3.0"
+    mode: Literal["smart", "manual"]
+    decision: Literal["candidate", "manual", "protect", "no_op"]
+    planner_settings_id: Identifier
+    planner_settings_sha256: Sha256
+    planner_settings: CleanupPlannerSettings
+    evidence: CleanupEvidenceSummary
+    requested_settings: CleanupSettings
+    requested_settings_sha256: Sha256
+    resolved_settings: CleanupSettings
+    resolved_settings_sha256: Sha256
+    applied_stages: tuple[
+        Literal[
+            "declip",
+            "rumble_filter",
+            "hum_reduction",
+            "noise_reduction",
+            "noise_gate",
+            "deesser",
+            "voice_enhancement",
+            "compression",
+        ],
+        ...,
+    ] = ()
+    candidate_stages: tuple[
+        Literal["rumble_filter", "hum_reduction", "noise_reduction"],
+        ...,
+    ] = ()
+    stage_decisions: tuple[CleanupStageDecision, ...] = Field(min_length=8, max_length=8)
+    reason_codes: tuple[Identifier, ...] = Field(min_length=1)
+    reasons: tuple[str, ...] = Field(min_length=1)
+    warnings: tuple[str, ...] = ()
+    production_audio_changed: bool
+
+    @model_validator(mode="after")
+    def valid_cleanup_resolution(self) -> Self:
+        from .serialization import manifest_sha256
+
+        if self.planner_settings_sha256 != manifest_sha256(self.planner_settings):
+            raise ValueError("cleanup planner settings SHA-256 must match the embedded policy snapshot")
+        if self.requested_settings_sha256 != manifest_sha256(self.requested_settings):
+            raise ValueError("cleanup requested settings SHA-256 must match the embedded request")
+        if self.resolved_settings_sha256 != manifest_sha256(self.resolved_settings):
+            raise ValueError("cleanup resolved settings SHA-256 must match the embedded resolution")
+        expected_stages: list[str] = []
+        settings = self.resolved_settings
+        if settings.declip:
+            expected_stages.append("declip")
+        if settings.rumble_filter:
+            expected_stages.append("rumble_filter")
+        if settings.hum_reduction != "off":
+            expected_stages.append("hum_reduction")
+        if settings.noise_reduction != "off":
+            expected_stages.append("noise_reduction")
+        if settings.noise_gate != "off":
+            expected_stages.append("noise_gate")
+        if settings.deesser != "off":
+            expected_stages.append("deesser")
+        if settings.voice_enhancement != "off":
+            expected_stages.append("voice_enhancement")
+        if settings.compression != "off":
+            expected_stages.append("compression")
+        if tuple(expected_stages) != self.applied_stages:
+            raise ValueError("applied_stages must exactly match the resolved cleanup settings")
+        if self.production_audio_changed is not bool(self.applied_stages):
+            raise ValueError("production_audio_changed must match whether cleanup stages are applied")
+        if self.mode != settings.mode:
+            raise ValueError("cleanup plan mode must match the resolved settings mode")
+        if self.planner_settings_id != self.planner_settings.settings_id:
+            raise ValueError("cleanup planner settings ID must match the embedded policy snapshot")
+        if self.mode == "manual" and self.decision != "manual":
+            raise ValueError("manual cleanup mode requires a manual decision")
+        if self.mode == "smart" and self.decision == "manual":
+            raise ValueError("Smart Cleanup cannot contain a manual decision")
+        if self.mode == "manual" and self.requested_settings != self.resolved_settings:
+            raise ValueError("manual cleanup settings must be preserved exactly")
+        if self.decision in {"protect", "no_op"} and self.applied_stages:
+            raise ValueError("protect and no-op cleanup plans cannot apply processing stages")
+        if self.mode == "smart" and self.applied_stages:
+            raise ValueError("Smart Cleanup V0.3 is protect-only and cannot change production audio")
+        if self.mode == "manual" and self.candidate_stages:
+            raise ValueError("manual cleanup plans do not contain automatic candidate stages")
+        if self.decision == "candidate" and not self.candidate_stages:
+            raise ValueError("candidate cleanup decisions require at least one candidate stage")
+        if self.decision != "candidate" and self.candidate_stages:
+            raise ValueError("only candidate cleanup decisions may contain candidate stages")
+        if len(set(self.candidate_stages)) != len(self.candidate_stages):
+            raise ValueError("cleanup candidate stages must be unique")
+        decision_stages = tuple(decision.stage for decision in self.stage_decisions)
+        required_stages = {
+            "declip",
+            "rumble_filter",
+            "hum_reduction",
+            "noise_reduction",
+            "noise_gate",
+            "deesser",
+            "voice_enhancement",
+            "compression",
+        }
+        if set(decision_stages) != required_stages or len(decision_stages) != len(required_stages):
+            raise ValueError("stage_decisions must contain each cleanup stage exactly once")
+        if (
+            tuple(decision.stage for decision in self.stage_decisions if decision.disposition == "applied")
+            != self.applied_stages
+        ):
+            raise ValueError("applied stage decisions must match applied_stages")
+        if (
+            tuple(decision.stage for decision in self.stage_decisions if decision.disposition == "candidate")
+            != self.candidate_stages
+        ):
+            raise ValueError("candidate stage decisions must match candidate_stages")
+        if len(set(self.reason_codes)) != len(self.reason_codes):
+            raise ValueError("cleanup reason codes must be unique")
+        return self
 
 
 class OutputMetadataSettings(ContractModel):
@@ -524,6 +707,7 @@ class ResolvedProductionSettings(ContractModel):
     settings_sha256: Sha256
     field_provenance: dict[
         Literal[
+            "cleanup.mode",
             "cleanup.noise_reduction",
             "cleanup.rumble_filter",
             "cleanup.hum_reduction",
@@ -1737,6 +1921,8 @@ class ProcessingReport(ContractModel):
     loudness_after: LoudnessMeasurement
     gain_envelope_id: Identifier | None = None
     leveler_statistics_id: Identifier | None = None
+    cleanup_plan_id: Identifier
+    cleanup_plan_sha256: Sha256
     step_ids: tuple[Identifier, ...]
     decisions: tuple[str, ...]
     artifact_sha256: dict[str, Sha256]
@@ -1744,6 +1930,12 @@ class ProcessingReport(ContractModel):
     external_api_cost_usd: float = Field(default=0.0, ge=0.0)
     privacy_summary: str = Field(min_length=1, max_length=512)
     reproducibility_summary: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def cleanup_plan_reference_matches_artifact_hash(self) -> Self:
+        if self.artifact_sha256.get("cleanup_plan") != self.cleanup_plan_sha256:
+            raise ValueError("processing report cleanup-plan hash must match the artifact ledger")
+        return self
 
 
 class ModelManifest(ContractModel):

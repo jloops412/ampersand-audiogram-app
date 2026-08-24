@@ -42,6 +42,7 @@ complete Studio. ADR-0011 records this superseding deployment direction.
 21. [Leveler Gain Renderer V0](./architecture/LEVELER_GAIN_RENDERER_V0.md)
 22. [Processing Router V0](./architecture/PROCESSING_ROUTER_V0.md)
 23. [ADR-0012 guided-processing beta upgrade](./decisions/ADR-0012-GUIDED-PROCESSING-LARGE-UPLOADS-AUDIOGRAMS.md)
+24. [Smart Cleanup Guardrails V0.3](./architecture/SMART_CLEANUP_GUARDRAILS_V0_3.md)
 
 ## Architecture decision records
 

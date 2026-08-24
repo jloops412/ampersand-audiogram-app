@@ -56,6 +56,29 @@ test('public job projection excludes internal paths and source hashes', () => {
   assert.equal(serialized.includes('aaaaaaaa'), false);
 });
 
+test('successful jobs expose authenticated report and cleanup-plan downloads', () => {
+  const projected = publicJob({
+    id: 'beta-123',
+    requestId: 'request:browser:1234',
+    title: 'Test',
+    status: 'succeeded',
+    intent: 'podcast',
+    settings: {},
+    source: { filename: 'test.wav', sizeBytes: 42 },
+    result: {},
+    summary: { cleanupPlan: {} },
+    createdAt: '2026-08-20T00:00:00.000Z',
+    updatedAt: '2026-08-20T00:00:00.000Z',
+    currentStep: 'complete',
+    completedSteps: [],
+    progressPercent: 100,
+    attempt: 1,
+  });
+
+  assert.equal(projected.outputs?.report, '/api/v2/productions/beta-123/report');
+  assert.equal(projected.outputs?.cleanupPlan, '/api/v2/productions/beta-123/cleanup-plan');
+});
+
 test('error messages redact private roots and collapse newlines', () => {
   assert.equal(
     safeErrorMessage('failed at /data/private/source.wav\nnext', ['/data/private']),

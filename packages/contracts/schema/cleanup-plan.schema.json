@@ -1,0 +1,569 @@
+{
+  "$defs": {
+    "CleanupEvidenceSummary": {
+      "additionalProperties": false,
+      "description": "Bounded measurements used to explain one Smart Cleanup resolution.",
+      "properties": {
+        "conflict_count": {
+          "minimum": 0,
+          "title": "Conflict Count",
+          "type": "integer"
+        },
+        "duration_us": {
+          "minimum": 0,
+          "title": "Duration Us",
+          "type": "integer"
+        },
+        "maximum_clipping_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Clipping Probability"
+        },
+        "maximum_hum_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Hum Probability"
+        },
+        "maximum_music_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Music Probability"
+        },
+        "maximum_noise_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Noise Probability"
+        },
+        "maximum_rumble_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Rumble Probability"
+        },
+        "music_evidence_available": {
+          "title": "Music Evidence Available",
+          "type": "boolean"
+        },
+        "protected_region_count": {
+          "minimum": 0,
+          "title": "Protected Region Count",
+          "type": "integer"
+        },
+        "region_count": {
+          "exclusiveMinimum": 0,
+          "title": "Region Count",
+          "type": "integer"
+        },
+        "resolved_hum_fundamental_hz": {
+          "anyOf": [
+            {
+              "enum": [
+                50,
+                60
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolved Hum Fundamental Hz"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "semantic_map_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Semantic Map Sha256",
+          "type": "string"
+        },
+        "stationary_noise_evidence_available": {
+          "title": "Stationary Noise Evidence Available",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "semantic_map_sha256",
+        "duration_us",
+        "region_count",
+        "protected_region_count",
+        "conflict_count",
+        "music_evidence_available",
+        "stationary_noise_evidence_available"
+      ],
+      "title": "CleanupEvidenceSummary",
+      "type": "object"
+    },
+    "CleanupPlannerSettings": {
+      "additionalProperties": false,
+      "description": "Versioned, protect-only admission policy for Smart Cleanup V0.3.",
+      "properties": {
+        "activation_mode": {
+          "const": "protect",
+          "default": "protect",
+          "title": "Activation Mode",
+          "type": "string"
+        },
+        "algorithm_version": {
+          "const": "0.3.0",
+          "default": "0.3.0",
+          "title": "Algorithm Version",
+          "type": "string"
+        },
+        "automatic_declip_enabled": {
+          "const": false,
+          "default": false,
+          "title": "Automatic Declip Enabled",
+          "type": "boolean"
+        },
+        "maximum_music_probability": {
+          "default": 0.35,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Maximum Music Probability",
+          "type": "number"
+        },
+        "minimum_hum_probability_for_candidate": {
+          "default": 0.8,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Minimum Hum Probability For Candidate",
+          "type": "number"
+        },
+        "minimum_noise_probability_for_candidate": {
+          "default": 0.65,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Minimum Noise Probability For Candidate",
+          "type": "number"
+        },
+        "minimum_rumble_probability_for_candidate": {
+          "default": 0.75,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Minimum Rumble Probability For Candidate",
+          "type": "number"
+        },
+        "require_full_coverage_music_evidence": {
+          "const": true,
+          "default": true,
+          "title": "Require Full Coverage Music Evidence",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "settings_id": {
+          "default": "cleanup-planner-settings:smart-v0.3",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Settings Id",
+          "type": "string"
+        }
+      },
+      "title": "CleanupPlannerSettings",
+      "type": "object"
+    },
+    "CleanupSettings": {
+      "additionalProperties": false,
+      "description": "Deterministic spoken-word cleanup controls admitted for the V1 beta.",
+      "properties": {
+        "compression": {
+          "default": "off",
+          "enum": [
+            "off",
+            "gentle",
+            "balanced",
+            "firm"
+          ],
+          "title": "Compression",
+          "type": "string"
+        },
+        "declip": {
+          "default": false,
+          "title": "Declip",
+          "type": "boolean"
+        },
+        "deesser": {
+          "default": "off",
+          "enum": [
+            "off",
+            "light",
+            "balanced",
+            "strong"
+          ],
+          "title": "Deesser",
+          "type": "string"
+        },
+        "hum_reduction": {
+          "default": "off",
+          "enum": [
+            "off",
+            "50hz",
+            "60hz"
+          ],
+          "title": "Hum Reduction",
+          "type": "string"
+        },
+        "mode": {
+          "default": "manual",
+          "enum": [
+            "smart",
+            "manual"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "noise_gate": {
+          "default": "off",
+          "enum": [
+            "off",
+            "light",
+            "balanced"
+          ],
+          "title": "Noise Gate",
+          "type": "string"
+        },
+        "noise_reduction": {
+          "default": "off",
+          "enum": [
+            "off",
+            "light",
+            "balanced",
+            "strong"
+          ],
+          "title": "Noise Reduction",
+          "type": "string"
+        },
+        "rumble_filter": {
+          "default": false,
+          "title": "Rumble Filter",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "voice_enhancement": {
+          "default": "off",
+          "enum": [
+            "off",
+            "natural",
+            "warm",
+            "presence"
+          ],
+          "title": "Voice Enhancement",
+          "type": "string"
+        }
+      },
+      "title": "CleanupSettings",
+      "type": "object"
+    },
+    "CleanupStageDecision": {
+      "additionalProperties": false,
+      "description": "One explicit stage disposition in a resolved cleanup plan.",
+      "properties": {
+        "candidate_threshold": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Candidate Threshold"
+        },
+        "disposition": {
+          "enum": [
+            "candidate",
+            "applied",
+            "skipped",
+            "protected"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "measured_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measured Probability"
+        },
+        "reason": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "reason_code": {
+          "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "stage": {
+          "enum": [
+            "declip",
+            "rumble_filter",
+            "hum_reduction",
+            "noise_reduction",
+            "noise_gate",
+            "deesser",
+            "voice_enhancement",
+            "compression"
+          ],
+          "title": "Stage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "stage",
+        "disposition",
+        "reason_code",
+        "reason"
+      ],
+      "title": "CleanupStageDecision",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Resolved, auditable cleanup decision used by the production renderer.",
+  "properties": {
+    "algorithm_version": {
+      "const": "0.3.0",
+      "default": "0.3.0",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "applied_stages": {
+      "default": [],
+      "items": {
+        "enum": [
+          "declip",
+          "rumble_filter",
+          "hum_reduction",
+          "noise_reduction",
+          "noise_gate",
+          "deesser",
+          "voice_enhancement",
+          "compression"
+        ],
+        "type": "string"
+      },
+      "title": "Applied Stages",
+      "type": "array"
+    },
+    "candidate_stages": {
+      "default": [],
+      "items": {
+        "enum": [
+          "rumble_filter",
+          "hum_reduction",
+          "noise_reduction"
+        ],
+        "type": "string"
+      },
+      "title": "Candidate Stages",
+      "type": "array"
+    },
+    "cleanup_plan_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Cleanup Plan Id",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "candidate",
+        "manual",
+        "protect",
+        "no_op"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "evidence": {
+      "$ref": "#/$defs/CleanupEvidenceSummary"
+    },
+    "mode": {
+      "enum": [
+        "smart",
+        "manual"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "planner_settings": {
+      "$ref": "#/$defs/CleanupPlannerSettings"
+    },
+    "planner_settings_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Planner Settings Id",
+      "type": "string"
+    },
+    "planner_settings_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Planner Settings Sha256",
+      "type": "string"
+    },
+    "production_audio_changed": {
+      "title": "Production Audio Changed",
+      "type": "boolean"
+    },
+    "reason_codes": {
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Reasons",
+      "type": "array"
+    },
+    "requested_settings": {
+      "$ref": "#/$defs/CleanupSettings"
+    },
+    "requested_settings_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Requested Settings Sha256",
+      "type": "string"
+    },
+    "resolved_settings": {
+      "$ref": "#/$defs/CleanupSettings"
+    },
+    "resolved_settings_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Resolved Settings Sha256",
+      "type": "string"
+    },
+    "run_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "semantic_map_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Semantic Map Id",
+      "type": "string"
+    },
+    "stage_decisions": {
+      "items": {
+        "$ref": "#/$defs/CleanupStageDecision"
+      },
+      "maxItems": 8,
+      "minItems": 8,
+      "title": "Stage Decisions",
+      "type": "array"
+    },
+    "warnings": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "cleanup_plan_id",
+    "run_id",
+    "semantic_map_id",
+    "mode",
+    "decision",
+    "planner_settings_id",
+    "planner_settings_sha256",
+    "planner_settings",
+    "evidence",
+    "requested_settings",
+    "requested_settings_sha256",
+    "resolved_settings",
+    "resolved_settings_sha256",
+    "stage_decisions",
+    "reason_codes",
+    "reasons",
+    "production_audio_changed"
+  ],
+  "title": "CleanupPlan",
+  "type": "object"
+}

@@ -80,6 +80,7 @@ export function publicJob(job) {
         mp3: job.result?.mp3Sha256 ? `/api/v2/productions/${job.id}/media/mp3` : null,
         audiogram: job.result?.audiogramSha256 ? `/api/v2/productions/${job.id}/media/audiogram` : null,
         report: `/api/v2/productions/${job.id}/report`,
+        cleanupPlan: job.summary?.cleanupPlan ? `/api/v2/productions/${job.id}/cleanup-plan` : null,
         waveform: `/api/v2/productions/${job.id}/waveform`,
       }
     : null;

@@ -8,6 +8,7 @@ import pytest
 from ampersand_contracts import (
     AdaptiveLevelerSettings,
     AudiogramSettings,
+    CleanupPlan,
     CleanupSettings,
     ExportSettings,
     GainEnvelope,
@@ -20,8 +21,10 @@ from ampersand_contracts import (
     ProcessingReport,
     ProcessingRouterReport,
     ProcessingRouterSettings,
+    ProductionRun,
     ProductionSettings,
     ProviderNativeArtifactManifest,
+    manifest_sha256,
     read_manifest,
     read_semantic_map,
 )
@@ -74,6 +77,9 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     )
     router_step = read_manifest(first.output_directory / "steps/processing-router-v0-shadow.json", JobStep)
     leveler_step = read_manifest(first.output_directory / "steps/adaptive-leveler-shadow.json", JobStep)
+    cleanup_plan = read_manifest(first.output_directory / "cleanup-plan.json", CleanupPlan)
+    cleanup_step = read_manifest(first.output_directory / "steps/smart-cleanup-v0.json", JobStep)
+    production_run = read_manifest(first.output_directory / "production-run.json", ProductionRun)
     assert output.validation_status == "valid"
     assert abs(output.loudness_after.integrated_lufs - output.target_integrated_lufs) <= 0.35
     assert output.loudness_after.true_peak_dbtp <= output.max_true_peak_dbtp + 0.20
@@ -114,6 +120,14 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     assert leveler_step.metrics["applied_to_audio"] is False
     assert router_step.step_key == "processing-router-v0-shadow"
     assert router_step.metrics["applied_to_audio"] is False
+    assert cleanup_plan.mode == "smart"
+    assert cleanup_plan.decision == "protect"
+    assert cleanup_plan.production_audio_changed is False
+    assert cleanup_step.status.value == "bypassed"
+    assert cleanup_step.metrics["cleanup_plan_hash"] == manifest_sha256(cleanup_plan)
+    assert production_run.cleanup_plan_id == cleanup_plan.cleanup_plan_id
+    assert production_run.cleanup_plan_sha256 == manifest_sha256(cleanup_plan)
+    assert report.artifact_sha256["cleanup_plan"] == manifest_sha256(cleanup_plan)
     assert (first.output_directory / "loudness-before.json").is_file()
     assert (first.output_directory / "loudness-after.json").is_file()
     assert {provenance.provider_id for provenance in semantic_map.provenance_sources} == {
@@ -236,15 +250,16 @@ def test_pipeline_applies_cleanup_metadata_and_renders_audiogram(
         "master_mp3",
         "audiogram_mp4",
     }
-    cleanup_step = read_manifest(result.output_directory / "steps/deterministic-cleanup-v1.json", JobStep)
+    cleanup_step = read_manifest(result.output_directory / "steps/smart-cleanup-v0.json", JobStep)
     audiogram_step = read_manifest(result.output_directory / "steps/render-audiogram.json", JobStep)
     assert cleanup_step.metrics["applied_to_audio"] is True
     assert audiogram_step.status.value == "succeeded"
     report = read_manifest(result.output_directory / "processing-report.json", ProcessingReport)
-    cleanup_decision = next(decision for decision in report.decisions if "cleanup chain" in decision)
-    assert "hum 60hz" in cleanup_decision
-    assert "de-esser light" in cleanup_decision
-    assert "voice enhancement natural" in cleanup_decision
+    cleanup_decision = next(decision for decision in report.decisions if "Resolved Smart Cleanup" in decision)
+    assert "manual mode" in cleanup_decision
+    assert "hum_reduction" in cleanup_decision
+    assert "deesser" in cleanup_decision
+    assert "voice_enhancement" in cleanup_decision
 
     completed = subprocess.run(
         [

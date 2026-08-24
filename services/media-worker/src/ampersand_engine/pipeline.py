@@ -12,6 +12,7 @@ from ampersand_contracts import (
     AnalysisManifest,
     AssetKind,
     AssetManifest,
+    CleanupPlan,
     EvidenceProvenance,
     GainEnvelope,
     JobStatus,
@@ -34,6 +35,7 @@ from ampersand_contracts import (
 )
 
 from . import __version__
+from .cleanup_planner import build_cleanup_plan
 from .energy_vad import analyze_energy_vad
 from .errors import EngineError, OutputValidationError
 from .ffmpeg import (
@@ -369,20 +371,18 @@ def process_source(
         write_manifest(stage / "recipe.json", recipe)
         write_manifest(stage / "resolved-settings.json", resolved_settings)
 
-        cleanup_settings = resolved_settings.settings.cleanup
-        cleanup_applied = (
-            cleanup_settings.rumble_filter
-            or cleanup_settings.noise_reduction != "off"
-            or cleanup_settings.hum_reduction != "off"
-            or cleanup_settings.declip
-            or cleanup_settings.noise_gate != "off"
-            or cleanup_settings.deesser != "off"
-            or cleanup_settings.voice_enhancement != "off"
-            or cleanup_settings.compression != "off"
+        _notify(progress, "resolve Smart Cleanup plan")
+        cleanup_plan = build_cleanup_plan(
+            semantic_map,
+            run_id=run_id,
+            requested_settings=resolved_settings.settings.cleanup,
         )
+        write_manifest(stage / "cleanup-plan.json", cleanup_plan)
+        cleanup_settings = cleanup_plan.resolved_settings
+        cleanup_applied = cleanup_plan.production_audio_changed
         mastering_input = analysis_input
         if cleanup_applied:
-            _notify(progress, "apply deterministic cleanup and compression")
+            _notify(progress, "apply resolved deterministic cleanup")
             cleanup_path = stage / "cleanup-working.wav"
             render_cleanup_wav(
                 analysis_input,
@@ -555,8 +555,7 @@ def process_source(
             leveler_settings=leveler_settings,
             leveler_statistics=leveler_statistics,
             gain_envelope=gain_envelope,
-            cleanup_applied=cleanup_applied,
-            cleanup_settings_hash=manifest_sha256(cleanup_settings),
+            cleanup_plan=cleanup_plan,
             audiogram_enabled=audiogram_settings.enabled,
             output_manifest=output_manifest,
         )
@@ -582,6 +581,8 @@ def process_source(
             idempotency_key=run_fingerprint,
             status=RunStatus.SUCCEEDED,
             step_ids=tuple(step.step_id for step in steps),
+            cleanup_plan_id=cleanup_plan.cleanup_plan_id,
+            cleanup_plan_sha256=manifest_sha256(cleanup_plan),
         )
         write_manifest(stage / "production.json", production)
         write_manifest(stage / "production-run.json", production_run)
@@ -601,6 +602,7 @@ def process_source(
             "leveler_settings": manifest_sha256(leveler_settings),
             "gain_envelope": manifest_sha256(gain_envelope),
             "leveler_statistics": manifest_sha256(leveler_statistics),
+            "cleanup_plan": manifest_sha256(cleanup_plan),
             "loudness_after": manifest_sha256(loudness_after),
             "output_manifest": manifest_sha256(output_manifest),
         }
@@ -630,6 +632,8 @@ def process_source(
             loudness_after=loudness_after,
             gain_envelope_id=gain_envelope.gain_envelope_id,
             leveler_statistics_id=leveler_statistics.leveler_statistics_id,
+            cleanup_plan_id=cleanup_plan.cleanup_plan_id,
+            cleanup_plan_sha256=manifest_sha256(cleanup_plan),
             step_ids=tuple(step.step_id for step in steps),
             decisions=(
                 "Preserved the source bytes and recorded their SHA-256 before processing.",
@@ -654,15 +658,12 @@ def process_source(
                     f"{leveler_statistics.gain_min_db:.2f} to {leveler_statistics.gain_max_db:.2f} dB gain."
                 ),
                 (
-                    f"Applied the deterministic V1 cleanup chain globally: noise reduction "
-                    f"{cleanup_settings.noise_reduction}, rumble "
-                    f"{'on' if cleanup_settings.rumble_filter else 'off'}, hum "
-                    f"{cleanup_settings.hum_reduction}, declip "
-                    f"{'on' if cleanup_settings.declip else 'off'}, gate {cleanup_settings.noise_gate}, "
-                    f"de-esser {cleanup_settings.deesser}, voice enhancement "
-                    f"{cleanup_settings.voice_enhancement}, and compression {cleanup_settings.compression}."
-                    if cleanup_applied
-                    else "Bypassed deterministic cleanup because every cleanup control was off."
+                    f"Resolved Smart Cleanup {cleanup_plan.algorithm_version} in {cleanup_plan.mode} mode with "
+                    f"decision {cleanup_plan.decision}; applied stages: "
+                    f"{', '.join(cleanup_plan.applied_stages) if cleanup_plan.applied_stages else 'none'}; "
+                    f"protect-only candidates: "
+                    f"{', '.join(cleanup_plan.candidate_stages) if cleanup_plan.candidate_stages else 'none'}. "
+                    + " ".join(cleanup_plan.reasons)
                 ),
                 "Did not render the shadow Adaptive Leveler gain envelope; applied the selected cleanup chain "
                 "followed by the standards-based two-pass final loudness master.",
@@ -686,10 +687,11 @@ def process_source(
                 "Processing Router V0 and Adaptive Leveler V0 are shadow-only in this pipeline until admitted "
                 "processors, music/protected-content evidence, and human listening gates authorize regional rendering; "
                 "no regional cleanup or Leveler gain is applied.",
-                "The deterministic FFT denoiser targets steady background noise. It does not perform true "
-                "background-music separation or dereverberation, and strong settings require listening review.",
+                "Smart Cleanup candidate stages are protect-only in V0.3. Manual FFT denoise targets steady "
+                "background noise; it is not music separation or dereverberation and requires listening review.",
                 "The bootstrap VAD is conservative; ASR, diarization, and music classification are not required "
                 "for mastering.",
+                *cleanup_plan.warnings,
                 *resolved_settings.warnings,
                 *router_report.warnings,
             ),
@@ -699,8 +701,8 @@ def process_source(
                 "or customer-media training path is used."
             ),
             reproducibility_summary=(
-                "IDs and JSON manifests derive from source, resolved settings, recipe, engine, "
-                "and native-tool versions; "
+                "IDs and JSON manifests derive from source, resolved settings, recipe, engine, and native-tool "
+                "versions. ProductionRun and this report reference the deterministic resolved cleanup-plan hash; "
                 "incidental source metadata is stripped and requested output metadata is written explicitly. "
                 "Exact binary hashes require the same admitted FFmpeg build and runtime architecture."
             ),
@@ -739,8 +741,7 @@ def _build_steps(
     leveler_settings: AdaptiveLevelerSettings,
     leveler_statistics: LevelerStatistics,
     gain_envelope: GainEnvelope,
-    cleanup_applied: bool,
-    cleanup_settings_hash: str,
+    cleanup_plan: CleanupPlan,
     audiogram_enabled: bool,
     output_manifest: OutputManifest,
 ) -> tuple[JobStep, ...]:
@@ -754,6 +755,7 @@ def _build_steps(
     leveler_settings_hash = manifest_sha256(leveler_settings)
     leveler_statistics_hash = manifest_sha256(leveler_statistics)
     gain_hash = manifest_sha256(gain_envelope)
+    cleanup_plan_hash = manifest_sha256(cleanup_plan)
     output_hash = manifest_sha256(output_manifest)
     definitions: tuple[StepDefinition, ...] = (
         ("validate-probe", source_hash, JobStatus.SUCCEEDED, (source_manifest.asset_id,), {"probe_hash": probe_hash}),
@@ -818,19 +820,24 @@ def _build_steps(
             },
         ),
         (
-            "deterministic-cleanup-v1",
-            sha256_text(f"{analysis_hash}|{cleanup_settings_hash}"),
-            JobStatus.SUCCEEDED if cleanup_applied else JobStatus.BYPASSED,
-            (),
+            "smart-cleanup-v0",
+            sha256_text(f"{semantic_hash}|{cleanup_plan_hash}"),
+            JobStatus.SUCCEEDED if cleanup_plan.production_audio_changed else JobStatus.BYPASSED,
+            (cleanup_plan.cleanup_plan_id,),
             {
-                "settings_hash": cleanup_settings_hash,
-                "applied_to_audio": cleanup_applied,
+                "cleanup_plan_hash": cleanup_plan_hash,
+                "resolved_settings_hash": cleanup_plan.resolved_settings_sha256,
+                "mode": cleanup_plan.mode,
+                "decision": cleanup_plan.decision,
+                "candidate_stage_count": len(cleanup_plan.candidate_stages),
+                "applied_stage_count": len(cleanup_plan.applied_stages),
+                "applied_to_audio": cleanup_plan.production_audio_changed,
                 "scope": "global",
             },
         ),
         (
             "two-pass-loudness-master",
-            sha256_text(f"{analysis_hash}|{plan_hash}|{cleanup_settings_hash}|shadow-unity-render"),
+            sha256_text(f"{analysis_hash}|{plan_hash}|{cleanup_plan_hash}|shadow-unity-render"),
             JobStatus.SUCCEEDED,
             (),
             {},

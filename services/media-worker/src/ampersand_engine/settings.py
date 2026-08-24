@@ -19,6 +19,7 @@ from .hashing import sha256_text, stable_id
 ProductionIntent = Literal["podcast", "natural_voice", "broadcast", "social_voice"]
 SettingsSource = Literal["recipe", "template", "run_override"]
 SettingPath = Literal[
+    "cleanup.mode",
     "cleanup.noise_reduction",
     "cleanup.rumble_filter",
     "cleanup.hum_reduction",
@@ -65,6 +66,7 @@ SettingPath = Literal[
 ]
 
 _SETTING_PATHS: tuple[SettingPath, ...] = (
+    "cleanup.mode",
     "cleanup.noise_reduction",
     "cleanup.rumble_filter",
     "cleanup.hum_reduction",
@@ -113,7 +115,7 @@ _SETTING_PATHS: tuple[SettingPath, ...] = (
 
 def default_production_settings(recipe: RecipeVersion) -> ProductionSettings:
     return ProductionSettings(
-        cleanup=CleanupSettings(),
+        cleanup=CleanupSettings(mode="smart"),
         mastering=MasteringSettings(
             target_integrated_lufs=recipe.target_integrated_lufs,
             max_true_peak_dbtp=recipe.max_true_peak_dbtp,
@@ -170,9 +172,9 @@ def resolve_production_settings(
         settings_sha256=settings_sha,
         field_provenance={path: settings_source for path in _SETTING_PATHS},
         warnings=(
-            "The selected deterministic cleanup, repair, voice-tone, and compression controls are applied globally "
-            "before final mastering. They are conservative V1 baselines, not neural restoration; review gates, "
-            "strong de-essing, declipping, and tone changes against the original.",
+            "Smart Cleanup fails closed when protected-content or music evidence is unavailable. Manual cleanup "
+            "applies the selected deterministic controls globally before final mastering and should be reviewed "
+            "against the original.",
             "True background-music separation, dereverberation, and Adaptive Leveler rendering remain protected "
             "until their model, listening, and promotion gates pass.",
         ),

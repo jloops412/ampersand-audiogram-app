@@ -40,7 +40,8 @@ const STEP_LABELS = [
   ['measure, build waveform, and analyze semantics', 'Analyze audio'],
   ['build Processing Router V0 shadow plan', 'Plan safe processing'],
   ['plan Adaptive Leveler shadow candidate', 'Analyze leveling'],
-  ['apply deterministic cleanup and compression', 'Clean noise and even dynamics'],
+  ['resolve Smart Cleanup plan', 'Resolve cleanup guardrails'],
+  ['apply resolved deterministic cleanup', 'Apply manual cleanup'],
   ['render deterministic WAV and MP3', 'Master and encode'],
   ['render audiogram MP4', 'Render audiogram'],
   ['validate outputs and report', 'Validate delivery'],
@@ -242,6 +243,12 @@ function NewProductionView({
     setSettings((current) => updater(cloneSettings(current)));
     setDirty(true);
   };
+  const chooseCleanupMode = (mode: ProductionSettings['cleanup']['mode']) => {
+    updateSettings((next) => {
+      next.cleanup.mode = mode;
+      return next;
+    });
+  };
   const chooseIntent = (nextIntent: ProductionIntent) => {
     const template = BUILT_IN_TEMPLATES.find((item) => item.intent === nextIntent) || BUILT_IN_TEMPLATES[0];
     applyTemplate(template);
@@ -387,7 +394,12 @@ function NewProductionView({
             <div className="section-number">03</div>
             <div className="section-content">
               <div className="section-heading"><div><h2>Cleanup &amp; mastering</h2><p>The selected starting point already chooses a sensible delivery level. Adjust only when you have a reason.</p></div><span className="live-chip">Executable</span></div>
-              <div className="guided-banner"><span>✓</span><div><strong>Recommended target selected: {settings.mastering.target_integrated_lufs.toFixed(1)} LUFS</strong><p>{INTENT_COPY[intent].description} Ampersand will measure, normalize, and verify it automatically.</p></div></div>
+              <div className="cleanup-mode-grid" role="radiogroup" aria-label="Cleanup mode">
+                <button type="button" role="radio" aria-checked={settings.cleanup.mode === 'smart'} className={settings.cleanup.mode === 'smart' ? 'selected' : ''} onClick={() => chooseCleanupMode('smart')}><strong>Smart · protect first</strong><small>Analyze and record candidates; make no uncalibrated cleanup changes.</small></button>
+                <button type="button" role="radio" aria-checked={settings.cleanup.mode === 'manual'} className={settings.cleanup.mode === 'manual' ? 'selected' : ''} onClick={() => chooseCleanupMode('manual')}><strong>Manual · explicit DSP</strong><small>Run only the deterministic controls you choose below.</small></button>
+              </div>
+              <div className="guided-banner"><span>✓</span><div><strong>{settings.cleanup.mode === 'smart' ? 'Smart Cleanup guardrails enabled' : 'Manual cleanup enabled'} · {settings.mastering.target_integrated_lufs.toFixed(1)} LUFS target</strong><p>{settings.cleanup.mode === 'smart' ? 'Uncertain, mixed, or music-bearing material stays protected. The report records measurements, thresholds, and inactive candidates.' : 'Manual controls are global. Compare the Master with Original before delivery.'} Ampersand will measure, normalize, and verify the final master.</p></div></div>
+              <fieldset className="manual-cleanup-controls" disabled={settings.cleanup.mode === 'smart'}>
               <div className="cleanup-grid">
                 <label className="select-card"><span>Background noise</span><select value={settings.cleanup.noise_reduction} onChange={(event) => updateSettings((next) => { next.cleanup.noise_reduction = event.target.value as ProductionSettings['cleanup']['noise_reduction']; return next; })}><option value="off">Off</option><option value="light">Light · safest</option><option value="balanced">Balanced · recommended</option><option value="strong">Strong · review carefully</option></select><small>Reduces steady room, fan, and broadband noise. This is not music separation.</small></label>
                 <label className="select-card"><span>Voice compression</span><select value={settings.cleanup.compression} onChange={(event) => updateSettings((next) => { next.cleanup.compression = event.target.value as ProductionSettings['cleanup']['compression']; return next; })}><option value="off">Off</option><option value="gentle">Gentle</option><option value="balanced">Balanced · recommended</option><option value="firm">Firm · voice-forward</option></select><small>Evens broad dynamics before the final measured loudness pass.</small></label>
@@ -404,6 +416,7 @@ function NewProductionView({
                   <label className={`toggle-card ${settings.cleanup.declip ? 'selected' : ''}`}><input type="checkbox" checked={settings.cleanup.declip} onChange={(event) => updateSettings((next) => { next.cleanup.declip = event.target.checked; return next; })} /><div><strong>Repair clipped peaks</strong><small>Reconstructs flattened waveform peaks before EQ, cleanup, and mastering. Leave off for clean sources.</small></div></label>
                 </div>
               </details>
+              </fieldset>
               <details className="advanced-controls">
                 <summary>Advanced loudness controls</summary>
                 <p>Use these when a publisher or broadcaster gives you a specific delivery standard.</p>
@@ -519,7 +532,7 @@ function NewProductionView({
             <h2>{sources.length > 1 ? `${sources.length}-file batch` : title || sources[0]?.name.replace(/\.[^.]+$/, '') || 'Untitled production'}</h2>
             <dl className="summary-list">
               <div><dt>Starting point</dt><dd>{selected.name}{dirty ? ' · modified' : ` · v${selected.version}`}</dd></div>
-              <div><dt>Cleanup</dt><dd>{settings.cleanup.noise_reduction} noise · {settings.cleanup.voice_enhancement} tone · {settings.cleanup.compression} compression</dd></div>
+              <div><dt>Cleanup</dt><dd>{settings.cleanup.mode === 'smart' ? 'Smart · protect-only candidates' : `${settings.cleanup.noise_reduction} noise · ${settings.cleanup.voice_enhancement} tone · ${settings.cleanup.compression} compression`}</dd></div>
               <div><dt>Loudness</dt><dd>{settings.mastering.target_integrated_lufs.toFixed(1)} LUFS</dd></div>
               <div><dt>Peak ceiling</dt><dd>{settings.mastering.max_true_peak_dbtp.toFixed(1)} dBTP</dd></div>
               <div><dt>Outputs</dt><dd>{[settings.export.wav && 'WAV', settings.export.mp3 && 'MP3', settings.audiogram.enabled && 'MP4'].filter(Boolean).join(' + ')}</dd></div>
@@ -609,6 +622,7 @@ function ProductionView({ production, onBack, onRetry, onDelete }: { production:
                 {production.outputs.mp3 && <a href={production.outputs.mp3} download><span>MP3</span><div><strong>{production.settings.export.mp3_bitrate_kbps} kbps delivery</strong><small>For upload and sharing</small></div><b>↓</b></a>}
                 {production.outputs.audiogram && <a href={production.outputs.audiogram} download><span>MP4</span><div><strong>Audiogram video</strong><small>H.264 video with mastered audio</small></div><b>↓</b></a>}
                 <a href={production.outputs.report} download><span>JSON</span><div><strong>Processing report</strong><small>Decisions, versions, and hashes</small></div><b>↓</b></a>
+                {production.outputs.cleanupPlan && <a href={production.outputs.cleanupPlan} download><span>PLAN</span><div><strong>Cleanup plan</strong><small>Evidence, thresholds, and stage decisions</small></div><b>↓</b></a>}
               </div>
             </section>
           </div>
@@ -616,7 +630,9 @@ function ProductionView({ production, onBack, onRetry, onDelete }: { production:
           <section className="report-panel">
             <div><p className="eyebrow">Ampersand report</p><h2>What the engine did</h2></div>
             <ol>{summary?.decisions.map((decision) => <li key={decision}>{decision}</li>)}</ol>
+            {summary?.cleanupPlan && <div className="cleanup-proof"><p><span>Cleanup plan</span><strong>{summary.cleanupPlan.mode} · {summary.cleanupPlan.decision.replace('_', ' ')}</strong></p><p><span>Applied</span><strong>{summary.cleanupPlan.appliedStages.join(', ') || 'None'}</strong></p><p><span>Protect-only candidates</span><strong>{summary.cleanupPlan.candidateStages.join(', ') || 'None'}</strong></p><small>Music evidence {summary.cleanupPlan.evidence.musicEvidenceAvailable ? 'available' : 'unavailable'} · {summary.cleanupPlan.evidence.protectedRegionCount} protected region(s) · candidate thresholds: noise {summary.cleanupPlan.thresholds.minimumNoiseProbability.toFixed(2)}, rumble {summary.cleanupPlan.thresholds.minimumRumbleProbability.toFixed(2)}, hum {summary.cleanupPlan.thresholds.minimumHumProbability.toFixed(2)}.</small></div>}
             <details><summary>Beta limitations and warnings ({summary?.warnings.length || 0})</summary><ul>{summary?.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></details>
+            <p className="settings-proof">Cleanup plan <code>{summary?.cleanupPlan.id}</code> · <code>{summary?.cleanupPlan.sha256.slice(0, 12)}…</code></p>
             <p className="settings-proof">Resolved settings <code>{summary?.resolvedSettingsId}</code> · <code>{summary?.resolvedSettingsSha256.slice(0, 12)}…</code></p>
           </section>
         </>

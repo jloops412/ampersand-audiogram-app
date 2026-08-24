@@ -21,6 +21,7 @@ function isSettings(value: unknown): value is ProductionSettings {
   const delivery = candidate.export;
   return Boolean(
     cleanup &&
+      ['smart', 'manual'].includes(cleanup.mode) &&
       ['off', 'light', 'balanced', 'strong'].includes(cleanup.noise_reduction) &&
       typeof cleanup.rumble_filter === 'boolean' &&
       ['off', '50hz', '60hz'].includes(cleanup.hum_reduction) &&
@@ -103,14 +104,15 @@ function settings(
   cleanup: Partial<ProductionSettings['cleanup']> = {},
 ): ProductionSettings {
   const resolvedCleanup: ProductionSettings['cleanup'] = {
-    noise_reduction: 'balanced',
-    rumble_filter: true,
+    mode: 'smart',
+    noise_reduction: 'off',
+    rumble_filter: false,
     hum_reduction: 'off',
     declip: false,
     noise_gate: 'off',
     deesser: 'off',
     voice_enhancement: 'off',
-    compression: 'balanced',
+    compression: 'off',
     ...cleanup,
   };
   return {
@@ -161,58 +163,41 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
   {
     key: 'builtin:podcast',
     templateId: 'template:builtin:podcast',
-    templateVersionId: 'template-version:builtin:podcast:1',
+    templateVersionId: 'template-version:builtin:podcast:2',
     name: 'Podcast polish',
-    version: 1,
+    version: 2,
     intent: 'podcast',
-    settings: settings(-16, -1, 11, 192, { deesser: 'light', voice_enhancement: 'natural' }),
+    settings: settings(-16, -1, 11),
     builtIn: true,
   },
   {
     key: 'builtin:natural-voice',
     templateId: 'template:builtin:natural-voice',
-    templateVersionId: 'template-version:builtin:natural-voice:1',
+    templateVersionId: 'template-version:builtin:natural-voice:2',
     name: 'Natural voice',
-    version: 1,
+    version: 2,
     intent: 'natural_voice',
-    settings: settings(-18, -1.5, 14, 192, {
-      noise_reduction: 'light',
-      rumble_filter: true,
-      compression: 'gentle',
-    }),
+    settings: settings(-18, -1.5, 14),
     builtIn: true,
   },
   {
     key: 'builtin:broadcast',
     templateId: 'template:builtin:broadcast',
-    templateVersionId: 'template-version:builtin:broadcast:1',
+    templateVersionId: 'template-version:builtin:broadcast:2',
     name: 'Broadcast delivery',
-    version: 1,
+    version: 2,
     intent: 'broadcast',
-    settings: settings(-23, -1, 7, 256, {
-      noise_reduction: 'balanced',
-      rumble_filter: true,
-      deesser: 'balanced',
-      voice_enhancement: 'presence',
-      compression: 'firm',
-    }),
+    settings: settings(-23, -1, 7, 256),
     builtIn: true,
   },
   {
     key: 'builtin:social-voice',
     templateId: 'template:builtin:social-voice',
-    templateVersionId: 'template-version:builtin:social-voice:1',
+    templateVersionId: 'template-version:builtin:social-voice:2',
     name: 'Social voice',
-    version: 1,
+    version: 2,
     intent: 'social_voice',
-    settings: settings(-14, -1, 8, 192, {
-      noise_reduction: 'balanced',
-      rumble_filter: true,
-      noise_gate: 'light',
-      deesser: 'balanced',
-      voice_enhancement: 'presence',
-      compression: 'firm',
-    }),
+    settings: settings(-14, -1, 8),
     builtIn: true,
   },
 ];
@@ -225,8 +210,9 @@ function migrateSettings(value: unknown): unknown {
   if (!value || typeof value !== 'object') return value;
   const candidate = value as Partial<ProductionSettings>;
   const fallback = settings(-16, -1, 11);
+  const cleanup: Partial<ProductionSettings['cleanup']> = candidate.cleanup || {};
   return {
-    cleanup: { ...fallback.cleanup, ...(candidate.cleanup || {}) },
+    cleanup: { ...fallback.cleanup, ...cleanup, mode: cleanup.mode || 'manual' },
     mastering: candidate.mastering,
     metadata: { ...fallback.metadata, ...(candidate.metadata || {}) },
     audiogram: { ...fallback.audiogram, ...(candidate.audiogram || {}) },

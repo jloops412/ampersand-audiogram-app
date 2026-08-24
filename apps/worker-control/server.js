@@ -51,7 +51,8 @@ const STEP_ORDER = [
   'measure, build waveform, and analyze semantics',
   'build Processing Router V0 shadow plan',
   'plan Adaptive Leveler shadow candidate',
-  'apply deterministic cleanup and compression',
+  'resolve Smart Cleanup plan',
+  'apply resolved deterministic cleanup',
   'render deterministic WAV and MP3',
   'render audiogram MP4',
   'validate outputs and report',
@@ -252,13 +253,14 @@ function updateProgress(job, message) {
 }
 
 async function buildSummary(outputDirectory) {
-  const [probe, before, after, report, resolved, output] = await Promise.all([
+  const [probe, before, after, report, resolved, output, cleanupPlan] = await Promise.all([
     readJson(path.join(outputDirectory, 'probe.json')),
     readJson(path.join(outputDirectory, 'loudness-before.json')),
     readJson(path.join(outputDirectory, 'loudness-after.json')),
     readJson(path.join(outputDirectory, 'processing-report.json')),
     readJson(path.join(outputDirectory, 'resolved-settings.json')),
     readJson(path.join(outputDirectory, 'output-manifest.json')),
+    readJson(path.join(outputDirectory, 'cleanup-plan.json')),
   ]);
   return {
     durationUs: probe.duration_us,
@@ -269,6 +271,33 @@ async function buildSummary(outputDirectory) {
     loudnessAfter: after,
     resolvedSettingsId: resolved.resolved_settings_id,
     resolvedSettingsSha256: resolved.settings_sha256,
+    cleanupPlan: {
+      id: report.cleanup_plan_id,
+      sha256: report.cleanup_plan_sha256,
+      mode: cleanupPlan.mode,
+      decision: cleanupPlan.decision,
+      productionAudioChanged: cleanupPlan.production_audio_changed,
+      candidateStages: cleanupPlan.candidate_stages,
+      appliedStages: cleanupPlan.applied_stages,
+      evidence: {
+        musicEvidenceAvailable: cleanupPlan.evidence.music_evidence_available,
+        stationaryNoiseEvidenceAvailable: cleanupPlan.evidence.stationary_noise_evidence_available,
+        protectedRegionCount: cleanupPlan.evidence.protected_region_count,
+        conflictCount: cleanupPlan.evidence.conflict_count,
+        maximumMusicProbability: cleanupPlan.evidence.maximum_music_probability,
+        maximumNoiseProbability: cleanupPlan.evidence.maximum_noise_probability,
+        maximumRumbleProbability: cleanupPlan.evidence.maximum_rumble_probability,
+        maximumHumProbability: cleanupPlan.evidence.maximum_hum_probability,
+        maximumClippingProbability: cleanupPlan.evidence.maximum_clipping_probability,
+        resolvedHumFundamentalHz: cleanupPlan.evidence.resolved_hum_fundamental_hz,
+      },
+      thresholds: {
+        maximumMusicProbability: cleanupPlan.planner_settings.maximum_music_probability,
+        minimumNoiseProbability: cleanupPlan.planner_settings.minimum_noise_probability_for_candidate,
+        minimumRumbleProbability: cleanupPlan.planner_settings.minimum_rumble_probability_for_candidate,
+        minimumHumProbability: cleanupPlan.planner_settings.minimum_hum_probability_for_candidate,
+      },
+    },
     decisions: report.decisions,
     warnings: report.warnings,
     artifacts: output.artifacts.map((artifact) => ({
@@ -508,7 +537,7 @@ export async function createApp() {
 
   app.get('/api/v2/capabilities', (_request, response) => {
     response.json({
-      apiVersion: 'v2-beta-2',
+      apiVersion: 'v2-beta-3',
       recipe: 'smart-spoken-word-v0',
       maxUploadBytes: MAX_UPLOAD_BYTES,
       directUpload: {
@@ -520,8 +549,14 @@ export async function createApp() {
       batch: { enabled: true, processingConcurrency: 1 },
       intents: ['podcast', 'natural_voice', 'broadcast', 'social_voice'],
       executableSettings: [
+        'cleanup.mode',
         'cleanup.noise_reduction',
         'cleanup.rumble_filter',
+        'cleanup.hum_reduction',
+        'cleanup.declip',
+        'cleanup.noise_gate',
+        'cleanup.deesser',
+        'cleanup.voice_enhancement',
         'cleanup.compression',
         'mastering.target_integrated_lufs',
         'mastering.max_true_peak_dbtp',
@@ -533,7 +568,8 @@ export async function createApp() {
         'export.mp3_bitrate_kbps',
       ],
       betaLimitations: [
-        'Conservative global FFT denoise and compression are applied; the semantic Router and Adaptive Leveler remain shadow-only.',
+        'Smart Cleanup protects uncertain or music-bearing material and may intentionally make no cleanup changes; Manual controls remain global.',
+        'The semantic Router and Adaptive Leveler remain shadow-only.',
         'True background-music separation, dereverberation, and transcription are not enabled yet.',
         'The beta runner processes one production at a time and needs one persistent data volume.',
       ],
@@ -938,6 +974,23 @@ export async function createApp() {
       response.setHeader('Content-Disposition', `attachment; filename="ampersand-${job.id}-report.json"`);
       response.sendFile(path.join(job.outputDirectory, 'processing-report.json'));
     } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/v2/productions/:id/cleanup-plan', async (request, response, next) => {
+    try {
+      const job = jobs.get(request.params.id);
+      if (!job || job.status !== 'succeeded') {
+        return response.status(404).json({ error: { code: 'not_ready', message: 'Cleanup plan is not ready.' } });
+      }
+      await fs.access(path.join(job.outputDirectory, 'cleanup-plan.json'));
+      response.setHeader('Content-Disposition', `attachment; filename="ampersand-${job.id}-cleanup-plan.json"`);
+      response.sendFile(path.join(job.outputDirectory, 'cleanup-plan.json'));
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        return response.status(404).json({ error: { code: 'not_ready', message: 'Cleanup plan is unavailable.' } });
+      }
       next(error);
     }
   });
