@@ -51,6 +51,7 @@ def analyze_energy_vad(
     feature_rows: list[tuple[float, float, float, float, float, float]] = []
     pending = np.empty(0, dtype=np.float32)
     byte_tail = b""
+    decoded_sample_count = 0
     window = np.hanning(samples_per_frame).astype(np.float64)
     frequencies = np.fft.rfftfreq(samples_per_frame, d=1.0 / sample_rate_hz)
 
@@ -61,6 +62,7 @@ def analyze_energy_vad(
         if not complete:
             continue
         decoded = np.frombuffer(complete, dtype="<f4")
+        decoded_sample_count += int(decoded.size)
         samples = np.concatenate((pending, decoded)) if pending.size else decoded
         frame_count = samples.size // samples_per_frame
         if frame_count:
@@ -80,6 +82,11 @@ def analyze_energy_vad(
         feature_rows.extend(_extract_features(padded, window=window, frequencies=frequencies))
 
     expected_frames = (duration_us + hop_us - 1) // hop_us
+    analysis_duration_us = expected_frames * hop_us
+    tail_padding_us = analysis_duration_us - duration_us
+    if tail_padding_us and len(feature_rows) == expected_frames - 1:
+        zero_tail = np.zeros((1, samples_per_frame), dtype=np.float32)
+        feature_rows.extend(_extract_features(zero_tail, window=window, frequencies=frequencies))
     if len(feature_rows) < expected_frames:
         raise EngineError(
             f"VAD decoder returned {len(feature_rows)} frames; {expected_frames} are required for full coverage."
@@ -165,6 +172,11 @@ def analyze_energy_vad(
             "analysis_hop_us": hop_us,
             "analysis_sample_rate_hz": sample_rate_hz,
             "duration_us": duration_us,
+            "analysis_duration_us": analysis_duration_us,
+            "tail_padding_us": tail_padding_us,
+            "tail_padding_policy": "zero_pad_final_partial_hop" if tail_padding_us else "none",
+            "decoded_sample_count": decoded_sample_count,
+            "analysis_zero_padding_samples": max(0, expected_frames * samples_per_frame - decoded_sample_count),
             "estimated_noise_floor_dbfs": round(noise_floor_dbfs, 6),
             "activity_threshold_dbfs": round(activity_threshold_dbfs, 6),
             "limitations": (

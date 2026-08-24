@@ -16,11 +16,22 @@ Every region uses a half-open integer-microsecond interval `[start_us, end_us)`.
 
 ### Deterministic loudness and peak adapter
 
-FFmpeg's `ebur128` filter emits 100 ms momentary loudness, short-term loudness, and per-frame true-peak measurements. Ampersand parses only metric frames, excludes command lines and local paths, preserves the parsed provider payload separately, and maps measurements into Ampersand observation kinds.
+FFmpeg's `ebur128` filter emits 100 ms momentary loudness, short-term loudness, and per-frame true-peak measurements.
+It does not flush a trailing partial 100 ms frame. Ampersand therefore zero-pads only that final partial analysis hop,
+retains its provider measurement, and clips the normalized frame end back to the exact probed source duration. The
+provider payload records the analysis duration, padding length, and policy. Exact-hop sources are not padded, and
+missing or discontinuous interior provider frames still fail closed. Ampersand parses only metric frames, excludes
+command lines and local paths, preserves the parsed provider payload separately, and maps measurements into Ampersand
+observation kinds.
 
 ### Ampersand energy/spectral VAD
 
-The first-party V0 detector decodes a 16 kHz mono analysis stream and calculates 100 ms RMS, sample peak, speech-band energy, rumble energy, spectral flatness, and zero-crossing rate. It estimates a bounded noise floor, derives soft activity/speech/silence probabilities, smooths adjacent probabilities, and retains hysteresis state without collapsing evidence into edit cuts.
+The first-party V0 detector decodes a 16 kHz mono analysis stream and calculates 100 ms RMS, sample peak, speech-band
+energy, rumble energy, spectral flatness, and zero-crossing rate. It zero-pads only the final partial analysis hop,
+including the sub-sample case where resampling rounds a tiny source tail away, and records decoded sample count plus the
+bounded padding in the provider payload. Exact-hop sources are not padded and larger coverage shortfalls fail closed. It
+estimates a bounded noise floor, derives soft activity/speech/silence probabilities, smooths adjacent probabilities,
+and retains hysteresis state without collapsing evidence into edit cuts.
 
 This detector has no model, checkpoint, runtime download, hosted request, or license dependency. Its confidence is deliberately bounded because energy/spectral features alone cannot reliably distinguish speech from music. It can unlock conservative Leveler development; it cannot authorize destructive editing or unprotected music processing.
 
