@@ -4,6 +4,8 @@ FROM node:20-bookworm-slim AS web-builder
 WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
+COPY THIRD_PARTY_NOTICES.md ./
+COPY infra/licenses ./infra/licenses
 COPY apps/web ./apps/web
 RUN npm run build
 

@@ -156,6 +156,10 @@ export interface Production {
 }
 
 export interface WaveformPeaks {
+  schema_version: '1.0.0';
+  waveform_id: string;
+  source_asset_id: string;
+  sample_rate_hz: number;
   duration_us: number;
   channels: number;
   levels: Array<{

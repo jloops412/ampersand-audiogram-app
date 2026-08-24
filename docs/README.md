@@ -43,6 +43,7 @@ complete Studio. ADR-0011 records this superseding deployment direction.
 22. [Processing Router V0](./architecture/PROCESSING_ROUTER_V0.md)
 23. [ADR-0012 guided-processing beta upgrade](./decisions/ADR-0012-GUIDED-PROCESSING-LARGE-UPLOADS-AUDIOGRAMS.md)
 24. [Smart Cleanup Guardrails V0.3](./architecture/SMART_CLEANUP_GUARDRAILS_V0_3.md)
+25. [Long-Form Waveform Timeline V0](./architecture/LONG_FORM_WAVEFORM_TIMELINE_V0.md)
 
 ## Architecture decision records
 
@@ -58,6 +59,7 @@ complete Studio. ADR-0011 records this superseding deployment direction.
 - [ADR-0010: Cloud Run + GitHub private-beta checkpoint](./decisions/ADR-0010-CLOUD-RUN-GITHUB-PRIVATE-BETA.md)
 - [ADR-0011: Make the new Cloud Run service the baseline](./decisions/ADR-0011-FRESH-CLOUD-RUN-BASELINE.md)
 - [ADR-0012: Ship guided processing, large uploads, and audiograms](./decisions/ADR-0012-GUIDED-PROCESSING-LARGE-UPLOADS-AUDIOGRAMS.md)
+- [ADR-0013: Pin stable WaveSurfer for the long-form timeline spike](./decisions/ADR-0013-STABLE-WAVESURFER-LONGFORM-TIMELINE.md)
 
 ## Governing rules
 

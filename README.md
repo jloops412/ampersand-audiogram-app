@@ -92,6 +92,7 @@ probe.json
 canonical-manifest.json       # only when canonicalization was needed
 analysis.json
 waveform-peaks.json
+waveform-studio.json          # compact Studio delivery sidecar
 semantic-map-v0.json
 semantic-map-debug.html
 provider-native/*.json

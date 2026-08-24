@@ -24,6 +24,7 @@ from ampersand_contracts import (
     ProductionRun,
     ProductionSettings,
     ProviderNativeArtifactManifest,
+    WaveformPeaks,
     manifest_sha256,
     read_manifest,
     read_semantic_map,
@@ -65,6 +66,8 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
 
     output = read_manifest(first.output_directory / "output-manifest.json", OutputManifest)
     report = read_manifest(first.output_directory / "processing-report.json", ProcessingReport)
+    canonical_waveform = read_manifest(first.output_directory / "waveform-peaks.json", WaveformPeaks)
+    studio_waveform = read_manifest(first.output_directory / "waveform-studio.json", WaveformPeaks)
     semantic_map = read_semantic_map(first.output_directory / "semantic-map-v0.json")
     leveler_settings = read_manifest(first.output_directory / "leveler-settings.json", AdaptiveLevelerSettings)
     gain_envelope = read_manifest(first.output_directory / "gain-envelope.json", GainEnvelope)
@@ -75,6 +78,7 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
         first.output_directory / "processing-router-report.json",
         ProcessingRouterReport,
     )
+    waveform_step = read_manifest(first.output_directory / "steps/waveform-peaks.json", JobStep)
     router_step = read_manifest(first.output_directory / "steps/processing-router-v0-shadow.json", JobStep)
     leveler_step = read_manifest(first.output_directory / "steps/adaptive-leveler-shadow.json", JobStep)
     cleanup_plan = read_manifest(first.output_directory / "cleanup-plan.json", CleanupPlan)
@@ -84,6 +88,12 @@ def test_pipeline_emits_valid_deterministic_manifests_and_media(
     assert abs(output.loudness_after.integrated_lufs - output.target_integrated_lufs) <= 0.35
     assert output.loudness_after.true_peak_dbtp <= output.max_true_peak_dbtp + 0.20
     assert report.external_api_cost_usd == 0
+    assert studio_waveform.waveform_id == canonical_waveform.waveform_id
+    assert len(studio_waveform.levels) == 1
+    assert studio_waveform.levels[0] in canonical_waveform.levels
+    assert report.artifact_sha256["waveform_peaks"] == manifest_sha256(canonical_waveform)
+    assert report.artifact_sha256["waveform_studio"] == manifest_sha256(studio_waveform)
+    assert waveform_step.metrics["studio_view_hash"] == manifest_sha256(studio_waveform)
     assert report.gain_envelope_id == gain_envelope.gain_envelope_id
     assert report.leveler_statistics_id == leveler_statistics.leveler_statistics_id
     assert "no network" in report.privacy_summary.lower()

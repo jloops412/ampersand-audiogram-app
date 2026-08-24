@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "isolatedModules": false,
+    "noEmit": false,
+    "outDir": ".test-dist",
+    "rootDir": "src",
+    "sourceMap": false
+  },
+  "include": ["src/types.ts", "src/waveformPeaks.ts", "src/Waveform.tsx"]
+}
