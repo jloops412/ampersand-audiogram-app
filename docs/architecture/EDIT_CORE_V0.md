@@ -21,12 +21,13 @@ the EDL or render plan.
 Canonical EDL JSON has one source identity and a minimal cut list:
 
 ```json
-{"schemaVersion":"1.0.0","kind":"ampersand.edl","timebase":"microseconds","intervalSemantics":"half-open","source":{"assetId":"asset-1","durationUs":4000000},"cuts":[{"startUs":1000000,"endUs":2000000}]}
+{"schema_version":"1.0.0","kind":"ampersand.edl","timebase":"microseconds","interval_semantics":"half-open","source":{"asset_id":"asset-1","duration_us":4000000},"cuts":[{"start_us":1000000,"end_us":2000000}]}
 ```
 
 Readers reject unsupported versions, missing/unknown fields, unsafe or negative numbers, empty ranges, out-of-duration
 ranges, and non-canonical cut order. Writers emit keys in one fixed order without generated timestamps or random IDs.
-The source uses an immutable asset ID rather than a local path or signed URL.
+The wire format follows the repository's snake-case contract convention while the TypeScript API uses idiomatic
+camel-case properties. The source uses an immutable asset ID rather than a local path or signed URL.
 
 V0 cuts obey these invariants:
 

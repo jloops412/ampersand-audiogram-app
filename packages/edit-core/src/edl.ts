@@ -108,10 +108,21 @@ function sameRanges(
 }
 
 export function serializeEdl(edl: EditDecisionListV1): string {
-  return JSON.stringify(validateEdlDocument(edl));
+  const validated = validateInternalEdl(edl);
+  return JSON.stringify({
+    schema_version: validated.schemaVersion,
+    kind: validated.kind,
+    timebase: validated.timebase,
+    interval_semantics: validated.intervalSemantics,
+    source: {
+      asset_id: validated.source.assetId,
+      duration_us: validated.source.durationUs,
+    },
+    cuts: validated.cuts.map((cut) => ({ start_us: cut.startUs, end_us: cut.endUs })),
+  });
 }
 
-function validateEdlDocument(raw: unknown): EditDecisionListV1 {
+function validateInternalEdl(raw: unknown): EditDecisionListV1 {
   assertPlainObject(raw, "EDL");
   assertExactKeys(raw, ["schemaVersion", "kind", "timebase", "intervalSemantics", "source", "cuts"], "EDL");
   if (raw.schemaVersion !== EDL_SCHEMA_VERSION) {
@@ -139,6 +150,34 @@ function validateEdlDocument(raw: unknown): EditDecisionListV1 {
   return edl;
 }
 
+function parseWireEdl(raw: unknown): EditDecisionListV1 {
+  assertPlainObject(raw, "EDL");
+  assertExactKeys(raw, ["schema_version", "kind", "timebase", "interval_semantics", "source", "cuts"], "EDL");
+  if (raw.schema_version !== EDL_SCHEMA_VERSION) {
+    throw new TypeError(`unsupported EDL schema_version: ${String(raw.schema_version)}`);
+  }
+  if (raw.kind !== EDL_KIND || raw.timebase !== "microseconds" || raw.interval_semantics !== "half-open") {
+    throw new TypeError("EDL identity, timebase, or interval semantics are invalid");
+  }
+  assertPlainObject(raw.source, "EDL.source");
+  assertExactKeys(raw.source, ["asset_id", "duration_us"], "EDL.source");
+  if (!Array.isArray(raw.cuts)) throw new TypeError("EDL.cuts must be an array");
+  const parsedCuts = raw.cuts.map((value, index) => {
+    assertPlainObject(value, `EDL.cuts[${index}]`);
+    assertExactKeys(value, ["start_us", "end_us"], `EDL.cuts[${index}]`);
+    return { startUs: value.start_us as number, endUs: value.end_us as number };
+  });
+  const edl = createEdl({
+    assetId: raw.source.asset_id as string,
+    durationUs: raw.source.duration_us as number,
+    cuts: parsedCuts,
+  });
+  if (!sameRanges(parsedCuts, edl.cuts)) {
+    throw new TypeError("EDL cuts must be sorted, disjoint, and non-adjacent");
+  }
+  return edl;
+}
+
 export function parseEdl(serialized: string): EditDecisionListV1 {
   let raw: unknown;
   try {
@@ -146,5 +185,5 @@ export function parseEdl(serialized: string): EditDecisionListV1 {
   } catch (error) {
     throw new SyntaxError(`EDL is not valid JSON: ${(error as Error).message}`);
   }
-  return validateEdlDocument(raw);
+  return parseWireEdl(raw);
 }

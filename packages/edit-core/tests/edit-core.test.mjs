@@ -190,7 +190,7 @@ test("canonical EDL JSON is stable and strict readers reject ambiguous documents
   const serialized = serializeEdl(edl);
   assert.equal(
     serialized,
-    '{"schemaVersion":"1.0.0","kind":"ampersand.edl","timebase":"microseconds","intervalSemantics":"half-open","source":{"assetId":"asset-1","durationUs":4000000},"cuts":[{"startUs":1000000,"endUs":2000000}]}',
+    '{"schema_version":"1.0.0","kind":"ampersand.edl","timebase":"microseconds","interval_semantics":"half-open","source":{"asset_id":"asset-1","duration_us":4000000},"cuts":[{"start_us":1000000,"end_us":2000000}]}',
   );
   assert.equal(serializeEdl(parseEdl(serialized)), serialized);
   assert.throws(
@@ -201,8 +201,8 @@ test("canonical EDL JSON is stable and strict readers reject ambiguous documents
     () =>
       parseEdl(
         serialized.replace(
-          '[{"startUs":1000000,"endUs":2000000}]',
-          '[{"startUs":2000000,"endUs":3000000},{"startUs":1000000,"endUs":2000000}]',
+          '[{"start_us":1000000,"end_us":2000000}]',
+          '[{"start_us":2000000,"end_us":3000000},{"start_us":1000000,"end_us":2000000}]',
         ),
       ),
     /sorted, disjoint, and non-adjacent/,
