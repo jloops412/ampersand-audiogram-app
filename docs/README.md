@@ -45,6 +45,7 @@ complete Studio. ADR-0011 records this superseding deployment direction.
 24. [Smart Cleanup Guardrails V0.3](./architecture/SMART_CLEANUP_GUARDRAILS_V0_3.md)
 25. [Long-Form Waveform Timeline V0](./architecture/LONG_FORM_WAVEFORM_TIMELINE_V0.md)
 26. [Deterministic Edit Core V0](./architecture/EDIT_CORE_V0.md)
+27. [Audiogram Visual System V1.1](./architecture/AUDIOGRAM_VISUAL_SYSTEM_V1_1.md)
 
 ## Architecture decision records
 

@@ -612,22 +612,37 @@ class OutputMetadataSettings(ContractModel):
 class AudiogramSettings(ContractModel):
     """Versioned deterministic controls shared by Studio and the server renderer."""
 
-    spec_version: Literal["1.0"] = "1.0"
+    spec_version: Literal["1.0", "1.1"] = "1.1"
     enabled: bool = False
     aspect_ratio: Literal["square", "feed_portrait", "portrait", "landscape"] = "square"
-    waveform_style: Literal["line", "mirrored", "bars", "dots"] = "mirrored"
+    waveform_style: Literal[
+        "line",
+        "mirrored",
+        "bars",
+        "dots",
+        "spectrum",
+        "spectrum_dots",
+    ] = "mirrored"
     waveform_scale: Literal["linear", "sqrt", "cbrt", "log"] = "sqrt"
     waveform_position: Literal["top", "center", "bottom"] = "center"
-    waveform_width_percent: int = Field(default=82, ge=40, le=100)
+    waveform_width_percent: int = Field(default=84, ge=40, le=100)
     waveform_height_percent: int = Field(default=30, ge=10, le=60)
     waveform_opacity: float = Field(default=1.0, ge=0.1, le=1.0)
-    background_mode: Literal["color", "artwork", "video"] = "color"
+    waveform_glow: float = Field(default=0.58, ge=0.0, le=1.0)
+    waveform_frame: Literal["none", "glass", "outline", "accent"] = "glass"
+    background_mode: Literal["color", "gradient", "radial", "artwork", "video"] = "gradient"
     background_fit: Literal["cover", "contain"] = "cover"
-    background_dim: float = Field(default=0.34, ge=0.0, le=0.85)
+    background_dim: float = Field(default=0.08, ge=0.0, le=0.85)
+    background_blur: int = Field(default=0, ge=0, le=30)
+    background_vignette: float = Field(default=0.45, ge=0.0, le=1.0)
     background_color: str = Field(default="#111718", pattern=r"^#[0-9a-fA-F]{6}$")
-    waveform_color: str = Field(default="#e1b977", pattern=r"^#[0-9a-fA-F]{6}$")
-    text_color: str = Field(default="#f4f1ea", pattern=r"^#[0-9a-fA-F]{6}$")
+    accent_color: str = Field(default="#e1b977", pattern=r"^#[0-9a-fA-F]{6}$")
+    waveform_color: str = Field(default="#f3cc8a", pattern=r"^#[0-9a-fA-F]{6}$")
+    text_color: str = Field(default="#f8f4ec", pattern=r"^#[0-9a-fA-F]{6}$")
+    font_family: Literal["sans", "serif", "mono"] = "sans"
     text_align: Literal["left", "center", "right"] = "center"
+    text_position: Literal["top", "center", "bottom"] = "top"
+    text_panel: Literal["none", "shadow", "glass", "accent"] = "shadow"
     headline_size_percent: float = Field(default=4.8, ge=2.0, le=10.0)
     subtitle_size_percent: float = Field(default=2.7, ge=1.0, le=6.0)
     headline: str = Field(default="", max_length=160)
@@ -735,13 +750,21 @@ class ResolvedProductionSettings(ContractModel):
             "audiogram.waveform_width_percent",
             "audiogram.waveform_height_percent",
             "audiogram.waveform_opacity",
+            "audiogram.waveform_glow",
+            "audiogram.waveform_frame",
             "audiogram.background_mode",
             "audiogram.background_fit",
             "audiogram.background_dim",
+            "audiogram.background_blur",
+            "audiogram.background_vignette",
             "audiogram.background_color",
+            "audiogram.accent_color",
             "audiogram.waveform_color",
             "audiogram.text_color",
+            "audiogram.font_family",
             "audiogram.text_align",
+            "audiogram.text_position",
+            "audiogram.text_panel",
             "audiogram.headline_size_percent",
             "audiogram.subtitle_size_percent",
             "audiogram.headline",

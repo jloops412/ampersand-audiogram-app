@@ -30,22 +30,30 @@ export interface OutputMetadataSettings {
 }
 
 export interface AudiogramSettings {
-  spec_version: '1.0';
+  spec_version: '1.0' | '1.1';
   enabled: boolean;
   aspect_ratio: 'square' | 'feed_portrait' | 'portrait' | 'landscape';
-  waveform_style: 'line' | 'mirrored' | 'bars' | 'dots';
+  waveform_style: 'line' | 'mirrored' | 'bars' | 'dots' | 'spectrum' | 'spectrum_dots';
   waveform_scale: 'linear' | 'sqrt' | 'cbrt' | 'log';
   waveform_position: 'top' | 'center' | 'bottom';
   waveform_width_percent: number;
   waveform_height_percent: number;
   waveform_opacity: number;
-  background_mode: 'color' | 'artwork' | 'video';
+  waveform_glow: number;
+  waveform_frame: 'none' | 'glass' | 'outline' | 'accent';
+  background_mode: 'color' | 'gradient' | 'radial' | 'artwork' | 'video';
   background_fit: 'cover' | 'contain';
   background_dim: number;
+  background_blur: number;
+  background_vignette: number;
   background_color: string;
+  accent_color: string;
   waveform_color: string;
   text_color: string;
+  font_family: 'sans' | 'serif' | 'mono';
   text_align: 'left' | 'center' | 'right';
+  text_position: 'top' | 'center' | 'bottom';
+  text_panel: 'none' | 'shadow' | 'glass' | 'accent';
   headline_size_percent: number;
   subtitle_size_percent: number;
   headline: string;

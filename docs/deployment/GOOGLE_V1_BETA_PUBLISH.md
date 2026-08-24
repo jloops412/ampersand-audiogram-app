@@ -22,7 +22,8 @@ Cloud Run revision. This service becomes the active Ampersand baseline.
 - saves reusable template versions in this browser;
 - resolves protect-first Smart Cleanup plans by default, offers explicit Manual deterministic cleanup controls, and
   applies standards-based final mastering;
-- embeds requested delivery metadata and renders optional full-duration H.264 audiograms with color or uploaded art;
+- embeds requested delivery metadata and renders optional full-duration H.264 audiograms with curated looks, animated
+  gradients, waveform/frequency visualizers, or uploaded image/video backgrounds;
 - saves exact settings/provenance, waveform data, report, WAV/MP3/MP4 outputs, and job state;
 - supports progress, browser return, retry after restart, A/B listening, downloads, and deletion.
 
@@ -194,8 +195,8 @@ Do not call the beta usable until every item passes:
 6. Select two small files together and confirm both become separate queued productions.
 7. Select each quick start and confirm its loudness target changes while Smart Cleanup remains the protect-first default;
    switch to Manual and confirm the deterministic cleanup controls become editable.
-8. Add metadata, enable an audiogram, exercise image and short looping-video backgrounds plus multiple layouts, save a
-   reusable template, and launch one production.
+8. Add metadata, enable an audiogram, exercise at least one curated look, one gradient, one frequency visualizer, and an
+   image or short looping-video background across multiple layouts; save a reusable template and launch one production.
 9. Confirm queued → running → ready, then refresh the browser and reopen the production.
 10. Compare Original/Master at the same play position and visually inspect the audiogram.
 11. Download every selected format, the JSON report, and the cleanup plan; inspect MP3 tags in a media player.

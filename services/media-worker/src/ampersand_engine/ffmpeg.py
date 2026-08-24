@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import textwrap
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -604,20 +605,38 @@ def render_audiogram_mp4(
     }[settings.aspect_ratio]
     wave_width = int(width * settings.waveform_width_percent / 100)
     wave_height = max(108, int(height * settings.waveform_height_percent / 100))
-    wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p", "dots": "point"}[settings.waveform_style]
     wave_scale = {"linear": "lin", "sqrt": "sqrt", "cbrt": "cbrt", "log": "log"}[settings.waveform_scale]
     background = settings.background_color.removeprefix("#")
+    accent = settings.accent_color.removeprefix("#")
     waveform = settings.waveform_color.removeprefix("#")
     text_color = settings.text_color.removeprefix("#")
     headline = settings.headline.strip() or title
     subtitle = settings.subtitle.strip()
+    headline_size = max(28, int(width * settings.headline_size_percent / 100))
+    subtitle_size = max(18, int(width * settings.subtitle_size_percent / 100))
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     temporary_files: list[Path] = []
     try:
-        headline_file = _write_drawtext_file(destination.parent, headline)
+        headline_line_length = max(12, int(width * 0.84 / max(headline_size * 0.58, 1)))
+        subtitle_line_length = max(16, int(width * 0.84 / max(subtitle_size * 0.56, 1)))
+        headline_file, headline_lines = _write_drawtext_file(
+            destination.parent,
+            headline,
+            max_characters_per_line=headline_line_length,
+        )
         temporary_files.append(headline_file)
-        subtitle_file = _write_drawtext_file(destination.parent, subtitle) if subtitle else None
+        subtitle_result = (
+            _write_drawtext_file(
+                destination.parent,
+                subtitle,
+                max_characters_per_line=subtitle_line_length,
+            )
+            if subtitle
+            else None
+        )
+        subtitle_file = subtitle_result[0] if subtitle_result is not None else None
+        subtitle_lines = subtitle_result[1] if subtitle_result is not None else 0
         if subtitle_file is not None:
             temporary_files.append(subtitle_file)
 
@@ -625,6 +644,19 @@ def render_audiogram_mp4(
             input_arguments = ["-loop", "1", "-framerate", str(settings.frame_rate), "-i", str(artwork)]
         elif settings.background_mode == "video" and artwork is not None:
             input_arguments = ["-stream_loop", "-1", "-i", str(artwork)]
+        elif settings.background_mode in {"gradient", "radial"}:
+            gradient_type = "radial" if settings.background_mode == "radial" else "linear"
+            gradient_start = accent if settings.background_mode == "radial" else background
+            gradient_end = background if settings.background_mode == "radial" else accent
+            input_arguments = [
+                "-f",
+                "lavfi",
+                "-i",
+                (
+                    f"gradients=s={width}x{height}:r={settings.frame_rate}:"
+                    f"c0=0x{gradient_start}:c1=0x{gradient_end}:type={gradient_type}:speed=0.003"
+                ),
+            ]
         else:
             input_arguments = [
                 "-f",
@@ -632,7 +664,7 @@ def render_audiogram_mp4(
                 "-i",
                 f"color=c=0x{background}:s={width}x{height}:r={settings.frame_rate}",
             ]
-        if settings.background_mode == "color":
+        if settings.background_mode in {"color", "gradient", "radial"}:
             fit_filter = f"[0:v]fps={settings.frame_rate},setsar=1,format=rgba"
         elif settings.background_fit == "contain":
             fit_filter = (
@@ -644,42 +676,134 @@ def render_audiogram_mp4(
                 f"[0:v]fps={settings.frame_rate},scale={width}:{height}:force_original_aspect_ratio=increase,"
                 f"crop={width}:{height},setsar=1,format=rgba"
             )
-        base_filter = (
-            f"{fit_filter},drawbox=x=0:y=0:w=iw:h=ih:color=black@{settings.background_dim:.3f}:t=fill[background]"
-        )
-        wave_filter = (
-            f"[1:a]showwaves=s={wave_width}x{wave_height}:mode={wave_mode}:"
-            f"colors=0x{waveform}@{settings.waveform_opacity:.3f}:rate={settings.frame_rate}:scale={wave_scale},"
-            "format=rgba,"
-            "colorkey=black:0.02:0.10[waveform]"
-        )
-        wave_y = {
-            "top": "H*0.31-h/2",
-            "center": "(H-h)/2",
-            "bottom": "H*0.76-h/2",
+        background_filters = [fit_filter]
+        if settings.background_blur:
+            background_filters.append(f"gblur=sigma={settings.background_blur}")
+        background_filters.append(f"drawbox=x=0:y=0:w=iw:h=ih:color=black@{settings.background_dim:.3f}:t=fill")
+        if settings.background_vignette:
+            vignette_denominator = 9.0 - settings.background_vignette * 5.0
+            background_filters.append(f"vignette=angle=PI/{vignette_denominator:.3f}:aspect={width}/{height}")
+        base_filter = ",".join(background_filters) + "[background]"
+
+        wave_center_y = {
+            "top": int(height * 0.31),
+            "center": height // 2,
+            "bottom": int(height * 0.76),
         }[settings.waveform_position]
-        overlay_filter = f"[background][waveform]overlay=(W-w)/2:{wave_y}:shortest=1[composite]"
-        headline_size = max(28, int(width * settings.headline_size_percent / 100))
+        wave_x = (width - wave_width) // 2
+        wave_y = max(0, min(height - wave_height, wave_center_y - wave_height // 2))
+        frame_padding = max(12, int(width * 0.018))
+        frame_x = max(0, wave_x - frame_padding)
+        frame_y = max(0, wave_y - frame_padding)
+        frame_width = min(width - frame_x, wave_width + frame_padding * 2)
+        frame_height = min(height - frame_y, wave_height + frame_padding * 2)
+        if settings.waveform_frame == "glass":
+            frame_filter = (
+                f"[background]drawbox=x={frame_x}:y={frame_y}:w={frame_width}:h={frame_height}:"
+                "color=black@0.30:t=fill,"
+                f"drawbox=x={frame_x}:y={frame_y}:w={frame_width}:h={frame_height}:"
+                "color=white@0.18:t=2[stage]"
+            )
+        elif settings.waveform_frame == "outline":
+            frame_filter = (
+                f"[background]drawbox=x={frame_x}:y={frame_y}:w={frame_width}:h={frame_height}:"
+                f"color=0x{accent}@0.58:t=3[stage]"
+            )
+        elif settings.waveform_frame == "accent":
+            frame_filter = (
+                f"[background]drawbox=x={frame_x}:y={frame_y}:w={frame_width}:h={frame_height}:"
+                f"color=0x{accent}@0.20:t=fill,"
+                f"drawbox=x={frame_x}:y={frame_y}:w={frame_width}:h={frame_height}:"
+                f"color=0x{accent}@0.62:t=2[stage]"
+            )
+        else:
+            frame_filter = "[background]null[stage]"
+
+        if settings.waveform_style in {"spectrum", "spectrum_dots"}:
+            frequency_mode = "dot" if settings.waveform_style == "spectrum_dots" else "bar"
+            visualizer_source = (
+                f"[1:a]showfreqs=s={wave_width}x{wave_height}:mode={frequency_mode}:"
+                f"ascale={wave_scale}:fscale=log:win_size=2048:averaging=4:"
+                f"colors=0x{waveform}@{settings.waveform_opacity:.3f}|"
+                f"0x{accent}@{settings.waveform_opacity:.3f}:rate={settings.frame_rate}"
+            )
+        else:
+            wave_mode = {"line": "line", "mirrored": "cline", "bars": "p2p", "dots": "point"}[settings.waveform_style]
+            visualizer_source = (
+                f"[1:a]showwaves=s={wave_width}x{wave_height}:mode={wave_mode}:"
+                f"colors=0x{waveform}@{settings.waveform_opacity:.3f}:"
+                f"rate={settings.frame_rate}:scale={wave_scale}"
+            )
+        wave_filter = f"{visualizer_source},format=rgba,colorkey=black:0.025:0.14[visualizer]"
+        if settings.waveform_glow:
+            glow_sigma = max(2, int(4 + settings.waveform_glow * 18))
+            glow_alpha = 0.18 + settings.waveform_glow * 0.62
+            overlay_filters = (
+                "[visualizer]split=2[wavecore][waveglowsource]",
+                f"[waveglowsource]gblur=sigma={glow_sigma},colorchannelmixer=aa={glow_alpha:.3f}[waveglow]",
+                f"[stage][waveglow]overlay={wave_x}:{wave_y}:shortest=1[glowed]",
+                f"[glowed][wavecore]overlay={wave_x}:{wave_y}:shortest=1[composite]",
+            )
+        else:
+            overlay_filters = (f"[stage][visualizer]overlay={wave_x}:{wave_y}:shortest=1[composite]",)
+
         text_x = {
             "left": "w*0.08",
             "center": "(w-text_w)/2",
             "right": "w-text_w-w*0.08",
         }[settings.text_align]
+        title_y = {
+            "top": int(height * 0.10),
+            "center": int(height * 0.39),
+            "bottom": int(height * 0.69),
+        }[settings.text_position]
+        headline_spacing = max(4, headline_size // 8)
+        subtitle_spacing = max(3, subtitle_size // 8)
+        subtitle_gap = max(18, int(height * 0.018)) if subtitle_file is not None else 0
+        subtitle_y = title_y + headline_lines * (headline_size + headline_spacing) + subtitle_gap
+        text_panel_padding = max(12, int(width * 0.018))
+        text_panel_x = int(width * 0.08) - text_panel_padding
+        text_panel_y = max(0, title_y - text_panel_padding)
+        text_panel_width = int(width * 0.84) + text_panel_padding * 2
+        text_panel_height = headline_lines * (headline_size + headline_spacing) + text_panel_padding * 2
+        if subtitle_file is not None:
+            text_panel_height += subtitle_gap + subtitle_lines * (subtitle_size + subtitle_spacing)
+        text_panel_height = min(height - text_panel_y, text_panel_height)
+        if settings.text_panel == "glass":
+            text_frame_filter = (
+                f"[composite]drawbox=x={text_panel_x}:y={text_panel_y}:w={text_panel_width}:"
+                f"h={text_panel_height}:color=black@0.36:t=fill,"
+                f"drawbox=x={text_panel_x}:y={text_panel_y}:w={text_panel_width}:"
+                f"h={text_panel_height}:color=white@0.14:t=2[textstage]"
+            )
+        elif settings.text_panel == "accent":
+            text_frame_filter = (
+                f"[composite]drawbox=x={text_panel_x}:y={text_panel_y}:w={text_panel_width}:"
+                f"h={text_panel_height}:color=0x{accent}@0.84:t=fill,"
+                f"drawbox=x={text_panel_x}:y={text_panel_y}:w={text_panel_width}:"
+                f"h={text_panel_height}:color=white@0.16:t=2[textstage]"
+            )
+        else:
+            text_frame_filter = "[composite]null[textstage]"
+        shadow_options = ":shadowcolor=black@0.82:shadowx=3:shadowy=3" if settings.text_panel == "shadow" else ""
         title_filter = (
-            f"[composite]drawtext=fontfile={_filter_path(_font_path())}:"
+            f"[textstage]drawtext=fontfile={_filter_path(_font_path(settings.font_family, bold=True))}:"
             f"textfile={_filter_path(headline_file)}:fontcolor=0x{text_color}:fontsize={headline_size}:"
-            f"x={text_x}:y=h*0.14:box=1:boxcolor=black@0.28:boxborderw=18"
+            f"x={text_x}:y={title_y}:line_spacing={headline_spacing}:fix_bounds=1{shadow_options}"
         )
         if subtitle_file is not None:
-            subtitle_size = max(18, int(width * settings.subtitle_size_percent / 100))
+            subtitle_shadow = ":shadowcolor=black@0.82:shadowx=2:shadowy=2" if settings.text_panel == "shadow" else ""
             title_filter += (
-                f"[titled];[titled]drawtext=fontfile={_filter_path(_font_path())}:"
-                f"textfile={_filter_path(subtitle_file)}:fontcolor=0x{text_color}@0.86:"
-                f"fontsize={subtitle_size}:x={text_x}:y=h*0.14+{headline_size + 54}[video]"
+                f"[titled];[titled]drawtext=fontfile={_filter_path(_font_path(settings.font_family))}:"
+                f"textfile={_filter_path(subtitle_file)}:fontcolor=0x{accent}@0.96:"
+                f"fontsize={subtitle_size}:x={text_x}:y={subtitle_y}:"
+                f"line_spacing={subtitle_spacing}:fix_bounds=1{subtitle_shadow}[video]"
             )
         else:
             title_filter += "[video]"
-        filter_complex = ";".join((base_filter, wave_filter, overlay_filter, title_filter))
+        filter_complex = ";".join(
+            (base_filter, frame_filter, wave_filter, *overlay_filters, text_frame_filter, title_filter)
+        )
 
         preset, crf = {
             "draft": ("ultrafast", "28"),
@@ -794,7 +918,19 @@ def _metadata_arguments(title: str, metadata: OutputMetadataSettings) -> list[st
     return arguments
 
 
-def _write_drawtext_file(directory: Path, value: str) -> Path:
+def _write_drawtext_file(
+    directory: Path,
+    value: str,
+    *,
+    max_characters_per_line: int,
+) -> tuple[Path, int]:
+    normalized = " ".join(value.replace("\x00", " ").split()).strip()[:160]
+    lines = textwrap.wrap(
+        normalized,
+        width=max_characters_per_line,
+        break_long_words=True,
+        break_on_hyphens=False,
+    ) or [""]
     with tempfile.NamedTemporaryFile(
         mode="w",
         encoding="utf-8",
@@ -804,8 +940,8 @@ def _write_drawtext_file(directory: Path, value: str) -> Path:
         dir=directory,
         delete=False,
     ) as handle:
-        handle.write(" ".join(value.replace("\x00", " ").split())[:160])
-        return Path(handle.name)
+        handle.write("\n".join(lines))
+        return Path(handle.name), len(lines)
 
 
 def _filter_path(path: Path) -> str:
@@ -813,10 +949,24 @@ def _filter_path(path: Path) -> str:
     return "'" + value.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'") + "'"
 
 
-def _font_path() -> Path:
+def _font_path(family: str = "sans", *, bold: bool = False) -> Path:
+    dejavu_name = {
+        ("sans", False): "DejaVuSans.ttf",
+        ("sans", True): "DejaVuSans-Bold.ttf",
+        ("serif", False): "DejaVuSerif.ttf",
+        ("serif", True): "DejaVuSerif-Bold.ttf",
+        ("mono", False): "DejaVuSansMono.ttf",
+        ("mono", True): "DejaVuSansMono-Bold.ttf",
+    }.get((family, bold))
+    if dejavu_name is None:
+        raise ValueError("unsupported audiogram font family")
     candidates = (
-        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-        Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu") / dejavu_name,
+        Path(
+            "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf"
+            if bold
+            else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
+        ),
     )
     font = next((candidate for candidate in candidates if candidate.is_file()), None)
     if font is None:
