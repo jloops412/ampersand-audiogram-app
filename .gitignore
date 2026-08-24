@@ -19,6 +19,7 @@ dist-ssr
 __pycache__
 *.py[cod]
 apps/web/.test-dist
+packages/edit-core/.test-dist
 
 # Generated local media and production artifacts
 *.wav

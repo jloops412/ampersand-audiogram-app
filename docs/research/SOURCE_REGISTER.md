@@ -117,7 +117,7 @@ The provider decision remains formally open under ADR-0004.
 |---|---|---|
 | [@napi-rs/canvas](https://github.com/Brooooooklyn/canvas) | Node/Skia frame rendering candidate | MIT; prototype shared render-spec performance and font behavior |
 | [libass](https://github.com/libass/libass) | Mature ASS/SSA subtitle rendering through FFmpeg | ISC; strong burn-in candidate |
-| [Dawn-Cut](https://github.com/kwakseongjae/dawn-cut) | Deterministic edit-core architecture candidate | MIT reported; young; code audit required |
+| [Dawn-Cut](https://github.com/kwakseongjae/dawn-cut/tree/7de68fce41505d8092ec227806b8d4bea4127675) | Deterministic edit-core architecture reference audited for issue #11 | MIT verified at pinned commit; original Ampersand V0 selected, no code copied/adapted; ADR-0014 |
 | [CutScript](https://github.com/DataAnts-AI/CutScript) | WhisperX/DeepFilterNet/text-edit/FFmpeg implementation reference | MIT reported; young desktop architecture |
 | [Auto-Editor](https://github.com/WyattBlue/auto-editor) | Silence/loudness edit and timeline export reference | Pin exact open CLI version; current product boundaries require verification |
 | [Waveform Playlist](https://github.com/naomiaro/waveform-playlist) | Later multitrack editor candidate | MIT reported; deferred |
@@ -169,7 +169,7 @@ Before Phase 1 implementation:
 - current waveform UI maintenance and license status;
 - managed storage/auth provider terms, export, retention, and cost;
 - Temporal/Hatchet/Prefect current releases and managed/self-host terms;
-- exact Dawn-Cut and Auto-Editor commits/licenses;
+- exact Auto-Editor commit/license; Dawn-Cut is already pinned as a reference-only audit by ADR-0014;
 - current FFmpeg/libsoxr build profile and codec obligations;
 - @napi-rs/canvas and libass font/render parity behavior.
 

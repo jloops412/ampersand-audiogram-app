@@ -41,7 +41,7 @@ Everything else should be built from standards, controlled native tools, narrow 
 | Server visual rendering | Shared render spec + **@napi-rs/canvas/Skia** frames + FFmpeg | **Provisional recommendation** |
 | Final caption burn-in | FFmpeg with **libass** | **Strong recommendation** |
 | Professional timeline interchange | **OpenTimelineIO** at the export boundary | **Deferred recommendation** |
-| Deterministic edit-domain reference | Audit **Dawn-Cut** core concepts; adapt only a bounded verified core if justified | **Architecture/reference candidate** |
+| Deterministic edit domain | Original dependency-free Ampersand Edit Core V0; Dawn-Cut audited as concepts-only reference | **Implemented checkpoint; integration gates open (ADR-0014)** |
 
 ## 1. Media and deterministic DSP foundation
 
@@ -739,9 +739,9 @@ Primary source:
 
 Recommended approach:
 
-- audit its bounded core package;
-- copy concepts freely only at the architectural level;
-- vendor/adapt actual MIT code only after provenance and maintenance review;
+- ADR-0014 records the bounded core audit at commit `7de68fce41505d8092ec227806b8d4bea4127675`;
+- use its concepts only at the architectural level; Ampersand Edit Core V0 is an original dependency-free implementation;
+- vendor/adapt actual MIT code only after a new provenance, maintenance, and demonstrated-advantage review;
 - do not fork its entire application;
 - keep Ampersand's Semantic Map and processing domain independent.
 
