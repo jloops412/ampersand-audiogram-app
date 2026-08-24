@@ -10,6 +10,7 @@
     "beta:start": "node apps/worker-control/server.js",
     "beta:test": "node --test apps/worker-control/*.test.js",
     "beta:check": "node --check apps/worker-control/server.js && node --check apps/worker-control/storage.js && node --check apps/worker-control/gcs.js",
+    "web:test": "tsc -p apps/web/tsconfig.waveform-test.json && node --test apps/web/tests/*.test.mjs",
     "legacy:dev": "vite --config vite.config.ts",
     "legacy:build": "tsc && vite build",
     "v2:sync": "uv sync --all-packages --dev",
@@ -18,7 +19,8 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "wavesurfer.js": "7.12.11"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

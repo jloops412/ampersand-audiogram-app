@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "dependency_manifest_id": "dependency:wavesurfer-js",
+  "dependency_name": "wavesurfer.js",
+  "dependency_version": "7.12.11",
+  "source_url": "https://registry.npmjs.org/wavesurfer.js/-/wavesurfer.js-7.12.11.tgz",
+  "artifact_sha256": "a337bf2548e41a7211a39b0d16bd70c32eb07cf0ba243e4eb7190f371b2f92a0",
+  "code_license": "BSD-3-Clause",
+  "admission_state": "production_candidate",
+  "scope": "runtime",
+  "transitive_native_review": "The npm package declares no runtime dependencies and contains browser JavaScript, TypeScript declarations, and plugin bundles only. npm audit --omit=dev reported zero vulnerabilities on 2026-08-24. It adds no native code, model, runtime download, external service, or third-party media request. Full issue #11 browser, long-file, timing, accessibility, and mobile gates remain before approved status.",
+  "commercial_hosted_use_reviewed": true,
+  "approval_reference": "issue #11 Lane A; ADR-0013"
+}

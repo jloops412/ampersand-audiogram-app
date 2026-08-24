@@ -64,7 +64,7 @@ Rules:
 | [Uppy](https://github.com/transloadit/uppy) | Resumable upload UI and integrations | MIT |
 | [tusd](https://github.com/tus/tusd) | TUS server/self-hosted upload fallback | MIT |
 | [Supabase](https://github.com/supabase/supabase) | Postgres/Auth/Storage/Realtime managed or self-host candidate | Apache-2.0 repository; managed terms separate |
-| [WaveSurfer.js](https://github.com/katspaugh/wavesurfer.js) | Waveform playback/regions candidate | BSD-3-Clause; precomputed peaks needed for long files |
+| [WaveSurfer.js 7.12.11](https://github.com/katspaugh/wavesurfer.js/tree/7.12.11) and [official docs](https://wavesurfer.xyz/docs/) | Stable browser waveform, external-media playback, timeline, zoom, hover, and preview regions | **Verified 2026-08-24.** BSD-3-Clause; exact stable pin for issue #11 Lane A. npm v8.0.0-beta.3 remains prerelease; server peaks plus duration are required for long files. |
 | [Peaks.js](https://github.com/bbc/peaks.js) | Long-form waveform/segments alternative | LGPL-3.0; active development has moved from GitHub to Codeberg |
 | [BBC audiowaveform](https://github.com/bbc/audiowaveform) | Peak generation reference/tool | GPLv3; not default production choice without legal review |
 | [waveform-data.js](https://github.com/bbc/waveform-data.js) | Waveform data representation | LGPL-3.0 |

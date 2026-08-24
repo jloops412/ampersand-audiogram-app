@@ -59,7 +59,7 @@ from .semantic_adapters import normalize_loudness_frames, normalize_vad_frames
 from .semantic_debug import write_semantic_debug_report
 from .semantic_fusion import fuse_semantic_map
 from .settings import ProductionIntent, SettingsSource, resolve_production_settings
-from .waveform import generate_waveform_peaks
+from .waveform import generate_waveform_peaks, select_studio_waveform_peaks
 
 ENGINE_BUILD_ID = f"ampersand-media-worker:{__version__}"
 ProgressCallback = Callable[[str], None]
@@ -250,6 +250,8 @@ def process_source(
             tools=tools,
         )
         write_manifest(stage / "waveform-peaks.json", waveform)
+        studio_waveform = select_studio_waveform_peaks(waveform)
+        write_manifest(stage / "waveform-studio.json", studio_waveform)
 
         ebur128_artifact = write_provider_artifact(
             stage,
@@ -546,6 +548,7 @@ def process_source(
             analysis_asset=analysis_asset,
             canonical_was_created=canonical_was_created,
             waveform_hash=manifest_sha256(waveform),
+            studio_waveform_hash=manifest_sha256(studio_waveform),
             analysis=analysis,
             semantic_map=semantic_map,
             processing_plan=processing_plan,
@@ -595,6 +598,8 @@ def process_source(
             "provider_ffmpeg_ebur128": ebur128_artifact.sha256,
             "provider_ampersand_energy_vad": energy_vad_artifact.sha256,
             "loudness_before": manifest_sha256(loudness_before),
+            "waveform_peaks": manifest_sha256(waveform),
+            "waveform_studio": manifest_sha256(studio_waveform),
             "pre_master_loudness": manifest_sha256(cleanup_input_loudness),
             "router_settings": manifest_sha256(router_settings),
             "processing_plan": manifest_sha256(processing_plan),
@@ -732,6 +737,7 @@ def _build_steps(
     analysis_asset: AssetManifest,
     canonical_was_created: bool,
     waveform_hash: str,
+    studio_waveform_hash: str,
     analysis: AnalysisManifest,
     semantic_map: SemanticMap,
     processing_plan: ProcessingPlan,
@@ -771,7 +777,7 @@ def _build_steps(
             analysis_asset_hash,
             JobStatus.SUCCEEDED,
             ("manifest:waveform",),
-            {"manifest_hash": waveform_hash},
+            {"manifest_hash": waveform_hash, "studio_view_hash": studio_waveform_hash},
         ),
         ("loudness-before", analysis_asset_hash, JobStatus.SUCCEEDED, (analysis.analysis_manifest_id,), {}),
         (

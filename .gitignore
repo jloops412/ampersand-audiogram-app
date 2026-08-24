@@ -18,6 +18,7 @@ dist-ssr
 .ruff_cache
 __pycache__
 *.py[cod]
+apps/web/.test-dist
 
 # Generated local media and production artifacts
 *.wav

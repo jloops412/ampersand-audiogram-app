@@ -959,7 +959,22 @@ export async function createApp() {
       if (!job || job.status !== 'succeeded') {
         return response.status(404).json({ error: { code: 'not_ready', message: 'Waveform is not ready.' } });
       }
-      response.sendFile(path.join(job.outputDirectory, 'waveform-peaks.json'));
+      const candidates = ['waveform-studio.json', 'waveform-peaks.json'];
+      let waveformPath = null;
+      for (const candidate of candidates) {
+        const candidatePath = path.join(job.outputDirectory, candidate);
+        try {
+          await fs.access(candidatePath);
+          waveformPath = candidatePath;
+          break;
+        } catch (error) {
+          if (error.code !== 'ENOENT') throw error;
+        }
+      }
+      if (!waveformPath) {
+        return response.status(404).json({ error: { code: 'not_ready', message: 'Waveform is not ready.' } });
+      }
+      response.sendFile(waveformPath);
     } catch (error) {
       next(error);
     }

@@ -14,6 +14,8 @@ on:
       - "scripts/check_v2_boundaries.py"
       - "pyproject.toml"
       - "package.json"
+      - "package-lock.json"
+      - "THIRD_PARTY_NOTICES.md"
       - "uv.lock"
   push:
     branches: [main]
@@ -29,6 +31,8 @@ on:
       - "scripts/check_v2_boundaries.py"
       - "pyproject.toml"
       - "package.json"
+      - "package-lock.json"
+      - "THIRD_PARTY_NOTICES.md"
       - "uv.lock"
 
 permissions:
@@ -78,6 +82,9 @@ jobs:
         run: |
           npm run beta:test
           npm run beta:check
+          npm run web:test
           npm run build
+          cmp THIRD_PARTY_NOTICES.md dist/legal/THIRD_PARTY_NOTICES.md
+          cmp infra/licenses/wavesurfer.js-7.12.11-LICENSE.txt dist/legal/wavesurfer.js-7.12.11-LICENSE.txt
       - name: Build the Cloud Run image
         run: docker build --tag ampersand-private-beta:ci .

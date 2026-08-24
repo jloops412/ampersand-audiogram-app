@@ -11,6 +11,7 @@ from .errors import EngineError
 from .ffmpeg import FFmpegTools, decode_float32_command, subprocess_environment
 
 FloatArray = npt.NDArray[np.float32]
+STUDIO_MAX_WAVEFORM_SAMPLES_PER_CHANNEL = 240_000
 
 
 def generate_waveform_peaks(
@@ -96,6 +97,25 @@ def generate_waveform_peaks(
         duration_us=duration_us,
         levels=tuple(levels),
     )
+
+
+def select_studio_waveform_peaks(
+    waveform: WaveformPeaks,
+    *,
+    max_samples_per_channel: int = STUDIO_MAX_WAVEFORM_SAMPLES_PER_CHANNEL,
+) -> WaveformPeaks:
+    """Return a deterministic one-level browser view while preserving canonical waveform identity."""
+    if max_samples_per_channel < 2:
+        raise ValueError("max_samples_per_channel must be at least two")
+    populated = [level for level in waveform.levels if level.windows]
+    if not populated:
+        raise ValueError("waveform must contain a populated level")
+    ordered = sorted(populated, key=lambda level: level.samples_per_window)
+    selected = next(
+        (level for level in ordered if len(level.windows) * 2 <= max_samples_per_channel),
+        ordered[-1],
+    )
+    return waveform.model_copy(update={"levels": (selected,)})
 
 
 def _combine_adjacent(level: FloatArray) -> FloatArray:

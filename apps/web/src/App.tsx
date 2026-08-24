@@ -557,31 +557,25 @@ function NewProductionView({
 
 function ProductionView({ production, onBack, onRetry, onDelete }: { production: Production; onBack: () => void; onRetry: () => void; onDelete: () => void }) {
   const [waveform, setWaveform] = useState<WaveformPeaks | null>(null);
+  const [waveformError, setWaveformError] = useState('');
   const [listenMode, setListenMode] = useState<'original' | 'master'>('master');
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const pendingPlayback = useRef<{ time: number; paused: boolean } | null>(null);
-  const masterUrl = production.outputs?.mp3 || production.outputs?.wav || null;
+  const masterUrl = production.outputs?.wav || production.outputs?.mp3 || null;
   const audioUrl = listenMode === 'master' && masterUrl ? masterUrl : production.outputs?.original || '';
 
   useEffect(() => {
-    if (!production.outputs?.waveform) return;
-    getWaveform(production.outputs.waveform).then(setWaveform).catch(() => setWaveform(null));
+    let current = true;
+    setWaveform(null);
+    setWaveformError('');
+    if (!production.outputs?.waveform) return () => { current = false; };
+    getWaveform(production.outputs.waveform)
+      .then((next) => { if (current) setWaveform(next); })
+      .catch((caught: unknown) => {
+        if (!current) return;
+        setWaveform(null);
+        setWaveformError(caught instanceof Error ? caught.message : 'Waveform peaks could not be loaded.');
+      });
+    return () => { current = false; };
   }, [production.outputs?.waveform]);
-
-  const switchAudio = (mode: 'original' | 'master') => {
-    if (mode === listenMode || (mode === 'master' && !masterUrl)) return;
-    const audio = audioRef.current;
-    pendingPlayback.current = audio ? { time: audio.currentTime, paused: audio.paused } : null;
-    setListenMode(mode);
-  };
-  const restorePosition = () => {
-    const audio = audioRef.current;
-    const pending = pendingPlayback.current;
-    if (!audio || !pending) return;
-    audio.currentTime = Math.min(pending.time, Number.isFinite(audio.duration) ? audio.duration : pending.time);
-    if (!pending.paused) void audio.play();
-    pendingPlayback.current = null;
-  };
 
   const summary = production.summary;
   const completed = new Set(production.completedSteps);
@@ -599,12 +593,11 @@ function ProductionView({ production, onBack, onRetry, onDelete }: { production:
             <div className="listen-heading">
               <div><p className="eyebrow">Same-position comparison</p><h2>Hear what changed.</h2></div>
               <div className="ab-toggle" role="group" aria-label="Choose original or master">
-                <button className={listenMode === 'original' ? 'selected' : ''} onClick={() => switchAudio('original')}>Original</button>
-                <button className={listenMode === 'master' ? 'selected' : ''} onClick={() => switchAudio('master')}>Master</button>
+                <button className={listenMode === 'original' ? 'selected' : ''} aria-pressed={listenMode === 'original'} onClick={() => setListenMode('original')}>Original</button>
+                <button className={listenMode === 'master' ? 'selected' : ''} aria-pressed={listenMode === 'master'} disabled={!masterUrl} onClick={() => setListenMode('master')}>Master</button>
               </div>
             </div>
-            <Waveform waveform={waveform} />
-            <audio ref={audioRef} src={audioUrl} controls preload="metadata" onLoadedMetadata={restorePosition} />
+            <Waveform key={production.id} waveform={waveform} waveformError={waveformError} audioUrl={audioUrl} sourceLabel={listenMode === 'master' && masterUrl ? 'Master' : 'Original'} />
           </section>
 
           {production.outputs.audiogram && <section className="audiogram-result"><div><p className="eyebrow">Audiogram preview</p><h2>Ready for video delivery.</h2><p>{production.settings.audiogram.aspect_ratio} · {production.settings.audiogram.waveform_style} waveform</p></div><video src={production.outputs.audiogram} controls preload="metadata" /></section>}
@@ -734,7 +727,15 @@ export default function App() {
       {view === 'new' && <NewProductionView onCancel={() => setView('library')} onCreated={(created) => { setProductions((items) => [...created, ...items.filter((item) => !created.some((production) => production.id === item.id))]); if (created.length === 1) openProduction(created[0].id); else setView('library'); }} />}
       {view === 'production' && current && <ProductionView production={current} onBack={() => setView('library')} onDelete={() => void removeProduction(current.id)} onRetry={() => { retryProduction(current.id).then((updated) => setProductions((items) => [updated, ...items.filter((item) => item.id !== updated.id)])).catch((caught) => setGlobalError(caught.message)); }} />}
       {view === 'production' && !current && <LibraryView productions={productions} onOpen={openProduction} onNew={() => setView('new')} onDelete={(id) => void removeProduction(id)} />}
-      <footer><span>Ampersand beta · deterministic mastering</span><span>Independent engine · no external API cost</span></footer>
+      <footer>
+        <span>Ampersand beta · deterministic mastering</span>
+        <span>
+          Independent engine · no external API cost ·{' '}
+          <a href="/legal/THIRD_PARTY_NOTICES.md" target="_blank" rel="noreferrer">Notices</a>
+          {' · '}
+          <a href="/legal/wavesurfer.js-7.12.11-LICENSE.txt" target="_blank" rel="noreferrer">Licenses</a>
+        </span>
+      </footer>
     </div>
   );
 }
