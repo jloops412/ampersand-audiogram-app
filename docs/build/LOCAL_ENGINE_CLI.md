@@ -89,8 +89,10 @@ loudness stage and never changes `master.wav`; its `candidate.wav` must go throu
 3. Canonicalize once to 48 kHz float PCM only when necessary.
 4. Measure program loudness and true peak.
 5. Stream decoded PCM into a custom multiresolution min/max peak pyramid.
-6. Measure 100 ms momentary/short-term loudness and frame true peak with FFmpeg `ebur128`.
-7. Run Ampersand's first-party, confidence-bounded energy/spectral VAD on a 16 kHz analysis stream.
+6. Measure 100 ms momentary/short-term loudness and frame true peak with FFmpeg `ebur128`; zero-pad only a final
+   partial analysis hop, record that bounded padding, and normalize coverage back to the exact source duration.
+7. Run Ampersand's first-party, confidence-bounded energy/spectral VAD on a 16 kHz analysis stream with the same
+   disclosed final-partial-hop coverage policy.
 8. Preserve checksummed provider-native frames separately and normalize them through provider-neutral adapters.
 9. Fuse a full-coverage Semantic Map V0 with soft probabilities, provenance, optional-provider failures, and explicit conflicts.
 10. Emit a local debug HTML report while protecting uncertain or unsupported content.

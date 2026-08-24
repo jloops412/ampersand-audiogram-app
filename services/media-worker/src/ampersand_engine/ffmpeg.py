@@ -187,12 +187,25 @@ def measure_loudness_timeline(
     tools: FFmpegTools,
     hop_us: int = 100_000,
 ) -> LoudnessTimelineResult:
-    """Measure deterministic EBU R128 momentary/short-term loudness and frame true peak."""
+    """Measure deterministic EBU R128 loudness and true peak over the complete source timeline."""
 
     if duration_us <= 0 or hop_us <= 0:
         raise ValueError("duration_us and hop_us must be positive")
     if hop_us != 100_000:
         raise ValueError("FFmpeg ebur128 emits a fixed 100 ms analysis hop")
+    expected_frames = (duration_us + hop_us - 1) // hop_us
+    analysis_duration_us = expected_frames * hop_us
+    tail_padding_us = analysis_duration_us - duration_us
+    analysis_filters: list[str] = []
+    if tail_padding_us:
+        analysis_duration = _ffmpeg_duration_seconds(analysis_duration_us)
+        analysis_filters.extend(
+            (
+                f"apad=whole_dur={analysis_duration}",
+                f"atrim=duration={analysis_duration}",
+            )
+        )
+    analysis_filters.append("ebur128=peak=true:framelog=verbose")
     completed = _run(
         [
             tools.ffmpeg,
@@ -208,7 +221,7 @@ def measure_loudness_timeline(
             "0:a:0",
             "-vn",
             "-af",
-            "ebur128=peak=true:framelog=verbose",
+            ",".join(analysis_filters),
             "-f",
             "null",
             "-",
@@ -235,7 +248,6 @@ def measure_loudness_timeline(
             )
         )
 
-    expected_frames = (duration_us + hop_us - 1) // hop_us
     if len(parsed) < expected_frames:
         raise EngineError(
             f"ffmpeg ebur128 returned {len(parsed)} frames; {expected_frames} are required for full coverage."
@@ -246,6 +258,13 @@ def measure_loudness_timeline(
     for index, (provider_time, momentary, short_term, true_peak, below_floor, channel_peaks) in enumerate(
         parsed[:expected_frames]
     ):
+        expected_provider_end_us = (index + 1) * hop_us
+        provider_end_us = round(provider_time * 1_000_000)
+        if abs(provider_end_us - expected_provider_end_us) > 5_000:
+            raise EngineError(
+                "ffmpeg ebur128 frame timeline is discontinuous at "
+                f"frame {index + 1}: expected about {expected_provider_end_us} us, got {provider_end_us} us."
+            )
         start_us = index * hop_us
         end_us = min(duration_us, start_us + hop_us)
         frames.append(
@@ -275,6 +294,9 @@ def measure_loudness_timeline(
             "provider_version": tools.ffmpeg_version,
             "analysis_hop_us": hop_us,
             "duration_us": duration_us,
+            "analysis_duration_us": analysis_duration_us,
+            "tail_padding_us": tail_padding_us,
+            "tail_padding_policy": "zero_pad_final_partial_hop" if tail_padding_us else "none",
             "privacy_redaction": "Only parsed metric frames are retained; command lines and local paths are excluded.",
             "frames": raw_frames,
         },
@@ -892,6 +914,11 @@ def _duration_us(audio: dict[str, Any], format_payload: dict[str, Any]) -> int:
     if microseconds <= 0:
         raise InvalidMedia("The source duration must be positive.")
     return microseconds
+
+
+def _ffmpeg_duration_seconds(duration_us: int) -> str:
+    seconds, microseconds = divmod(duration_us, 1_000_000)
+    return f"{seconds}.{microseconds:06d}"
 
 
 def _positive_int(value: Any, label: str) -> int:

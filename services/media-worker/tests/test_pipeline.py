@@ -15,6 +15,7 @@ from ampersand_contracts import (
     JobStep,
     LevelerStatistics,
     MasteringSettings,
+    MediaProbe,
     OutputManifest,
     OutputMetadataSettings,
     ProcessingPlan,
@@ -167,6 +168,26 @@ def test_pipeline_refuses_to_overwrite_existing_output(
     output.mkdir()
     with pytest.raises(EngineError, match="will not overwrite"):
         process_source(synthetic_source, output)
+
+
+def test_pipeline_covers_a_final_partial_analysis_hop(tmp_path: Path) -> None:
+    source = generate_spoken_word_fixture(tmp_path / "partial-hop.wav", duration_seconds=6.00002)
+
+    result = process_source(source, tmp_path / "partial-hop-run")
+
+    probe = read_manifest(result.output_directory / "probe.json", MediaProbe)
+    semantic_map = read_semantic_map(result.output_directory / "semantic-map-v0.json")
+    provider_payload = json.loads(
+        (result.output_directory / "provider-native/ffmpeg-ebur128.json").read_text(encoding="utf-8")
+    )
+    expected_frames = (probe.duration_us + 99_999) // 100_000
+    assert probe.duration_us % 100_000
+    assert semantic_map.regions[-1].end_us == probe.duration_us
+    assert provider_payload["duration_us"] == probe.duration_us
+    assert provider_payload["analysis_duration_us"] == expected_frames * 100_000
+    assert provider_payload["tail_padding_us"] == expected_frames * 100_000 - probe.duration_us
+    assert provider_payload["tail_padding_policy"] == "zero_pad_final_partial_hop"
+    assert len(provider_payload["frames"]) == expected_frames
 
 
 def test_invalid_media_leaves_no_partial_output(tmp_path: Path) -> None:
