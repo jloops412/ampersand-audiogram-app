@@ -41,8 +41,9 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - an auditable Smart Cleanup V0.3 plan with exact evidence, thresholds, stage dispositions, hashes, and safe no-op results;
 - explicit Manual deterministic declipping, rumble/hum filtering, steady-noise reduction, gating, de-essing, voice EQ,
   and compression processing;
-- full-duration H.264/AAC audiograms with 1:1, 4:5, 9:16, and 16:9 layouts; four waveform primitives; rich layout,
-  opacity, typography, frame-rate, and quality controls; and color, uploaded image, or looping-video backgrounds;
+- full-duration H.264/AAC audiograms with six one-click looks; 1:1, 4:5, 9:16, and 16:9 layouts; waveform and
+  frequency visualizers; glow, plates, blur, vignette, typography, wrapping, frame-rate, and quality controls; and
+  animated gradient, color, uploaded image, or looping-video backgrounds;
 - a versioned, rights-clear synthetic Audio Lab corpus with controls, degradations, lineage, and an opt-in one-hour stream;
 - a local-only blinded listening/regression harness with deterministic loudness-matched Original/A/B and clean-input
   preservation sessions, delayed identity reveal, artifact scoring, diagnostics, and tamper-checked reports;
@@ -198,7 +199,8 @@ Original media is immutable. Expensive work is checkpointable. Provider-native r
 7. #7/#8/#23 — enhancement, speech understanding, and active Processing Router promotion;
 8. #24/#25/#26 — durable engine, Studio integration, A/B, and report;
 9. #13 — one-hour recovery proof;
-10. #27 — expand the deterministic audiogram renderer with captions, clip selection, and richer motion styles.
+10. #27 — continue the deterministic audiogram renderer with timed captions, clip selection, brand assets, and richer
+    layered motion.
 11. #43 — protect-first Smart Cleanup planning and exact Manual deterministic overrides.
 
 Issue #24 now includes an intentionally narrow private-beta publish checkpoint. It creates the new Ampersand Cloud Run

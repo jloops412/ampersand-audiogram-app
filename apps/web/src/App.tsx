@@ -30,7 +30,7 @@ import type {
   WaveformPeaks,
 } from './types';
 import { Waveform } from './Waveform';
-import { AudiogramPreview } from './AudiogramPreview';
+import { AudiogramStudio } from './AudiogramStudio';
 
 type View = 'library' | 'new' | 'production';
 
@@ -224,7 +224,6 @@ function NewProductionView({
   const [uploadPhase, setUploadPhase] = useState('');
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const artworkInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getCapabilities().then(setCapabilities).catch((caught) => {
@@ -466,38 +465,16 @@ function NewProductionView({
           <section className="studio-section">
             <div className="section-number">05</div>
             <div className="section-content">
-              <div className="section-heading"><div><h2>Audiogram Studio</h2><p>Design a full-duration H.264 MP4 with a rich image, looping video, or color background. Every saved control is executed by the server renderer.</p></div><span className="live-chip">Render spec 1.0</span></div>
+              <div className="section-heading"><div><h2>Audiogram Studio</h2><p>Build a polished full-duration H.264 MP4 from a complete visual look, then customize the composition as deeply as you want.</p></div><span className="live-chip">Visual system 1.1</span></div>
               <label className={`toggle-card hero-toggle ${settings.audiogram.enabled ? 'selected' : ''}`}><input type="checkbox" checked={settings.audiogram.enabled} onChange={(event) => updateSettings((next) => { next.audiogram.enabled = event.target.checked; return next; })} /><div><strong>Create an audiogram MP4</strong><small>Uses the mastered audio; no browser recording and no third-party renderer.</small></div></label>
-              {settings.audiogram.enabled && <div className="audiogram-controls">
-                <AudiogramPreview settings={settings.audiogram} media={artwork} title={title || sources[0]?.name.replace(/\.[^.]+$/, '') || ''} />
-                <div className="three-up">
-                  <label className="select-card"><span>Canvas</span><select value={settings.audiogram.aspect_ratio} onChange={(event) => updateSettings((next) => { next.audiogram.aspect_ratio = event.target.value as ProductionSettings['audiogram']['aspect_ratio']; return next; })}><option value="square">Square · 1:1 · 1080×1080</option><option value="feed_portrait">Feed portrait · 4:5 · 1080×1350</option><option value="portrait">Story / reel · 9:16 · 1080×1920</option><option value="landscape">Landscape · 16:9 · 1920×1080</option></select></label>
-                  <label className="select-card"><span>Waveform style</span><select value={settings.audiogram.waveform_style} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_style = event.target.value as ProductionSettings['audiogram']['waveform_style']; return next; })}><option value="line">Flowing line</option><option value="mirrored">Mirrored center</option><option value="bars">Audio bars</option><option value="dots">Particle dots</option></select></label>
-                  <label className="select-card"><span>Background</span><select value={settings.audiogram.background_mode} onChange={(event) => { setArtwork(null); updateSettings((next) => { next.audiogram.background_mode = event.target.value as ProductionSettings['audiogram']['background_mode']; return next; }); }}><option value="color">Solid color</option><option value="artwork">Image artwork</option><option value="video">Looping video</option></select></label>
-                </div>
-                {settings.audiogram.background_mode !== 'color' && <div className="artwork-picker"><input ref={artworkInputRef} type="file" accept={settings.audiogram.background_mode === 'video' ? 'video/mp4,video/quicktime,video/webm,.m4v' : 'image/jpeg,image/png,image/webp'} hidden onChange={(event) => setArtwork(event.target.files?.[0] || null)} /><button className="button button-secondary" onClick={() => artworkInputRef.current?.click()}>{artwork ? 'Replace background' : `Choose background ${settings.audiogram.background_mode === 'video' ? 'video' : 'image'}`}</button><span>{artwork ? `${artwork.name} · ${formatBytes(artwork.size)}` : `${settings.audiogram.background_mode === 'video' ? 'MP4, MOV, M4V, or WebM' : 'JPG, PNG, or WebP'} · up to ${formatBytes(capabilities?.maxArtworkBytes || 512 * 1024 * 1024)}`}</span></div>}
-                <div className="color-row"><label><span>Background</span><input type="color" value={settings.audiogram.background_color} onChange={(event) => updateSettings((next) => { next.audiogram.background_color = event.target.value; return next; })} /></label><label><span>Waveform</span><input type="color" value={settings.audiogram.waveform_color} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_color = event.target.value; return next; })} /></label><label><span>Text</span><input type="color" value={settings.audiogram.text_color} onChange={(event) => updateSettings((next) => { next.audiogram.text_color = event.target.value; return next; })} /></label></div>
-                <div className="metadata-grid"><label><span>Headline override</span><input className="text-input" value={settings.audiogram.headline} onChange={(event) => updateSettings((next) => { next.audiogram.headline = event.target.value; return next; })} placeholder="Uses production title when blank" /></label><label><span>Subtitle</span><input className="text-input" value={settings.audiogram.subtitle} onChange={(event) => updateSettings((next) => { next.audiogram.subtitle = event.target.value; return next; })} placeholder="Show, speaker, or call to action" /></label></div>
-                <details className="advanced-controls audiogram-advanced" open>
-                  <summary>Waveform, layout &amp; render controls</summary>
-                  <div className="three-up compact-selects">
-                    <label className="select-card"><span>Amplitude response</span><select value={settings.audiogram.waveform_scale} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_scale = event.target.value as ProductionSettings['audiogram']['waveform_scale']; return next; })}><option value="linear">Linear · literal</option><option value="sqrt">Square root · balanced</option><option value="cbrt">Cube root · fuller</option><option value="log">Logarithmic · energetic</option></select></label>
-                    <label className="select-card"><span>Waveform position</span><select value={settings.audiogram.waveform_position} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_position = event.target.value as ProductionSettings['audiogram']['waveform_position']; return next; })}><option value="top">Upper</option><option value="center">Center</option><option value="bottom">Lower</option></select></label>
-                    <label className="select-card"><span>Text alignment</span><select value={settings.audiogram.text_align} onChange={(event) => updateSettings((next) => { next.audiogram.text_align = event.target.value as ProductionSettings['audiogram']['text_align']; return next; })}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-                    <label className="select-card"><span>Background fit</span><select value={settings.audiogram.background_fit} onChange={(event) => updateSettings((next) => { next.audiogram.background_fit = event.target.value as ProductionSettings['audiogram']['background_fit']; return next; })}><option value="cover">Cover · fill canvas</option><option value="contain">Contain · show all</option></select></label>
-                    <label className="select-card"><span>Frame rate</span><select value={settings.audiogram.frame_rate} onChange={(event) => updateSettings((next) => { next.audiogram.frame_rate = Number(event.target.value) as 24 | 30 | 60; return next; })}><option value="24">24 fps · cinematic</option><option value="30">30 fps · standard</option><option value="60">60 fps · smooth / large</option></select></label>
-                    <label className="select-card"><span>Render quality</span><select value={settings.audiogram.render_quality} onChange={(event) => updateSettings((next) => { next.audiogram.render_quality = event.target.value as ProductionSettings['audiogram']['render_quality']; return next; })}><option value="draft">Draft · quick review</option><option value="standard">Standard · recommended</option><option value="high">High · slower / larger</option></select></label>
-                  </div>
-                  <div className="control-stack">
-                    <label className="range-control"><span><strong>Waveform width</strong><small>Percentage of canvas width</small></span><input type="range" min="40" max="100" step="1" value={settings.audiogram.waveform_width_percent} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_width_percent = Number(event.target.value); return next; })} /><output>{settings.audiogram.waveform_width_percent}%</output></label>
-                    <label className="range-control"><span><strong>Waveform height</strong><small>Percentage of canvas height</small></span><input type="range" min="10" max="60" step="1" value={settings.audiogram.waveform_height_percent} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_height_percent = Number(event.target.value); return next; })} /><output>{settings.audiogram.waveform_height_percent}%</output></label>
-                    <label className="range-control"><span><strong>Waveform opacity</strong><small>Blend the animation with artwork</small></span><input type="range" min="0.1" max="1" step="0.05" value={settings.audiogram.waveform_opacity} onChange={(event) => updateSettings((next) => { next.audiogram.waveform_opacity = Number(event.target.value); return next; })} /><output>{Math.round(settings.audiogram.waveform_opacity * 100)}%</output></label>
-                    <label className="range-control"><span><strong>Background dim</strong><small>Improves waveform and text contrast</small></span><input type="range" min="0" max="0.85" step="0.05" value={settings.audiogram.background_dim} onChange={(event) => updateSettings((next) => { next.audiogram.background_dim = Number(event.target.value); return next; })} /><output>{Math.round(settings.audiogram.background_dim * 100)}%</output></label>
-                    <label className="range-control"><span><strong>Headline size</strong><small>Percentage of canvas width</small></span><input type="range" min="2" max="10" step="0.1" value={settings.audiogram.headline_size_percent} onChange={(event) => updateSettings((next) => { next.audiogram.headline_size_percent = Number(event.target.value); return next; })} /><output>{settings.audiogram.headline_size_percent.toFixed(1)}%</output></label>
-                    <label className="range-control"><span><strong>Subtitle size</strong><small>Percentage of canvas width</small></span><input type="range" min="1" max="6" step="0.1" value={settings.audiogram.subtitle_size_percent} onChange={(event) => updateSettings((next) => { next.audiogram.subtitle_size_percent = Number(event.target.value); return next; })} /><output>{settings.audiogram.subtitle_size_percent.toFixed(1)}%</output></label>
-                  </div>
-                </details>
-              </div>}
+              {settings.audiogram.enabled && <AudiogramStudio
+                settings={settings.audiogram}
+                media={artwork}
+                title={title || sources[0]?.name.replace(/\.[^.]+$/, '') || ''}
+                maxMediaLabel={formatBytes(capabilities?.maxArtworkBytes || 512 * 1024 * 1024)}
+                onMediaChange={setArtwork}
+                onChange={(audiogram) => updateSettings((next) => { next.audiogram = audiogram; return next; })}
+              />}
             </div>
           </section>
 

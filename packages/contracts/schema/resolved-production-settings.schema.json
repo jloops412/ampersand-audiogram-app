@@ -4,6 +4,12 @@
       "additionalProperties": false,
       "description": "Versioned deterministic controls shared by Studio and the server renderer.",
       "properties": {
+        "accent_color": {
+          "default": "#e1b977",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Accent Color",
+          "type": "string"
+        },
         "aspect_ratio": {
           "default": "square",
           "enum": [
@@ -15,6 +21,13 @@
           "title": "Aspect Ratio",
           "type": "string"
         },
+        "background_blur": {
+          "default": 0,
+          "maximum": 30,
+          "minimum": 0,
+          "title": "Background Blur",
+          "type": "integer"
+        },
         "background_color": {
           "default": "#111718",
           "pattern": "^#[0-9a-fA-F]{6}$",
@@ -22,7 +35,7 @@
           "type": "string"
         },
         "background_dim": {
-          "default": 0.34,
+          "default": 0.08,
           "maximum": 0.85,
           "minimum": 0.0,
           "title": "Background Dim",
@@ -38,19 +51,38 @@
           "type": "string"
         },
         "background_mode": {
-          "default": "color",
+          "default": "gradient",
           "enum": [
             "color",
+            "gradient",
+            "radial",
             "artwork",
             "video"
           ],
           "title": "Background Mode",
           "type": "string"
         },
+        "background_vignette": {
+          "default": 0.45,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Background Vignette",
+          "type": "number"
+        },
         "enabled": {
           "default": false,
           "title": "Enabled",
           "type": "boolean"
+        },
+        "font_family": {
+          "default": "sans",
+          "enum": [
+            "sans",
+            "serif",
+            "mono"
+          ],
+          "title": "Font Family",
+          "type": "string"
         },
         "frame_rate": {
           "default": 30,
@@ -92,8 +124,11 @@
           "type": "string"
         },
         "spec_version": {
-          "const": "1.0",
-          "default": "1.0",
+          "default": "1.1",
+          "enum": [
+            "1.0",
+            "1.1"
+          ],
           "title": "Spec Version",
           "type": "string"
         },
@@ -121,16 +156,55 @@
           "type": "string"
         },
         "text_color": {
-          "default": "#f4f1ea",
+          "default": "#f8f4ec",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Text Color",
           "type": "string"
         },
+        "text_panel": {
+          "default": "shadow",
+          "enum": [
+            "none",
+            "shadow",
+            "glass",
+            "accent"
+          ],
+          "title": "Text Panel",
+          "type": "string"
+        },
+        "text_position": {
+          "default": "top",
+          "enum": [
+            "top",
+            "center",
+            "bottom"
+          ],
+          "title": "Text Position",
+          "type": "string"
+        },
         "waveform_color": {
-          "default": "#e1b977",
+          "default": "#f3cc8a",
           "pattern": "^#[0-9a-fA-F]{6}$",
           "title": "Waveform Color",
           "type": "string"
+        },
+        "waveform_frame": {
+          "default": "glass",
+          "enum": [
+            "none",
+            "glass",
+            "outline",
+            "accent"
+          ],
+          "title": "Waveform Frame",
+          "type": "string"
+        },
+        "waveform_glow": {
+          "default": 0.58,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Waveform Glow",
+          "type": "number"
         },
         "waveform_height_percent": {
           "default": 30,
@@ -173,13 +247,15 @@
             "line",
             "mirrored",
             "bars",
-            "dots"
+            "dots",
+            "spectrum",
+            "spectrum_dots"
           ],
           "title": "Waveform Style",
           "type": "string"
         },
         "waveform_width_percent": {
-          "default": 82,
+          "default": 84,
           "maximum": 100,
           "minimum": 40,
           "title": "Waveform Width Percent",
@@ -491,13 +567,21 @@
           "audiogram.waveform_width_percent",
           "audiogram.waveform_height_percent",
           "audiogram.waveform_opacity",
+          "audiogram.waveform_glow",
+          "audiogram.waveform_frame",
           "audiogram.background_mode",
           "audiogram.background_fit",
           "audiogram.background_dim",
+          "audiogram.background_blur",
+          "audiogram.background_vignette",
           "audiogram.background_color",
+          "audiogram.accent_color",
           "audiogram.waveform_color",
           "audiogram.text_color",
+          "audiogram.font_family",
           "audiogram.text_align",
+          "audiogram.text_position",
+          "audiogram.text_panel",
           "audiogram.headline_size_percent",
           "audiogram.subtitle_size_percent",
           "audiogram.headline",

@@ -44,22 +44,29 @@ function isSettings(value: unknown): value is ProductionSettings {
       metadata &&
       Object.values(metadata).every((item) => typeof item === 'string') &&
       audiogram &&
-      audiogram.spec_version === '1.0' &&
+      ['1.0', '1.1'].includes(audiogram.spec_version) &&
       typeof audiogram.enabled === 'boolean' &&
       ['square', 'feed_portrait', 'portrait', 'landscape'].includes(audiogram.aspect_ratio) &&
-      ['line', 'mirrored', 'bars', 'dots'].includes(audiogram.waveform_style) &&
+      ['line', 'mirrored', 'bars', 'dots', 'spectrum', 'spectrum_dots'].includes(audiogram.waveform_style) &&
       ['linear', 'sqrt', 'cbrt', 'log'].includes(audiogram.waveform_scale) &&
       ['top', 'center', 'bottom'].includes(audiogram.waveform_position) &&
       audiogram.waveform_width_percent >= 40 && audiogram.waveform_width_percent <= 100 &&
       audiogram.waveform_height_percent >= 10 && audiogram.waveform_height_percent <= 60 &&
       audiogram.waveform_opacity >= 0.1 && audiogram.waveform_opacity <= 1 &&
-      ['color', 'artwork', 'video'].includes(audiogram.background_mode) &&
+      audiogram.waveform_glow >= 0 && audiogram.waveform_glow <= 1 &&
+      ['none', 'glass', 'outline', 'accent'].includes(audiogram.waveform_frame) &&
+      ['color', 'gradient', 'radial', 'artwork', 'video'].includes(audiogram.background_mode) &&
       ['cover', 'contain'].includes(audiogram.background_fit) &&
       audiogram.background_dim >= 0 && audiogram.background_dim <= 0.85 &&
-      [audiogram.background_color, audiogram.waveform_color, audiogram.text_color].every((color) =>
+      audiogram.background_blur >= 0 && audiogram.background_blur <= 30 &&
+      audiogram.background_vignette >= 0 && audiogram.background_vignette <= 1 &&
+      [audiogram.background_color, audiogram.accent_color, audiogram.waveform_color, audiogram.text_color].every((color) =>
         /^#[0-9a-f]{6}$/i.test(color),
       ) &&
+      ['sans', 'serif', 'mono'].includes(audiogram.font_family) &&
       ['left', 'center', 'right'].includes(audiogram.text_align) &&
+      ['top', 'center', 'bottom'].includes(audiogram.text_position) &&
+      ['none', 'shadow', 'glass', 'accent'].includes(audiogram.text_panel) &&
       audiogram.headline_size_percent >= 2 && audiogram.headline_size_percent <= 10 &&
       audiogram.subtitle_size_percent >= 1 && audiogram.subtitle_size_percent <= 6 &&
       [24, 30, 60].includes(audiogram.frame_rate) &&
@@ -132,22 +139,30 @@ function settings(
       track_number: '',
     },
     audiogram: {
-      spec_version: '1.0',
+      spec_version: '1.1',
       enabled: false,
       aspect_ratio: 'square',
       waveform_style: 'mirrored',
       waveform_scale: 'sqrt',
       waveform_position: 'center',
-      waveform_width_percent: 82,
+      waveform_width_percent: 84,
       waveform_height_percent: 30,
       waveform_opacity: 1,
-      background_mode: 'color',
+      waveform_glow: 0.58,
+      waveform_frame: 'glass',
+      background_mode: 'gradient',
       background_fit: 'cover',
-      background_dim: 0.34,
+      background_dim: 0.08,
+      background_blur: 0,
+      background_vignette: 0.45,
       background_color: '#111718',
-      waveform_color: '#e1b977',
-      text_color: '#f4f1ea',
+      accent_color: '#e1b977',
+      waveform_color: '#f3cc8a',
+      text_color: '#f8f4ec',
+      font_family: 'sans',
       text_align: 'center',
+      text_position: 'top',
+      text_panel: 'shadow',
       headline_size_percent: 4.8,
       subtitle_size_percent: 2.7,
       headline: '',
@@ -163,9 +178,9 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
   {
     key: 'builtin:podcast',
     templateId: 'template:builtin:podcast',
-    templateVersionId: 'template-version:builtin:podcast:2',
+    templateVersionId: 'template-version:builtin:podcast:3',
     name: 'Podcast polish',
-    version: 2,
+    version: 3,
     intent: 'podcast',
     settings: settings(-16, -1, 11),
     builtIn: true,
@@ -173,9 +188,9 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
   {
     key: 'builtin:natural-voice',
     templateId: 'template:builtin:natural-voice',
-    templateVersionId: 'template-version:builtin:natural-voice:2',
+    templateVersionId: 'template-version:builtin:natural-voice:3',
     name: 'Natural voice',
-    version: 2,
+    version: 3,
     intent: 'natural_voice',
     settings: settings(-18, -1.5, 14),
     builtIn: true,
@@ -183,9 +198,9 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
   {
     key: 'builtin:broadcast',
     templateId: 'template:builtin:broadcast',
-    templateVersionId: 'template-version:builtin:broadcast:2',
+    templateVersionId: 'template-version:builtin:broadcast:3',
     name: 'Broadcast delivery',
-    version: 2,
+    version: 3,
     intent: 'broadcast',
     settings: settings(-23, -1, 7, 256),
     builtIn: true,
@@ -193,9 +208,9 @@ export const BUILT_IN_TEMPLATES: SelectableTemplate[] = [
   {
     key: 'builtin:social-voice',
     templateId: 'template:builtin:social-voice',
-    templateVersionId: 'template-version:builtin:social-voice:2',
+    templateVersionId: 'template-version:builtin:social-voice:3',
     name: 'Social voice',
-    version: 2,
+    version: 3,
     intent: 'social_voice',
     settings: settings(-14, -1, 8),
     builtIn: true,
@@ -215,7 +230,7 @@ function migrateSettings(value: unknown): unknown {
     cleanup: { ...fallback.cleanup, ...cleanup, mode: cleanup.mode || 'manual' },
     mastering: candidate.mastering,
     metadata: { ...fallback.metadata, ...(candidate.metadata || {}) },
-    audiogram: { ...fallback.audiogram, ...(candidate.audiogram || {}) },
+    audiogram: { ...fallback.audiogram, ...(candidate.audiogram || {}), spec_version: '1.1' },
     export: candidate.export,
   };
 }
