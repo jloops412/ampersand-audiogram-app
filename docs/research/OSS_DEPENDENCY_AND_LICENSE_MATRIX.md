@@ -123,7 +123,7 @@ No model is selected by README demos or paper averages. Promotion is region/use-
 
 | Candidate | Proposed role | License/status | Current disposition | Required gate |
 |---|---|---|---|---|
-| Dawn-Cut | Deterministic TypeScript edit core and invariants | MIT; young | **Architecture audit / bounded vendoring candidate** | Code audit, project format, save/reopen/render proof |
+| Dawn-Cut | Deterministic TypeScript edit-core reference | MIT; audited at `7de68fc`; young/private core package | **Architecture reference only; no code copied or dependency admitted** | Reopen only through a new ADR-0003 admission with pinned copied paths, provenance, and demonstrated advantage |
 | CutScript | Reference for WhisperX, text edit, DeepFilterNet, FFmpeg export | MIT; young desktop project | **Reference and spike source** | Do not fork wholesale |
 | Auto-Editor CLI | Silence/loudness edit behavior and NLE export | Open CLI boundary must be pinned | **Lab/reference candidate** | Verify exact commit/license boundaries |
 | OpenTimelineIO | NLE interchange | Apache-2.0 | **Deferred recommendation** | Adapter compatibility/limitations matrix |

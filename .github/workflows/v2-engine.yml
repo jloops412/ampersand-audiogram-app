@@ -83,6 +83,7 @@ jobs:
           npm run beta:test
           npm run beta:check
           npm run web:test
+          npm run edit-core:test
           npm run build
           cmp THIRD_PARTY_NOTICES.md dist/legal/THIRD_PARTY_NOTICES.md
           cmp infra/licenses/wavesurfer.js-7.12.11-LICENSE.txt dist/legal/wavesurfer.js-7.12.11-LICENSE.txt

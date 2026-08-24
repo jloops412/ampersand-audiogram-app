@@ -51,7 +51,7 @@ These remain subject to the dependency/model and Audio Lab promotion gates.
 ### Editing and interchange
 
 - use an Ampersand-owned deterministic edit model;
-- audit Dawn-Cut's bounded MIT core concepts/code before deciding whether to vendor/adapt anything;
+- ADR-0014 supersedes the Dawn-Cut audit item: retain it as a concepts-only reference and use Ampersand's original dependency-free Edit Core V0;
 - use OpenTimelineIO only at the professional interchange boundary;
 - do not fork a complete editor application into the V1 foundation.
 

@@ -104,8 +104,10 @@ admission and notice coverage remains tracked in issue #12.
 | Responsive/mobile | Compact CSS; coarse-pointer region drag disabled; external controls remain available | Code/build pass; device smoke pending |
 | License/security/bundle | Exact pin/hash/license/no-dependency/audit; served notice/license asserted in build | Pass for candidate status |
 
-Lane B remains open: integer-microsecond EDL contracts, transcript/edit mapping, undo/redo command replay,
-save/reopen/render reproducibility, and property/invariant tests.
+Lane B's dependency-free Edit Core V0 is now implemented and documented separately in `EDIT_CORE_V0.md` and ADR-0014:
+integer-microsecond EDL contracts, transcript/edit mapping, undo/redo command replay, canonical save/reopen, FFmpeg audio
+render planning, generated invariants, and real PCM repeatability tests. Issue #11 remains open for Studio integration,
+caption/chapter/overlay tracks, video rendering, and both lanes' real long-form/browser promotion gates.
 
 ## Rollback and release order
 
