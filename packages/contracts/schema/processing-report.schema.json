@@ -72,6 +72,16 @@
       "title": "Artifact Sha256",
       "type": "object"
     },
+    "cleanup_plan_id": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Cleanup Plan Id",
+      "type": "string"
+    },
+    "cleanup_plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Cleanup Plan Sha256",
+      "type": "string"
+    },
     "decisions": {
       "items": {
         "type": "string"
@@ -207,6 +217,8 @@
     "status",
     "loudness_before",
     "loudness_after",
+    "cleanup_plan_id",
+    "cleanup_plan_sha256",
     "step_ids",
     "decisions",
     "artifact_sha256",

@@ -8,6 +8,7 @@ export interface MasteringSettings {
 }
 
 export interface CleanupSettings {
+  mode: 'smart' | 'manual';
   noise_reduction: 'off' | 'light' | 'balanced' | 'strong';
   rumble_filter: boolean;
   hum_reduction: 'off' | '50hz' | '60hz';
@@ -91,6 +92,33 @@ export interface ProductionSummary {
   loudnessAfter: LoudnessMeasurement;
   resolvedSettingsId: string;
   resolvedSettingsSha256: string;
+  cleanupPlan: {
+    id: string;
+    sha256: string;
+    mode: 'smart' | 'manual';
+    decision: 'candidate' | 'manual' | 'protect' | 'no_op';
+    productionAudioChanged: boolean;
+    candidateStages: string[];
+    appliedStages: string[];
+    evidence: {
+      musicEvidenceAvailable: boolean;
+      stationaryNoiseEvidenceAvailable: boolean;
+      protectedRegionCount: number;
+      conflictCount: number;
+      maximumMusicProbability: number | null;
+      maximumNoiseProbability: number | null;
+      maximumRumbleProbability: number | null;
+      maximumHumProbability: number | null;
+      maximumClippingProbability: number | null;
+      resolvedHumFundamentalHz: 50 | 60 | null;
+    };
+    thresholds: {
+      maximumMusicProbability: number;
+      minimumNoiseProbability: number;
+      minimumRumbleProbability: number;
+      minimumHumProbability: number;
+    };
+  };
   decisions: string[];
   warnings: string[];
   artifacts: Array<{ kind: string; sizeBytes: number; mimeType: string }>;
@@ -122,6 +150,7 @@ export interface Production {
     mp3: string | null;
     audiogram: string | null;
     report: string;
+    cleanupPlan: string | null;
     waveform: string;
   } | null;
 }

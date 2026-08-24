@@ -194,7 +194,7 @@
       "description": "Deterministic spoken-word cleanup controls admitted for the V1 beta.",
       "properties": {
         "compression": {
-          "default": "balanced",
+          "default": "off",
           "enum": [
             "off",
             "gentle",
@@ -230,6 +230,15 @@
           "title": "Hum Reduction",
           "type": "string"
         },
+        "mode": {
+          "default": "manual",
+          "enum": [
+            "smart",
+            "manual"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
         "noise_gate": {
           "default": "off",
           "enum": [
@@ -241,7 +250,7 @@
           "type": "string"
         },
         "noise_reduction": {
-          "default": "balanced",
+          "default": "off",
           "enum": [
             "off",
             "light",
@@ -252,7 +261,7 @@
           "type": "string"
         },
         "rumble_filter": {
-          "default": true,
+          "default": false,
           "title": "Rumble Filter",
           "type": "boolean"
         },
@@ -454,6 +463,7 @@
       },
       "propertyNames": {
         "enum": [
+          "cleanup.mode",
           "cleanup.noise_reduction",
           "cleanup.rumble_filter",
           "cleanup.hum_reduction",

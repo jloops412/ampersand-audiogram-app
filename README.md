@@ -1,6 +1,6 @@
 # Ampersand
 
-**Status:** V2 implementation is active; guided-processing private-beta upgrade is ready for review
+**Status:** V2 implementation is active; Smart Cleanup guardrails are integrated in the private beta
 
 **Studio/control plane:** new Cloud Run V1 beta deployed from reviewed GitHub `main`
 
@@ -17,8 +17,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 
 - a responsive private-beta Studio with a production library, single/batch upload, progress, retry, delete, and downloads;
 - private resumable browser-to-Cloud-Storage uploads up to 1 GiB without proxying source bytes through Cloud Run;
-- four useful quick-start intents plus executable noise reduction, rumble filtering, compression, loudness, true-peak,
-  loudness-range, output-format, bitrate, metadata, and audiogram controls;
+- four useful quick-start intents with protect-first Smart Cleanup, an explicit Manual DSP mode, and executable loudness,
+  true-peak, loudness-range, output-format, bitrate, metadata, and audiogram controls;
 - browser-local reusable templates with immutable versions and an exact resolved-settings snapshot on every run;
 - same-position Original/Master playback, precomputed waveforms, measured results, and an understandable report;
 - a lightweight serial batch runner with independent durable job/source/output records and restart recovery;
@@ -38,7 +38,8 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - a deterministic Adaptive Leveler V0 shadow envelope with bounded speaker/content-aware gain and Studio-ready reasoning;
 - a sample-accurate, channel-linked, evaluation-only Leveler renderer that leaves production masters unchanged;
 - deterministic two-pass WAV/MP3 loudness mastering;
-- conservative deterministic declipping, rumble/hum filtering, steady-noise reduction, gating, de-essing, voice EQ,
+- an auditable Smart Cleanup V0.3 plan with exact evidence, thresholds, stage dispositions, hashes, and safe no-op results;
+- explicit Manual deterministic declipping, rumble/hum filtering, steady-noise reduction, gating, de-essing, voice EQ,
   and compression processing;
 - full-duration H.264/AAC audiograms with 1:1, 4:5, 9:16, and 16:9 layouts; four waveform primitives; rich layout,
   opacity, typography, frame-rate, and quality controls; and color, uploaded image, or looping-video backgrounds;
@@ -49,8 +50,9 @@ https://ampersand-audiograms.woodwardwarrior.chatgpt.site
 - tests that reproduce manifests and media hashes across repeated runs.
 
 This is the content-aware deterministic engine foundation, not a claim that the Adaptive Leveler, active Router,
-neural restoration, background-music separation, dereverberation, checkpoint-backed VAD, or ASR is finished. The active
-beta denoiser is intentionally limited to conservative steady-noise reduction.
+neural restoration, background-music separation, dereverberation, checkpoint-backed VAD, or ASR is finished. Smart
+Cleanup candidates are protect-only until admitted detector and listening gates pass; Manual steady-noise reduction
+remains available as an explicit global control.
 
 ## Run the independent engine
 
@@ -102,6 +104,7 @@ gain-envelope.json
 leveler-statistics.json
 recipe.json
 resolved-settings.json
+cleanup-plan.json
 production.json
 production-run.json
 steps/*.json
@@ -146,6 +149,7 @@ origin-specific CORS policy in `infra/cloud-storage-cors.json`.
 See [Local Engine CLI](./docs/build/LOCAL_ENGINE_CLI.md),
 [Semantic Audio Map V0](./docs/architecture/SEMANTIC_AUDIO_MAP_V0.md),
 [Processing Router V0](./docs/architecture/PROCESSING_ROUTER_V0.md),
+[Smart Cleanup Guardrails V0.3](./docs/architecture/SMART_CLEANUP_GUARDRAILS_V0_3.md),
 [Adaptive Leveler V0](./docs/architecture/ADAPTIVE_LEVELER_V0.md),
 [Leveler Gain Renderer V0](./docs/architecture/LEVELER_GAIN_RENDERER_V0.md),
 [Synthetic Fixture Corpus V0](./docs/research/SYNTHETIC_FIXTURE_CORPUS_V0.md), and
@@ -194,6 +198,7 @@ Original media is immutable. Expensive work is checkpointable. Provider-native r
 8. #24/#25/#26 — durable engine, Studio integration, A/B, and report;
 9. #13 — one-hour recovery proof;
 10. #27 — expand the deterministic audiogram renderer with captions, clip selection, and richer motion styles.
+11. #43 — protect-first Smart Cleanup planning and exact Manual deterministic overrides.
 
 Issue #24 now includes an intentionally narrow private-beta publish checkpoint. It creates the new Ampersand Cloud Run
 baseline from GitHub. Older deployments are deprecated and may be inventoried and removed after this service is verified;

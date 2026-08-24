@@ -9,7 +9,11 @@ from ampersand_contracts import (
     AssetKind,
     AssetManifest,
     AudiogramSettings,
+    CleanupEvidenceSummary,
+    CleanupPlan,
+    CleanupPlannerSettings,
     CleanupSettings,
+    CleanupStageDecision,
     DependencyManifest,
     ExportSettings,
     FixtureAssetManifest,
@@ -75,6 +79,10 @@ def test_every_required_contract_round_trips_with_a_version() -> None:
         JobStep,
         RecipeVersion,
         MasteringSettings,
+        CleanupPlannerSettings,
+        CleanupEvidenceSummary,
+        CleanupStageDecision,
+        CleanupPlan,
         CleanupSettings,
         OutputMetadataSettings,
         AudiogramSettings,
@@ -249,6 +257,53 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         export=ExportSettings(),
     )
     settings_sha = manifest_sha256(settings)
+    cleanup_planner_settings = CleanupPlannerSettings()
+    cleanup_evidence = CleanupEvidenceSummary(
+        semantic_map_sha256=SHA,
+        duration_us=1_000_000,
+        region_count=1,
+        protected_region_count=1,
+        conflict_count=0,
+        music_evidence_available=False,
+        stationary_noise_evidence_available=False,
+    )
+    cleanup_stage_decisions = tuple(
+        CleanupStageDecision(
+            stage=stage,
+            disposition="skipped",
+            reason_code=f"cleanup:skip-{stage.replace('_', '-')}",
+            reason="Contract fixture stage is disabled.",
+        )
+        for stage in (
+            "declip",
+            "rumble_filter",
+            "hum_reduction",
+            "noise_reduction",
+            "noise_gate",
+            "deesser",
+            "voice_enhancement",
+            "compression",
+        )
+    )
+    cleanup_plan = CleanupPlan(
+        cleanup_plan_id="cleanup-plan:test",
+        run_id="run:test",
+        semantic_map_id="semantic-map:test",
+        mode="manual",
+        decision="manual",
+        planner_settings_id=cleanup_planner_settings.settings_id,
+        planner_settings_sha256=manifest_sha256(cleanup_planner_settings),
+        planner_settings=cleanup_planner_settings,
+        evidence=cleanup_evidence,
+        requested_settings=settings.cleanup,
+        requested_settings_sha256=manifest_sha256(settings.cleanup),
+        resolved_settings=settings.cleanup,
+        resolved_settings_sha256=manifest_sha256(settings.cleanup),
+        stage_decisions=cleanup_stage_decisions,
+        reason_codes=("cleanup:manual-no-op",),
+        reasons=("Contract fixture manual cleanup is disabled.",),
+        production_audio_changed=False,
+    )
     settings_override = ProductionSettingsOverride(target_integrated_lufs=-18)
     template = StudioTemplate(
         template_id="template:test",
@@ -531,9 +586,11 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         loudness_after=loudness,
         gain_envelope_id=envelope.gain_envelope_id,
         leveler_statistics_id=leveler_statistics.leveler_statistics_id,
+        cleanup_plan_id=cleanup_plan.cleanup_plan_id,
+        cleanup_plan_sha256=manifest_sha256(cleanup_plan),
         step_ids=(step.step_id,),
         decisions=("No-op protected baseline.",),
-        artifact_sha256={"master_wav": SHA},
+        artifact_sha256={"master_wav": SHA, "cleanup_plan": manifest_sha256(cleanup_plan)},
         privacy_summary="Local synthetic fixture only.",
         reproducibility_summary="Exact versions and checksums are recorded.",
     )
@@ -564,6 +621,10 @@ def _contract_fixtures() -> tuple[BaseModel, ...]:
         probe,
         production,
         settings.mastering,
+        cleanup_planner_settings,
+        cleanup_evidence,
+        *cleanup_stage_decisions,
+        cleanup_plan,
         settings.cleanup,
         settings.metadata,
         settings.audiogram,

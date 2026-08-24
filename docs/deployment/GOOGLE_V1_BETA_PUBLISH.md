@@ -20,15 +20,15 @@ Cloud Run revision. This service becomes the active Ampersand baseline.
 - accepts sources up to 1 GiB and preserves each source as an immutable production input;
 - offers four guided quick starts plus real cleanup, mastering, metadata, audiogram, and delivery controls;
 - saves reusable template versions in this browser;
-- applies Ampersand's independent deterministic rumble filter, steady-noise reduction, compression, analysis, and
-  standards-based final mastering;
+- resolves protect-first Smart Cleanup plans by default, offers explicit Manual deterministic cleanup controls, and
+  applies standards-based final mastering;
 - embeds requested delivery metadata and renders optional full-duration H.264 audiograms with color or uploaded art;
 - saves exact settings/provenance, waveform data, report, WAV/MP3/MP4 outputs, and job state;
 - supports progress, browser return, retry after restart, A/B listening, downloads, and deletion.
 
-Processing Router and Adaptive Leveler results remain shadow analysis. The active FFT denoiser targets steady noise; it
-does not claim true background-music separation or dereverberation. Those restoration paths and transcription remain
-future admitted-model work.
+Processing Router, Adaptive Leveler, and Smart Cleanup candidates remain shadow analysis. Manual FFT denoise targets
+steady noise; it does not claim true background-music separation or dereverberation. Those restoration paths and
+transcription remain future admitted-model work.
 
 ## 1. Publish a reviewed Git commit first
 
@@ -192,13 +192,14 @@ Do not call the beta usable until every item passes:
 4. Confirm **Productions** loads and no legacy service credential is requested.
 5. Upload a short rights-cleared WAV/MP3/M4A, then a source larger than 32 MiB and confirm resumable progress works.
 6. Select two small files together and confirm both become separate queued productions.
-7. Select each quick start and confirm loudness, cleanup, and compression settings change.
+7. Select each quick start and confirm its loudness target changes while Smart Cleanup remains the protect-first default;
+   switch to Manual and confirm the deterministic cleanup controls become editable.
 8. Add metadata, enable an audiogram, exercise image and short looping-video backgrounds plus multiple layouts, save a
    reusable template, and launch one production.
 9. Confirm queued → running → ready, then refresh the browser and reopen the production.
 10. Compare Original/Master at the same play position and visually inspect the audiogram.
-11. Download every selected format and the JSON report; inspect MP3 tags in a media player.
-12. Confirm the report's resolved-settings ID/hash, cleanup decisions, and `$0.00` external API cost.
+11. Download every selected format, the JSON report, and the cleanup plan; inspect MP3 tags in a media player.
+12. Confirm the report's resolved-settings ID/hash, cleanup-plan ID/hash, cleanup decisions, and `$0.00` external API cost.
 13. Delete the production, confirm it disappears after refresh, and verify its live objects are gone from the bucket.
 14. In Cloud Logging, confirm no beta key, upload-session URL, source path, or private media bytes appear in logs.
 

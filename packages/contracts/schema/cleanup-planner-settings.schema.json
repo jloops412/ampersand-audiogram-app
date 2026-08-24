@@ -1,0 +1,72 @@
+{
+  "additionalProperties": false,
+  "description": "Versioned, protect-only admission policy for Smart Cleanup V0.3.",
+  "properties": {
+    "activation_mode": {
+      "const": "protect",
+      "default": "protect",
+      "title": "Activation Mode",
+      "type": "string"
+    },
+    "algorithm_version": {
+      "const": "0.3.0",
+      "default": "0.3.0",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "automatic_declip_enabled": {
+      "const": false,
+      "default": false,
+      "title": "Automatic Declip Enabled",
+      "type": "boolean"
+    },
+    "maximum_music_probability": {
+      "default": 0.35,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Maximum Music Probability",
+      "type": "number"
+    },
+    "minimum_hum_probability_for_candidate": {
+      "default": 0.8,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Hum Probability For Candidate",
+      "type": "number"
+    },
+    "minimum_noise_probability_for_candidate": {
+      "default": 0.65,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Noise Probability For Candidate",
+      "type": "number"
+    },
+    "minimum_rumble_probability_for_candidate": {
+      "default": 0.75,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Rumble Probability For Candidate",
+      "type": "number"
+    },
+    "require_full_coverage_music_evidence": {
+      "const": true,
+      "default": true,
+      "title": "Require Full Coverage Music Evidence",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "settings_id": {
+      "default": "cleanup-planner-settings:smart-v0.3",
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Settings Id",
+      "type": "string"
+    }
+  },
+  "title": "CleanupPlannerSettings",
+  "type": "object"
+}

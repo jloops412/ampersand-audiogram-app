@@ -1,0 +1,83 @@
+{
+  "additionalProperties": false,
+  "description": "One explicit stage disposition in a resolved cleanup plan.",
+  "properties": {
+    "candidate_threshold": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Threshold"
+    },
+    "disposition": {
+      "enum": [
+        "candidate",
+        "applied",
+        "skipped",
+        "protected"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    },
+    "measured_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Measured Probability"
+    },
+    "reason": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "reason_code": {
+      "pattern": "^[a-z0-9][a-z0-9._:-]{1,127}$",
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "declip",
+        "rumble_filter",
+        "hum_reduction",
+        "noise_reduction",
+        "noise_gate",
+        "deesser",
+        "voice_enhancement",
+        "compression"
+      ],
+      "title": "Stage",
+      "type": "string"
+    }
+  },
+  "required": [
+    "stage",
+    "disposition",
+    "reason_code",
+    "reason"
+  ],
+  "title": "CleanupStageDecision",
+  "type": "object"
+}

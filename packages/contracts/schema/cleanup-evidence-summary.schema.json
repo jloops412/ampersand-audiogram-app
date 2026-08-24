@@ -1,0 +1,142 @@
+{
+  "additionalProperties": false,
+  "description": "Bounded measurements used to explain one Smart Cleanup resolution.",
+  "properties": {
+    "conflict_count": {
+      "minimum": 0,
+      "title": "Conflict Count",
+      "type": "integer"
+    },
+    "duration_us": {
+      "minimum": 0,
+      "title": "Duration Us",
+      "type": "integer"
+    },
+    "maximum_clipping_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maximum Clipping Probability"
+    },
+    "maximum_hum_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maximum Hum Probability"
+    },
+    "maximum_music_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maximum Music Probability"
+    },
+    "maximum_noise_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maximum Noise Probability"
+    },
+    "maximum_rumble_probability": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maximum Rumble Probability"
+    },
+    "music_evidence_available": {
+      "title": "Music Evidence Available",
+      "type": "boolean"
+    },
+    "protected_region_count": {
+      "minimum": 0,
+      "title": "Protected Region Count",
+      "type": "integer"
+    },
+    "region_count": {
+      "exclusiveMinimum": 0,
+      "title": "Region Count",
+      "type": "integer"
+    },
+    "resolved_hum_fundamental_hz": {
+      "anyOf": [
+        {
+          "enum": [
+            50,
+            60
+          ],
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resolved Hum Fundamental Hz"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "semantic_map_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Semantic Map Sha256",
+      "type": "string"
+    },
+    "stationary_noise_evidence_available": {
+      "title": "Stationary Noise Evidence Available",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "semantic_map_sha256",
+    "duration_us",
+    "region_count",
+    "protected_region_count",
+    "conflict_count",
+    "music_evidence_available",
+    "stationary_noise_evidence_available"
+  ],
+  "title": "CleanupEvidenceSummary",
+  "type": "object"
+}

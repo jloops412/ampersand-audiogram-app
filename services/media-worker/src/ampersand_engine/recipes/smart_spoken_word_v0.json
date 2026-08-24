@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
-  "recipe_version_id": "recipe:smart-spoken-word:0.2.0",
+  "recipe_version_id": "recipe:smart-spoken-word:0.3.0",
   "slug": "smart-spoken-word-v0",
-  "recipe_version": "0.2.0",
+  "recipe_version": "0.3.0",
   "display_name": "Smart Spoken Word Baseline",
-  "description": "Deterministic no-neural baseline: preserve source, inspect, build peaks and a Semantic Map, plan conservative regional routing and Leveler candidates in shadow mode, then apply final loudness mastering.",
+  "description": "Protect-first no-neural baseline: preserve source, inspect, build peaks and a Semantic Map, plan shadow routing and Leveler candidates, resolve auditable Smart Cleanup guardrails, then master and optionally render an audiogram.",
   "analysis_steps": [
     "validate-probe",
     "canonicalize-if-needed",
@@ -15,7 +15,9 @@
   "processing_steps": [
     "processing-router-v0-shadow",
     "adaptive-leveler-shadow",
+    "smart-cleanup-v0",
     "two-pass-loudness-master",
+    "render-audiogram",
     "output-validation"
   ],
   "target_integrated_lufs": -16.0,
